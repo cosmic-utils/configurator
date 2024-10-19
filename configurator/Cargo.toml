@@ -33,6 +33,7 @@ configurator_schema = { workspace = true }
 figment_schemars_bridge.workspace = true
 derive_more = { version = "1", features = ["unwrap"] }
 ron = "0.8"
+xdg = "2"
 
 [dependencies.libcosmic]
 # git = "https://github.com/pop-os/libcosmic"
