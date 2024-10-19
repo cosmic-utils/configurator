@@ -24,7 +24,7 @@ Initially developed with tweaking the COSMIC(tm) desktop in mind, it could work 
 
 - [ ] file watcher
 - [ ] explore more pattern to define config in client code
-- [ ] JSON Schema 1 to 1 compliance (pass the entire test suite, currently ~ 112/862 test passed)
+- [ ] JSON Schema 1 to 1 compliance (pass the entire test suite, currently ~ 130/862 test passed)
 - [ ] ...
 
 As you see, this is quite a lot of works, so if anyone is interested, please reach out
