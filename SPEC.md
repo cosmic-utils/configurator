@@ -5,9 +5,7 @@ The schema must be stored in one of this locations:
 - `$XDG_DATA_HOME/configurator/`
 - `$XDG_DATA_DIRS/configurator/`
 
-## Schema additional values
-
-**Each variable must be prefixed by `X_CONFIG_CONFIGURATOR_`. E.g: `SOURCE_PATHS` => `X_CONFIG_CONFIGURATOR_SOURCE_PATHS`**
+## Additional metadata
 
 <table>
     <thead>
@@ -19,7 +17,7 @@ The schema must be stored in one of this locations:
     </thead>
     <tbody>
         <tr>
-            <td><code>SOURCE_PATHS</code></td>
+            <td><code>X_CONFIG_CONFIGURATOR_SOURCE_PATHS</code></td>
             <td>Path to where the configuration will be sourced. The order matters. It can be a directory or a filename, depending on the format implementation.</td>
             <td>Yes</td>
         </tr>
