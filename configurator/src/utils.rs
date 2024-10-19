@@ -91,21 +91,41 @@ pub fn json_value_eq_figment_value(json_value: &json::Value, fig: &figment::valu
 }
 
 pub fn figment_value_to_i128(value: &figment::value::Value) -> Option<i128> {
+    type R = i128;
     match value.to_num()? {
-        figment::value::Num::U8(x) => Some(x as i128),
-        figment::value::Num::U16(x) => Some(x as i128),
-        figment::value::Num::U32(x) => Some(x as i128),
-        figment::value::Num::U64(x) => Some(x as i128),
-        figment::value::Num::U128(x) => Some(x as i128),
-        figment::value::Num::USize(x) => Some(x as i128),
-        figment::value::Num::I8(x) => Some(x as i128),
-        figment::value::Num::I16(x) => Some(x as i128),
-        figment::value::Num::I32(x) => Some(x as i128),
-        figment::value::Num::I64(x) => Some(x as i128),
-        figment::value::Num::I128(x) => Some(x),
-        figment::value::Num::ISize(x) => Some(x as i128),
-        // is it ok ? Well no of course, need a fix
-        figment::value::Num::F32(x) => Some(x as i128),
-        figment::value::Num::F64(x) => Some(x as i128),
+        figment::value::Num::U8(x) => Some(x as R),
+        figment::value::Num::U16(x) => Some(x as R),
+        figment::value::Num::U32(x) => Some(x as R),
+        figment::value::Num::U64(x) => Some(x as R),
+        figment::value::Num::U128(x) => Some(x as R),
+        figment::value::Num::USize(x) => Some(x as R),
+        figment::value::Num::I8(x) => Some(x as R),
+        figment::value::Num::I16(x) => Some(x as R),
+        figment::value::Num::I32(x) => Some(x as R),
+        figment::value::Num::I64(x) => Some(x as R),
+        figment::value::Num::I128(x) => Some(x as R),
+        figment::value::Num::ISize(x) => Some(x as R),
+        figment::value::Num::F32(x) => Some(x as R),
+        figment::value::Num::F64(x) => Some(x as R),
+    }
+}
+
+pub fn figment_value_to_f64(value: &figment::value::Value) -> Option<f64> {
+    type R = f64;
+    match value.to_num()? {
+        figment::value::Num::U8(x) => Some(x as R),
+        figment::value::Num::U16(x) => Some(x as R),
+        figment::value::Num::U32(x) => Some(x as R),
+        figment::value::Num::U64(x) => Some(x as R),
+        figment::value::Num::U128(x) => Some(x as R),
+        figment::value::Num::USize(x) => Some(x as R),
+        figment::value::Num::I8(x) => Some(x as R),
+        figment::value::Num::I16(x) => Some(x as R),
+        figment::value::Num::I32(x) => Some(x as R),
+        figment::value::Num::I64(x) => Some(x as R),
+        figment::value::Num::I128(x) => Some(x as R),
+        figment::value::Num::ISize(x) => Some(x as R),
+        figment::value::Num::F32(x) => Some(x as R),
+        figment::value::Num::F64(x) => Some(x as R),
     }
 }

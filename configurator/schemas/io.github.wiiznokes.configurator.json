@@ -17,6 +17,11 @@
         }
       ]
     },
+    "float": {
+      "default": 13.199999809265137,
+      "type": "number",
+      "format": "float"
+    },
     "opt": {
       "default": null,
       "type": [

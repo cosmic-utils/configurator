@@ -112,9 +112,9 @@ pub(crate) fn schema_object_to_node(
                 InstanceType::Boolean => Node::Bool(NodeBool::new()),
                 InstanceType::Object => Node::Object(NodeObject::new(BTreeMap::new(), None)),
                 InstanceType::Array => todo!(),
-                InstanceType::Number => todo!(),
+                InstanceType::Number => Node::Number(NodeNumber::new(NumberKind::Float)),
                 InstanceType::String => Node::String(NodeString::new()),
-                InstanceType::Integer => Node::Number(NodeNumber::new()),
+                InstanceType::Integer => Node::Number(NodeNumber::new(NumberKind::Integer)),
             }
         }
 

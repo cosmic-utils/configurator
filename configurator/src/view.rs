@@ -18,7 +18,7 @@ use crate::{
     node::{
         data_path::{DataPath, DataPathType},
         Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
-        NodeValue,
+        NodeValue, NumberKind,
     },
 };
 
@@ -318,28 +318,30 @@ fn view_number<'a>(
                     .push(text("Current value"))
                     .push(horizontal_space())
                     .push(
-                        text_input(
-                            "value",
-                            node_number
-                                .value
-                                .as_ref()
-                                .map_or_else(|| String::from(""), |v| v.to_string()),
-                        )
-                        .on_input(move |value| {
-                            if let Ok(value) = value.parse() {
-                                PageMsg::ChangeMsg(
-                                    data_path.to_vec(),
-                                    ChangeMsg::ChangeNumber(value),
-                                )
-                            } else {
-                                PageMsg::None
-                            }
+                        text_input("value", &node_number.value_string).on_input(move |value| {
+                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeNumber(value))
                         }),
                     )
                     .push_maybe(if node_number.value.is_none() {
                         Some(no_value_defined_warning_icon())
                     } else {
-                        None
+                        if match node_number.kind {
+                            NumberKind::Integer => {
+                                node_number.value_string.parse::<i128>().is_err()
+                            }
+                            NumberKind::Float => node_number.value_string.parse::<f64>().is_err(),
+                        } {
+                            Some(
+                                tooltip(
+                                    icon!("report24"),
+                                    text("This value is incorrect."),
+                                    Position::Top,
+                                )
+                                .into(),
+                            )
+                        } else {
+                            None
+                        }
                     }),
             ),
         )

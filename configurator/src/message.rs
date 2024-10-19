@@ -22,6 +22,6 @@ pub enum ChangeMsg {
     ApplyDefault,
     ChangeBool(bool),
     ChangeString(String),
-    ChangeNumber(i128),
+    ChangeNumber(String),
     ChangeEnum(usize),
 }

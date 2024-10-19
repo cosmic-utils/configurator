@@ -25,8 +25,7 @@ use crate::{
     config::{Config, CONFIG_PATH, SCHEMAS_PATH},
     fl,
     message::{AppMsg, ChangeMsg, PageMsg},
-    node::data_path::DataPath,
-    node::{Node, NodeContainer},
+    node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
     view::view_app,
 };
 
@@ -123,7 +122,7 @@ impl Page {
 
         assert!(tree.is_valid());
 
-        dbg!(&tree);
+        // dbg!(&tree);
 
         Ok(Self {
             title,
@@ -246,7 +245,20 @@ impl cosmic::Application for App {
                                 }
                                 ChangeMsg::ChangeNumber(value) => {
                                     let node_number = node.node.unwrap_number_mut();
-                                    node_number.value = Some(value);
+
+                                    match node_number.kind {
+                                        NumberKind::Integer => {
+                                            if let Ok(value) = value.parse() {
+                                                node_number.value = Some(NumberValue::I128(value));
+                                            }
+                                        }
+                                        NumberKind::Float => {
+                                            if let Ok(value) = value.parse() {
+                                                node_number.value = Some(NumberValue::F64(value));
+                                            }
+                                        }
+                                    }
+                                    node_number.value_string = value;
                                 }
                                 ChangeMsg::ChangeEnum(value) => {
                                     let node_enum = node.node.unwrap_enum_mut();

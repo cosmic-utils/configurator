@@ -19,6 +19,7 @@ pub const CONFIG_PATH: &str = "configurator/config";
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, ZConf)]
 #[serde(default)]
 pub struct Config {
+    pub float: f32,
     /// Activate something
     pub active: bool,
     pub sub: SubConfig,
@@ -48,6 +49,7 @@ impl Default for Config {
             otros: 0,
             // hella: "hello".into(),
             opt: None,
+            float: 13.2,
             // vec: vec![1],
             // hash,
         }

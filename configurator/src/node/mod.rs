@@ -49,8 +49,40 @@ pub struct NodeString {
 }
 
 #[derive(Debug, Clone)]
+pub enum NumberValue {
+    I128(i128),
+    F64(f64),
+}
+
+impl ToString for NumberValue {
+    fn to_string(&self) -> String {
+        match self {
+            NumberValue::I128(n) => n.to_string(),
+            NumberValue::F64(n) => n.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum NumberKind {
+    Integer,
+    Float,
+}
+
+#[derive(Debug, Clone)]
 pub struct NodeNumber {
-    pub value: Option<i128>,
+    pub kind: NumberKind,
+    // pub value: Option<NumberValue>,
+    pub value: Option<String>,
+}
+
+impl NodeNumber {
+    pub fn is_value_ok(&self) -> Option<bool> {
+        self.value.as_ref().map(|v| match self.kind {
+            NumberKind::Integer => v.parse::<i128>().is_ok(),
+            NumberKind::Float => v.parse::<f64>().is_ok(),
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -89,8 +121,12 @@ impl NodeString {
 }
 
 impl NodeNumber {
-    pub fn new() -> Self {
-        Self { value: None }
+    pub fn new(kind: NumberKind) -> Self {
+        Self {
+            value: None,
+            // value_string: String::new(),
+            kind,
+        }
     }
 }
 

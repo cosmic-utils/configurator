@@ -6,8 +6,12 @@ use figment::{
     Figment, Profile, Provider,
 };
 
-use crate::utils::{
-    data_default_profile_figment, figment_value_to_i128, json_value_eq_figment_value,
+use crate::{
+    node::{NumberKind, NumberValue},
+    utils::{
+        data_default_profile_figment, figment_value_to_f64, figment_value_to_i128,
+        json_value_eq_figment_value,
+    },
 };
 
 use super::{Node, NodeContainer};
@@ -22,7 +26,7 @@ impl NodeContainer {
 
     pub fn apply_value(&mut self, value: Value, modified: bool) -> anyhow::Result<()> {
         // info!("merge_figment_rec");
-        dbg!(&self, &value);
+        // dbg!(&self, &value);
 
         match (value, &mut self.node) {
             (Value::String(tag, value), Node::String(node_string)) => {
@@ -47,8 +51,22 @@ impl NodeContainer {
             }
             (Value::Bool(tag, value), Node::Bool(node_bool)) => node_bool.value = Some(value),
             (Value::Num(tag, value), Node::Number(node_number)) => {
-                let value = figment_value_to_i128(&Value::Num(tag, value)).unwrap();
-                node_number.value = Some(value)
+
+                dbg!(&value);
+
+                let value = match node_number.kind {
+                    NumberKind::Integer => {
+                        let value = figment_value_to_i128(&Value::Num(tag, value)).unwrap();
+                        NumberValue::I128(value)
+                    }
+                    NumberKind::Float => {
+                        let value = figment_value_to_f64(&Value::Num(tag, value)).unwrap();
+
+                        NumberValue::F64(value)
+                    }
+                };
+                node_number.value_string = value.to_string();
+                node_number.value = Some(value);
             }
             (Value::Empty(tag, value), Node::Enum(node_enum)) => {
                 let value = Value::Empty(tag, value);
