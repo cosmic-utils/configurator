@@ -22,6 +22,8 @@ use crate::{
     },
 };
 
+const SPACING: f32 = 10.;
+
 pub fn view_app(app: &App) -> Element<'_, AppMsg> {
     let entity = app.nav_model.active();
     let page = app.nav_model.data::<Page>(entity).unwrap();
@@ -78,96 +80,59 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
 fn view_object<'a>(
     data_path: &'a [DataPathType],
     node: &'a NodeContainer,
-    object: &'a NodeObject,
+    node_object: &'a NodeObject,
 ) -> Element<'a, PageMsg> {
-    let mut lines = Vec::new();
-
-    if let Some(name) = data_path.last() {
-        lines.push(text(format!("object name: {:?}", name)).into());
-    }
-
-    for (name, node) in &object.nodes {
-        let line = match &node.node {
-            Node::Bool(node_bool) => button::custom(
-                row()
-                    .push(text(name))
-                    .push(horizontal_space())
-                    .push(text(format!("{:?}", node_bool.value)))
-                    .width(Length::Fill),
-            )
-            .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
-            .into(),
-            Node::String(node_string) => button::custom(
-                row()
-                    .push(text(name))
-                    .push(horizontal_space())
-                    .push(text(format!("{:?}", node_string.value)))
-                    .width(Length::Fill),
-            )
-            .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
-            .into(),
-            Node::Number(node_int) => button::custom(
-                row()
-                    .push(text(name))
-                    .push(horizontal_space())
-                    .push(text(format!("{:?}", node_int.value)))
-                    .width(Length::Fill),
-            )
-            .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
-            .into(),
-            Node::Object(node_object) => button::custom(
-                row()
-                    .push(text(name))
-                    .push(horizontal_space())
-                    .width(Length::Fill),
-            )
-            .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
-            .into(),
-            Node::Enum(node_enum) => button::custom(
-                row()
-                    .push(text(name))
-                    .push(horizontal_space())
-                    .width(Length::Fill),
-            )
-            .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
-            .into(),
-            Node::Array(node_array) => button::custom(
-                row()
-                    .push(text(name))
-                    .push(horizontal_space())
-                    .width(Length::Fill),
-            )
-            .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
-            .into(),
-            _ => text("todo").into(),
-        };
-        lines.push(line);
-    }
-
-    if let Some(default) = &node.default {
-        lines.push(
+    column()
+        .push_maybe(
+            node.desc
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
+        .push(
             section()
-                .title("Default")
-                .add(
-                    row()
-                        .push(horizontal_space())
-                        .push(
-                            // xxx: the on_press need to be lazy
-                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                                data_path.to_vec(),
-                                ChangeMsg::ApplyDefault,
-                            )),
-                        )
-                        .push(tooltip(
-                            icon!("report24"),
-                            text("This will remove all children"),
-                            Position::Top,
+                .title("Values")
+                .extend(node_object.nodes.iter().map(|(name, node)| {
+                    button::custom(row().push(text(name)).push(horizontal_space()).push_maybe(
+                        match &node.node {
+                            Node::Null => Some(text("null")),
+                            Node::Bool(node_bool) => Some(text(format!("{:?}", node_bool.value))),
+                            Node::String(node_string) => {
+                                Some(text(format!("{:?}", node_string.value)))
+                            }
+                            Node::Number(node_number) => {
+                                Some(text(format!("{:?}", node_number.value)))
+                            }
+                            Node::Object(node_object) => None,
+                            Node::Enum(node_enum) => Some(text(format!("{:?}", node_enum.value))),
+                            Node::Array(node_array) => None,
+                            Node::Value(node_value) => {
+                                Some(text(format!("{:?}", node_value.value)))
+                            }
+                        },
+                    ))
+                    .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
+                })),
+        )
+        .push_maybe(node.default.as_ref().map(|default| {
+            section().title("Default").add(
+                row()
+                    .push(horizontal_space())
+                    .push(
+                        // xxx: the on_press need to be lazy
+                        button::text("reset to default").on_press(PageMsg::ChangeMsg(
+                            data_path.to_vec(),
+                            ChangeMsg::ApplyDefault,
                         )),
-                )
-                .into(),
-        );
-    }
-    column::with_children(lines).into()
+                    )
+                    .push(tooltip(
+                        icon!("report24"),
+                        text("This will remove all children"),
+                        Position::Top,
+                    )),
+            )
+        }))
+        .spacing(SPACING)
+        .into()
 }
 
 fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
@@ -231,7 +196,7 @@ fn view_bool<'a>(
                         ))
                 }),
         )
-        .spacing(10)
+        .spacing(SPACING)
         .into()
 }
 
@@ -290,7 +255,7 @@ fn view_string<'a>(
                         ))
                 }),
         )
-        .spacing(10)
+        .spacing(SPACING)
         .into()
 }
 
@@ -357,6 +322,7 @@ fn view_number<'a>(
                         ))
                 }),
         )
+        .spacing(SPACING)
         .into()
 }
 
@@ -430,6 +396,7 @@ fn view_enum<'a>(
                         )),
                 )
         }))
+        .spacing(SPACING)
         .into()
 }
 
