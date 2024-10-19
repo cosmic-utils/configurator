@@ -149,5 +149,5 @@
     }
   },
   "X_CONFIGURATOR_SOURCE_PATHS": "",
-  "X_CONFIGURATOR_SOURCE_HOME_PATHS": ".config/configurator/configurator.json"
+  "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/configurator/configurator.json"
 }

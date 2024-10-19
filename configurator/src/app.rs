@@ -20,6 +20,7 @@ use figment::{
 use figment_schemars_bridge::JsonSchemaProvider;
 use json::Value;
 use schemars::schema::RootSchema;
+use xdg::BaseDirectories;
 use zconf2::ConfigManager;
 
 use crate::{
@@ -44,15 +45,18 @@ pub struct App {
 #[derive(Debug)]
 pub struct Page {
     pub title: String,
-    pub system_config_path: Option<PathBuf>,
-    pub user_config_path: PathBuf,
+
+    pub source_paths: Vec<PathBuf>,
+    pub source_home_path: PathBuf,
+    pub write_path: PathBuf,
+    pub format: String,
+
     pub schema: RootSchema,
-    /// Maybe located in `/usr`
+
     pub system_config: Figment,
-    /// User config located in `~/.config`
     pub user_config: Figment,
-    /// Actual configuration
     pub full_config: Figment,
+
     pub tree: NodeContainer,
     pub data_path: DataPath,
 }
@@ -71,52 +75,80 @@ impl Provider for BoxedProvider {
     }
 }
 
-fn provider_from_path(path: &Path) -> anyhow::Result<BoxedProvider> {
-    let provider = if let Some(extension) = path.extension() {
-        if let Some(extension) = extension.to_str() {
-            match extension {
-                "json" => providers::Json::file(path),
-                _ => {
-                    bail!("no match for {}", extension);
-                }
-            }
-        } else {
-            bail!("can't convert extension to str")
-        }
-    } else {
-        bail!("no extension")
+fn provider_from_format(path: &Path, format: &str) -> anyhow::Result<BoxedProvider> {
+    let provider = match format {
+        "json" => providers::Json::file(path),
+
+        _ => bail!("unknown format: {}", format),
     };
+
     Ok(BoxedProvider(Box::new(provider)))
 }
 
 impl Page {
     fn new(path: &Path) -> anyhow::Result<Self> {
-        let title = path.file_name().unwrap().to_string_lossy().to_string();
+        let json_value = {
+            let mut file = File::open(path).unwrap();
+            let mut contents = String::new();
+            file.read_to_string(&mut contents).unwrap();
 
-        let mut file = File::open(path).unwrap();
-        let mut contents = String::new();
-        file.read_to_string(&mut contents).unwrap();
+            json::value::Value::from_str(&contents).unwrap()
+        };
 
-        let value = json::value::Value::from_str(&contents).unwrap();
-
-        let Some(obj) = value.as_object() else {
+        let Some(json_obj) = json_value.as_object() else {
             bail!("no obj")
         };
 
-        let Some(Value::String(user_config_path)) = obj.get("X_CONFIG_PATH").cloned() else {
-            bail!("X_CONFIG_PATH not defined")
+        let source_paths = {
+            if let Some(Value::String(paths)) = json_obj.get("X_CONFIGURATOR_SOURCE_PATHS") {
+                paths.split_terminator(';').map(PathBuf::from).collect()
+            } else {
+                vec![]
+            }
         };
 
-        let json_schema: RootSchema = json::from_value(value)?;
+        let source_home_path = {
+            if let Some(Value::String(path)) = json_obj.get("X_CONFIGURATOR_SOURCE_HOME_PATH") {
+                PathBuf::from(path)
+            } else {
+                bail!("no X_CONFIGURATOR_SOURCE_HOME_PATH")
+            }
+        };
 
-        // todo
-        let system_config = Figment::new();
+        let write_path = {
+            if let Some(Value::String(path)) = json_obj.get("X_CONFIGURATOR_WRITE_PATH") {
+                PathBuf::from(path)
+            } else {
+                source_home_path.clone()
+            }
+        };
 
-        let user_config = Figment::new().merge(provider_from_path(Path::new(&user_config_path))?);
+        let format = {
+            if let Some(Value::String(format)) = json_obj.get("X_CONFIGURATOR_FORMAT") {
+                format.clone()
+            } else {
+                source_home_path
+                    .extension()
+                    .expect("no format defined")
+                    .to_str()
+                    .unwrap()
+                    .to_string()
+            }
+        };
+
+        let mut system_config = Figment::new();
+
+        for path in &source_paths {
+            system_config = system_config.merge(provider_from_format(path, &format)?)
+        }
+
+        let user_config = Figment::new().merge(provider_from_format(&source_home_path, &format)?);
 
         let full_config = Figment::new()
             .merge(system_config.clone())
             .merge(user_config.clone());
+
+        let json_schema: RootSchema = json::from_value(json_value)?;
 
         let mut tree = NodeContainer::from_json_schema(&json_schema);
 
@@ -128,16 +160,19 @@ impl Page {
 
         // dbg!(&tree);
 
+        let title = path.file_name().unwrap().to_string_lossy().to_string();
         Ok(Self {
             title,
             schema: json_schema,
-            system_config_path: None,
-            user_config_path: user_config_path.into(),
             user_config,
             system_config,
             full_config,
             tree,
             data_path: DataPath::new(),
+            source_paths,
+            source_home_path,
+            write_path,
+            format,
         })
     }
 
@@ -164,23 +199,30 @@ impl cosmic::Application for App {
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
         let mut nav_model = SingleSelectModel::default();
 
-        for (i, entry) in fs::read_dir(SCHEMAS_PATH).unwrap().enumerate() {
-            let entry = entry.unwrap();
+        pub fn default_paths() -> impl Iterator<Item = PathBuf> {
+            let base_dirs = BaseDirectories::new().unwrap();
+            let mut data_dirs: Vec<PathBuf> = vec![];
+            data_dirs.push(base_dirs.get_data_home());
+            data_dirs.append(&mut base_dirs.get_data_dirs());
 
-            let page = Page::new(&entry.path()).unwrap();
+            data_dirs.into_iter().map(|d| d.join("configurator"))
+        }
 
-            // dbg!(&page);
+        for xdg_path in default_paths() {
+            if let Ok(dir) = fs::read_dir(xdg_path) {
+                for entry in dir {
+                    let entry = entry.unwrap();
 
-            let id = nav_model
-                .insert()
-                .text(page.title())
-                .data::<Page>(page)
-                .id();
+                    let page = Page::new(&entry.path()).unwrap();
 
-            if i == 0 {
-                nav_model.activate(id);
+                    // dbg!(&page);
+
+                    nav_model.insert().text(page.title()).data::<Page>(page);
+                }
             }
         }
+
+        nav_model.activate_position(0);
 
         // let config = Config::default();
 

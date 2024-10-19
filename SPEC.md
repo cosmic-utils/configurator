@@ -28,21 +28,21 @@ _note: list are separated by `;`._
       <td>List of paths</td>
     </tr>
     <tr>
-      <td><code>X_CONFIGURATOR_SOURCE_HOME_PATHS</code></td>
-      <td>Where the configuration will be sourced; in order, relative to <code>$HOME/</code></td>
+      <td><code>X_CONFIGURATOR_SOURCE_HOME_PATH</code></td>
+      <td>Where the configuration will be sourced, relative to <code>$HOME/</code></td>
       <td></td>
       <td>List of paths</td>
     </tr>
     <tr>
       <td><code>X_CONFIGURATOR_WRITE_PATH</code></td>
       <td>Where the configuration will be written.</td>
-      <td>Last path from <code>X_CONFIGURATOR_SOURCE_PATHS</code></td>
+      <td><code>X_CONFIGURATOR_SOURCE_HOME_PATH</code></td>
       <td>Path</td>
     </tr>
     <tr>
       <td><code>X_CONFIGURATOR_FORMAT</code></td>
       <td>Format of the configuration. For COSMIC, it will be <code>ron_cosmic</code>.</td>
-      <td>Extension of the last path in <code>X_CONFIGURATOR_SOURCE_HOME_PATHS</code></td>
+      <td>Extension of <code>X_CONFIGURATOR_SOURCE_HOME_PATH</code></td>
       <td>String</td>
     </tr>
   </tbody>

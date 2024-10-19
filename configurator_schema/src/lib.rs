@@ -24,7 +24,7 @@ pub fn gen_schema2<S: JsonSchema>(
 
     if let Some(source_home_paths) = source_home_paths {
         obj.insert(
-            "X_CONFIGURATOR_SOURCE_HOME_PATHS".into(),
+            "X_CONFIGURATOR_SOURCE_HOME_PATH".into(),
             Value::String(source_home_paths.join(";")),
         );
     }
