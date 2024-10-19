@@ -107,8 +107,7 @@ pub enum Choice {
 pub fn gen_schema() {
     let path = Path::new("../configurator/res").join(format!("{}.json", APPID));
 
-    let schema = configurator_schema::gen_schema2::<Config>()
-        .source_paths(&[])
+    let schema = configurator_schema::gen_schema::<Config>()
         .source_home_paths(&[".config/configurator/configurator.json"])
         .call()
         .unwrap();

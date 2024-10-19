@@ -3,7 +3,7 @@ use json::Value;
 use schemars::{schema_for, JsonSchema};
 
 #[builder]
-pub fn gen_schema2<S: JsonSchema>(
+pub fn gen_schema<S: JsonSchema>(
     source_paths: Option<&[&str]>,
     source_home_paths: Option<&[&str]>,
     write_path: Option<&str>,
