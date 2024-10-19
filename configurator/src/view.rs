@@ -2,10 +2,10 @@ use std::{borrow::Cow, rc::Rc};
 
 use cosmic::{
     iced::{Color, Length},
-    iced_widget::toggler,
+    iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
-        button, column, container, horizontal_space, row, segmented_button::Entity,
+        button, column, container, dropdown, horizontal_space, row, segmented_button::Entity,
         settings::section, text, text_input, tooltip, tooltip::Position, Row,
     },
     Element,
@@ -82,6 +82,13 @@ fn view_object<'a>(
     node: &'a NodeContainer,
     node_object: &'a NodeObject,
 ) -> Element<'a, PageMsg> {
+    fn append_data_path(data_path: &[DataPathType], name: &str) -> Vec<DataPathType> {
+        let mut new_vec = Vec::with_capacity(data_path.len() + 1);
+        new_vec.extend_from_slice(data_path);
+        new_vec.push(DataPathType::Name(name.to_string()));
+        new_vec
+    }
+
     column()
         .push_maybe(
             node.desc
@@ -92,24 +99,73 @@ fn view_object<'a>(
             section()
                 .title("Values")
                 .extend(node_object.nodes.iter().map(|(name, node)| {
-                    button::custom(row().push(text(name)).push(horizontal_space()).push_maybe(
-                        match &node.node {
-                            Node::Null => Some(text("null")),
-                            Node::Bool(node_bool) => Some(text(format!("{:?}", node_bool.value))),
-                            Node::String(node_string) => {
-                                Some(text(format!("{:?}", node_string.value)))
-                            }
-                            Node::Number(node_number) => {
-                                Some(text(format!("{:?}", node_number.value)))
-                            }
-                            Node::Object(node_object) => None,
-                            Node::Enum(node_enum) => Some(text(format!("{:?}", node_enum.value))),
-                            Node::Array(node_array) => None,
-                            Node::Value(node_value) => {
-                                Some(text(format!("{:?}", node_value.value)))
-                            }
-                        },
-                    ))
+                    button::custom(
+                        row().push(text(name)).push(horizontal_space()).push_maybe(
+                            match &node.node {
+                                Node::Null => Some(Element::from(text("null"))),
+                                Node::Bool(node_bool) => Some(
+                                    toggler(node_bool.value.unwrap_or_default())
+                                        .on_toggle(move |value| {
+                                            PageMsg::ChangeMsg(
+                                                append_data_path(data_path, name),
+                                                ChangeMsg::ChangeBool(value),
+                                            )
+                                        })
+                                        .into(),
+                                ),
+
+                                Node::Enum(node_enum) => {
+                                    #[derive(Eq, Clone)]
+                                    struct Key<'a> {
+                                        pub pos: usize,
+                                        pub value: Cow<'a, str>,
+                                    }
+
+                                    impl PartialEq for Key<'_> {
+                                        fn eq(&self, other: &Self) -> bool {
+                                            self.pos == other.pos
+                                        }
+                                    }
+
+                                    #[allow(clippy::to_string_trait_impl)]
+                                    impl ToString for Key<'_> {
+                                        fn to_string(&self) -> String {
+                                            self.value.to_string()
+                                        }
+                                    }
+
+                                    Some(
+                                        pick_list(
+                                            node_enum
+                                                .nodes
+                                                .iter()
+                                                .enumerate()
+                                                .map(|(pos, node)| Key {
+                                                    pos,
+                                                    value: node
+                                                        .name()
+                                                        .unwrap_or(Cow::Owned(pos.to_string())),
+                                                })
+                                                .collect::<Vec<_>>(),
+                                            node_enum.value.map(|pos| Key {
+                                                pos,
+                                                value: Cow::Borrowed(""),
+                                            }),
+                                            |key| {
+                                                PageMsg::ChangeMsg(
+                                                    append_data_path(data_path, name),
+                                                    ChangeMsg::ChangeEnum(key.pos),
+                                                )
+                                            },
+                                        )
+                                        .into(),
+                                    )
+                                }
+
+                                _ => None,
+                            },
+                        ),
+                    )
                     .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
                 })),
         )
