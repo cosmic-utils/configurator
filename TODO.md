@@ -6,4 +6,3 @@ for libcosmic
 - on_press_with for button
 
 - impl object page
-- button to click on enum content
