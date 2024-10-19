@@ -108,20 +108,15 @@ pub fn gen_schema() {
     configurator_schema::gen_schema::<Config>(&path, config_path).unwrap();
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 pub enum EnumSubConfig {
     A(A),
     B(B),
+    #[default]
     C,
     D(i32),
 }
 
-impl Default for EnumSubConfig {
-    fn default() -> Self {
-        // EnumSubConfig::A(A { s: "inner".into() })
-        EnumSubConfig::C
-    }
-}
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct A {

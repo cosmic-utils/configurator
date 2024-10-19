@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeMap};
+use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
 
 use derive_more::derive::Unwrap;
 use figment::{value::Value, Profile, Provider};
@@ -54,11 +54,11 @@ pub enum NumberValue {
     F64(f64),
 }
 
-impl ToString for NumberValue {
-    fn to_string(&self) -> String {
+impl Display for NumberValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NumberValue::I128(n) => n.to_string(),
-            NumberValue::F64(n) => n.to_string(),
+            NumberValue::I128(n) => write!(f, "{}", n),
+            NumberValue::F64(n) => write!(f, "{:.3}", n),
         }
     }
 }
@@ -72,17 +72,8 @@ pub enum NumberKind {
 #[derive(Debug, Clone)]
 pub struct NodeNumber {
     pub kind: NumberKind,
-    // pub value: Option<NumberValue>,
-    pub value: Option<String>,
-}
-
-impl NodeNumber {
-    pub fn is_value_ok(&self) -> Option<bool> {
-        self.value.as_ref().map(|v| match self.kind {
-            NumberKind::Integer => v.parse::<i128>().is_ok(),
-            NumberKind::Float => v.parse::<f64>().is_ok(),
-        })
-    }
+    pub value: Option<NumberValue>,
+    pub value_string: String,
 }
 
 #[derive(Debug, Clone)]
@@ -124,7 +115,7 @@ impl NodeNumber {
     pub fn new(kind: NumberKind) -> Self {
         Self {
             value: None,
-            // value_string: String::new(),
+            value_string: String::new(),
             kind,
         }
     }

@@ -324,24 +324,20 @@ fn view_number<'a>(
                     )
                     .push_maybe(if node_number.value.is_none() {
                         Some(no_value_defined_warning_icon())
-                    } else {
-                        if match node_number.kind {
-                            NumberKind::Integer => {
-                                node_number.value_string.parse::<i128>().is_err()
-                            }
-                            NumberKind::Float => node_number.value_string.parse::<f64>().is_err(),
-                        } {
-                            Some(
-                                tooltip(
-                                    icon!("report24"),
-                                    text("This value is incorrect."),
-                                    Position::Top,
-                                )
-                                .into(),
+                    } else if match node_number.kind {
+                        NumberKind::Integer => node_number.value_string.parse::<i128>().is_err(),
+                        NumberKind::Float => node_number.value_string.parse::<f64>().is_err(),
+                    } {
+                        Some(
+                            tooltip(
+                                icon!("report24"),
+                                text("This value is incorrect."),
+                                Position::Top,
                             )
-                        } else {
-                            None
-                        }
+                            .into(),
+                        )
+                    } else {
+                        None
                     }),
             ),
         )

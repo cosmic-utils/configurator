@@ -51,7 +51,6 @@ impl NodeContainer {
             }
             (Value::Bool(tag, value), Node::Bool(node_bool)) => node_bool.value = Some(value),
             (Value::Num(tag, value), Node::Number(node_number)) => {
-
                 dbg!(&value);
 
                 let value = match node_number.kind {

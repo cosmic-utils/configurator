@@ -77,13 +77,15 @@ fn schema_object(map: &mut BTreeMap<String, Value>, schema: &SchemaObject) {
         for (field_name, schema_field) in &schema.properties {
             match schema_field {
                 Schema::Bool(_) => todo!(),
-                Schema::Object(schema_field) => if let Some(metadata) = &schema_field.metadata {
-                    if let Some(default) = &metadata.default {
-                        let value = json_value_to_figment_value(default);
+                Schema::Object(schema_field) => {
+                    if let Some(metadata) = &schema_field.metadata {
+                        if let Some(default) = &metadata.default {
+                            let value = json_value_to_figment_value(default);
 
-                        map.insert(field_name.to_string(), value);
+                            map.insert(field_name.to_string(), value);
+                        }
                     }
-                },
+                }
             }
         }
     }
