@@ -5,6 +5,5 @@ for libcosmic
 - add_maybe for Setting Section
 - on_press_with for button
 
-- fix number page
 - impl object page
 - button to click on enum content
