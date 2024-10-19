@@ -53,26 +53,19 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
 }
 
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
-    let node = page.tree.get_at(page.data_path.current()).unwrap();
+    let data_path = page.data_path.current();
 
-    // depreciated
-    let data_path_type = page.data_path.get_current();
-    let pos = page.data_path.pos;
-
-    let data_path = match page.data_path.pos {
-        Some(pos) => &page.data_path.vec[0..=pos],
-        None => &[],
-    };
+    let node = page.tree.get_at(data_path.iter()).unwrap();
 
     let content = match &node.node {
-        Node::Bool(node_bool) => view_bool(data_path, pos, node, node_bool),
-        Node::String(node_string) => view_string(data_path, pos, node, node_string),
-        Node::Number(node_number) => view_number(data_path, pos, node, node_number),
-        Node::Object(node_object) => view_object(data_path, pos, node, node_object),
+        Node::Bool(node_bool) => view_bool(data_path, node, node_bool),
+        Node::String(node_string) => view_string(data_path, node, node_string),
+        Node::Number(node_number) => view_number(data_path, node, node_number),
+        Node::Object(node_object) => view_object(data_path, node, node_object),
         Node::Enum(node_enum) => view_enum(data_path, node, node_enum),
-        Node::Value(node_value) => view_value(data_path_type, node, node_value),
+        Node::Value(node_value) => view_value(data_path, node, node_value),
         Node::Null => text("null").into(),
-        Node::Array(node_array) => view_array(data_path_type, node, node_array),
+        Node::Array(node_array) => view_array(data_path, node, node_array),
     };
 
     column()
@@ -84,13 +77,12 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
 
 fn view_object<'a>(
     data_path: &'a [DataPathType],
-    pos: Option<usize>,
     node: &'a NodeContainer,
     object: &'a NodeObject,
 ) -> Element<'a, PageMsg> {
     let mut lines = Vec::new();
 
-    if let Some(name) = pos.map(|pos| &data_path[pos]) {
+    if let Some(name) = data_path.last() {
         lines.push(text(format!("object name: {:?}", name)).into());
     }
 
@@ -191,7 +183,6 @@ fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
 
 fn view_bool<'a>(
     data_path: &'a [DataPathType],
-    pos: Option<usize>,
     node: &'a NodeContainer,
     node_bool: &'a NodeBool,
 ) -> Element<'a, PageMsg> {
@@ -246,7 +237,6 @@ fn view_bool<'a>(
 
 fn view_string<'a>(
     data_path: &'a [DataPathType],
-    pos: Option<usize>,
     node: &'a NodeContainer,
     node_string: &'a NodeString,
 ) -> Element<'a, PageMsg> {
@@ -306,7 +296,6 @@ fn view_string<'a>(
 
 fn view_number<'a>(
     data_path: &'a [DataPathType],
-    pos: Option<usize>,
     node: &'a NodeContainer,
     node_number: &'a NodeNumber,
 ) -> Element<'a, PageMsg> {
@@ -445,19 +434,19 @@ fn view_enum<'a>(
 }
 
 fn view_value<'a>(
-    name: Option<&'a DataPathType>,
+    data_path: &'a [DataPathType],
     node: &'a NodeContainer,
     node_value: &'a NodeValue,
 ) -> Element<'a, PageMsg> {
     column()
         .push(text("i'm just a value"))
-        .push(text(format!("name: {:?}", name)))
+        .push(text(format!("name: {:?}", data_path.last())))
         .push(text(format!("{:?}", node_value.value)))
         .into()
 }
 
 fn view_array<'a>(
-    name: Option<&'a DataPathType>,
+    data_path: &'a [DataPathType],
     node: &'a NodeContainer,
     node_array: &'a NodeArray,
 ) -> Element<'a, PageMsg> {

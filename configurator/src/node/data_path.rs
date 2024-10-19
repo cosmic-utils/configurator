@@ -66,10 +66,10 @@ impl DataPath {
         self.pos.map(|pos| self.get_at(pos).unwrap())
     }
 
-    pub fn current(&self) -> std::slice::Iter<'_, DataPathType> {
+    pub fn current(&self) -> &[DataPathType] {
         match self.pos {
-            Some(pos) => self.vec[0..=pos].iter(),
-            None => [].iter(),
+            Some(pos) => &self.vec[0..=pos],
+            None => &[],
         }
     }
 }
