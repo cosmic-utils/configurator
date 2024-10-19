@@ -1,12 +1,16 @@
 use std::{borrow::Cow, rc::Rc};
 
 use cosmic::{
-    iced::{Color, Length},
+    iced::{alignment, Color, Length},
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
-        button, column, container, dropdown, horizontal_space, row, segmented_button::Entity,
-        settings::section, text, text_input, tooltip, tooltip::Position, Row,
+        button, column, container, dropdown, horizontal_space, mouse_area, row,
+        segmented_button::Entity,
+        settings::section,
+        text, text_input,
+        tooltip::{tooltip, Position},
+        Row,
     },
     Element,
 };
@@ -37,9 +41,18 @@ pub fn view_app(app: &App) -> Element<'_, AppMsg> {
 fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
     let mut elements = Vec::new();
 
+    let get_class = |pos: Option<usize>| {
+        if pos == data_path.pos {
+            button::ButtonClass::Text
+        } else {
+            button::ButtonClass::MenuRoot
+        }
+    };
+
     elements.push(
         button::text("/".to_string())
             .on_press(PageMsg::SelectDataPath(None))
+            .class(get_class(None))
             .into(),
     );
 
@@ -47,6 +60,7 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
         elements.push(
             button::text(format!("{}", component))
                 .on_press(PageMsg::SelectDataPath(Some(pos)))
+                .class(get_class(Some(pos)))
                 .into(),
         );
     }
@@ -99,7 +113,7 @@ fn view_object<'a>(
             section()
                 .title("Values")
                 .extend(node_object.nodes.iter().map(|(name, node)| {
-                    button::custom(
+                    mouse_area(
                         row().push(text(name)).push(horizontal_space()).push_maybe(
                             match &node.node {
                                 Node::Null => Some(Element::from(text("null"))),
@@ -135,30 +149,39 @@ fn view_object<'a>(
                                     }
 
                                     Some(
-                                        pick_list(
-                                            node_enum
-                                                .nodes
-                                                .iter()
-                                                .enumerate()
-                                                .map(|(pos, node)| Key {
-                                                    pos,
-                                                    value: node
+                                        row()
+                                            .push_maybe(node_enum.value.map(|pos| {
+                                                text(
+                                                    node_enum.nodes[pos]
                                                         .name()
                                                         .unwrap_or(Cow::Owned(pos.to_string())),
-                                                })
-                                                .collect::<Vec<_>>(),
-                                            node_enum.value.map(|pos| Key {
-                                                pos,
-                                                value: Cow::Borrowed(""),
-                                            }),
-                                            |key| {
-                                                PageMsg::ChangeMsg(
-                                                    append_data_path(data_path, name),
-                                                    ChangeMsg::ChangeEnum(key.pos),
                                                 )
-                                            },
-                                        )
-                                        .into(),
+                                            }))
+                                            .push(pick_list(
+                                                node_enum
+                                                    .nodes
+                                                    .iter()
+                                                    .enumerate()
+                                                    .map(|(pos, node)| Key {
+                                                        pos,
+                                                        value: node
+                                                            .name()
+                                                            .unwrap_or(Cow::Owned(pos.to_string())),
+                                                    })
+                                                    .collect::<Vec<_>>(),
+                                                node_enum.value.map(|pos| Key {
+                                                    pos,
+                                                    value: Cow::Borrowed(""),
+                                                }),
+                                                |key| {
+                                                    PageMsg::ChangeMsg(
+                                                        append_data_path(data_path, name),
+                                                        ChangeMsg::ChangeEnum(key.pos),
+                                                    )
+                                                },
+                                            ))
+                                            .align_y(alignment::Vertical::Center)
+                                            .into(),
                                     )
                                 }
 
