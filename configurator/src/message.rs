@@ -4,9 +4,10 @@ use crate::node::data_path::{DataPath, DataPathType};
 
 #[derive(Clone, Debug)]
 pub enum AppMsg {
-    ConfigActive(bool),
-    ReloadLocalConfig,
     PageMsg(Entity, PageMsg),
+    ReloadActivePage,
+    ReloadLocalConfig,
+    ConfigActive(bool),
 }
 
 #[derive(Clone, Debug)]

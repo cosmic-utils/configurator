@@ -16,7 +16,7 @@ use cosmic::{
 };
 
 use crate::{
-    app::{App, Page},
+    app::App,
     icon,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
@@ -24,6 +24,7 @@ use crate::{
         Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
         NodeValue, NumberKind,
     },
+    page::Page,
 };
 
 const SPACING: f32 = 10.;

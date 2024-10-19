@@ -14,6 +14,7 @@ mod config;
 mod localize;
 mod message;
 mod node;
+mod page;
 mod utils;
 mod view;
 

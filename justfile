@@ -16,10 +16,8 @@ bin-dst := base-dir / 'bin' / name
 
 
 
-run:
+run: install_schema
     cargo r --bin configurator
-
-
 
 gen_schema:
     cargo test gen_schema
