@@ -53,17 +53,8 @@ impl NodeContainer {
             (Value::Num(tag, value), Node::Number(node_number)) => {
                 dbg!(&value);
 
-                let value = match node_number.kind {
-                    NumberKind::Integer => {
-                        let value = figment_value_to_i128(&Value::Num(tag, value)).unwrap();
-                        NumberValue::I128(value)
-                    }
-                    NumberKind::Float => {
-                        let value = figment_value_to_f64(&Value::Num(tag, value)).unwrap();
+                let value = node_number.parse_number(value).unwrap();
 
-                        NumberValue::F64(value)
-                    }
-                };
                 node_number.value_string = value.to_string();
                 node_number.value = Some(value);
             }
@@ -188,5 +179,3 @@ impl NodeContainer {
         }
     }
 }
-
-trait ApplyDefault {}

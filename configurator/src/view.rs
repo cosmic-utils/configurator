@@ -344,7 +344,8 @@ fn view_number<'a>(
         .push_maybe(
             node.default
                 .as_ref()
-                .and_then(|v| v.to_i128())
+                .and_then(|v| v.to_num())
+                .and_then(|v| node_number.parse_number(v))
                 .map(|default| {
                     section()
                         .title("Default")
