@@ -28,8 +28,7 @@ figment.workspace = true
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 json = { workspace = true }
-zconf = { workspace = true }
-configurator_schema = { workspace = true }
+zconf2 = { workspace = true }
 figment_schemars_bridge.workspace = true
 derive_more = { version = "1", features = ["unwrap"] }
 ron = "0.8"
@@ -50,3 +49,6 @@ features = [
     # "single-instance",
     #"a11y",
 ]
+
+[dev-dependencies]
+configurator_schema = { workspace = true }

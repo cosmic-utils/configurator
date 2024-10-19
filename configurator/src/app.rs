@@ -20,6 +20,7 @@ use figment::{
 use figment_schemars_bridge::JsonSchemaProvider;
 use json::Value;
 use schemars::schema::RootSchema;
+use zconf2::ConfigManager;
 
 use crate::{
     config::{Config, CONFIG_PATH, SCHEMAS_PATH},
@@ -29,12 +30,15 @@ use crate::{
     view::view_app,
 };
 
+pub const QUALIFIER: &str = "io.github";
+pub const ORG: &str = "wiiznokes";
+pub const APP: &str = "configurator";
 pub const APPID: &str = "io.github.wiiznokes.configurator";
 
 pub struct App {
     core: Core,
     pub nav_model: SingleSelectModel,
-    pub config: Config,
+    pub config: ConfigManager<Config>,
 }
 
 #[derive(Debug)]
@@ -158,8 +162,6 @@ impl cosmic::Application for App {
     }
 
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
-        crate::config::gen_schema();
-
         let mut nav_model = SingleSelectModel::default();
 
         for (i, entry) in fs::read_dir(SCHEMAS_PATH).unwrap().enumerate() {
@@ -182,7 +184,9 @@ impl cosmic::Application for App {
 
         // let config = Config::default();
 
-        let config = zconf::init(APPID, PathBuf::from(CONFIG_PATH));
+        let config = ConfigManager::new(QUALIFIER, ORG, APP).unwrap();
+
+        dbg!(&config);
 
         let app = App {
             core,
@@ -211,11 +215,12 @@ impl cosmic::Application for App {
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         match message {
             AppMsg::ConfigActive(value) => {
-                self.config.set_active(value);
+                self.config.update(|settings| {
+                    settings.active = value;
+                });
             }
             AppMsg::ReloadLocalConfig => {
-                let config = zconf::zconf_derive_impl::load();
-                self.config = config;
+                self.config.reload().unwrap();
             }
             AppMsg::PageMsg(id, page_msg) => {
                 if let Some(page) = self.nav_model.data_mut::<Page>(id) {

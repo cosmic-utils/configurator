@@ -1,29 +1,48 @@
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::Path,
-};
-
+use bon::builder;
 use json::Value;
 use schemars::{schema_for, JsonSchema};
 
-pub fn gen_schema<T: JsonSchema>(
-    path: &Path,
-    config_path: String,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let schema = schema_for!(T);
-    let mut file = File::create(path)?;
+#[builder]
+pub fn gen_schema2<S: JsonSchema>(
+    source_paths: Option<&[&str]>,
+    source_home_paths: Option<&[&str]>,
+    write_path: Option<&str>,
+    format: Option<&str>,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let schema = schema_for!(S);
 
     let mut value = json::value::to_value(&schema)?;
 
-    if let Some(obj) = value.as_object_mut() {
-        obj.insert("X_CONFIG_PATH".into(), Value::String(config_path));
+    let obj = value.as_object_mut().expect("object from json schema");
+
+    if let Some(source_paths) = source_paths {
+        obj.insert(
+            "X_CONFIGURATOR_SOURCE_PATHS".into(),
+            Value::String(source_paths.join(";")),
+        );
     }
 
-    file.write_all(json::to_string_pretty(&value)?.as_bytes())?;
+    if let Some(source_home_paths) = source_home_paths {
+        obj.insert(
+            "X_CONFIGURATOR_SOURCE_HOME_PATHS".into(),
+            Value::String(source_home_paths.join(";")),
+        );
+    }
 
-    Ok(())
+    if let Some(write_path) = write_path {
+        obj.insert(
+            "X_CONFIGURATOR_WRITE_PATH".into(),
+            Value::String(write_path.to_string()),
+        );
+    }
+
+    if let Some(format) = format {
+        obj.insert(
+            "X_CONFIGURATOR_FORMAT".into(),
+            Value::String(format.to_string()),
+        );
+    }
+
+    let str = json::to_string_pretty(&value)?;
+    Ok(str)
 }

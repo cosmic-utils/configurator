@@ -7,6 +7,7 @@ members = [
     "zconf_derive",
     "zconf_derive_impl",
     "vexpe",
+    "zconf2",
     # "vtesting",
 ]
 resolver = "2"
@@ -26,6 +27,7 @@ unused_imports = "allow"
 configurator_schema = { path = "configurator_schema" }
 figment_schemars_bridge = { path = "figment_schemars_bridge" }
 zconf = { path = "zconf" }
+zconf2 = { path = "zconf2" }
 
 figment = { version = "0.10", features = ["json"] }
 schemars = "0.8"

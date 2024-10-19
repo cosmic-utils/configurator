@@ -1,8 +1,11 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    path::Path,
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use zconf::ZConf;
 
 use crate::app::APPID;
 
@@ -16,7 +19,7 @@ pub const CONFIG_PATH: &str = "configurator/config";
 // serde default is needed for allowing partials deserlization from file
 // cosmic config probably allow need this but we should ckeck
 /// Config description
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, ZConf)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
     pub float: f32,
@@ -56,7 +59,7 @@ impl Default for Config {
     }
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash, ZConf)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(default)]
 pub struct SubConfig {
     // pub active: bool,
@@ -76,7 +79,7 @@ impl Default for SubConfig {
     }
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash, ZConf)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(default)]
 pub struct Hella {
     // pub active: bool,
@@ -100,12 +103,17 @@ pub enum Choice {
     B,
 }
 
+#[test]
 pub fn gen_schema() {
-    let path = Path::new(SCHEMAS_PATH).join(format!("{}.json", APPID));
+    let path = Path::new("../configurator/res").join(format!("{}.json", APPID));
 
-    let config_path = format!("{}/{}.json", CONFIG_PATH, APPID);
+    let schema = configurator_schema::gen_schema2::<Config>()
+        .source_paths(&[])
+        .source_home_paths(&[".config/configurator/configurator.json"])
+        .call()
+        .unwrap();
 
-    configurator_schema::gen_schema::<Config>(&path, config_path).unwrap();
+    fs::write(path, &schema).unwrap();
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
