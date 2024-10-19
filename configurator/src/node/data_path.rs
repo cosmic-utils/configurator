@@ -24,6 +24,7 @@ impl Display for DataPathType {
 #[derive(Debug, Clone)]
 pub struct DataPath {
     pub vec: Vec<DataPathType>,
+    // todo: remove option, use 0 for root ?
     pub pos: Option<usize>,
 }
 

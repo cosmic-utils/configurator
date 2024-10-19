@@ -55,17 +55,21 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
     let node = page.tree.get_at(page.data_path.current()).unwrap();
 
+    // depreciated
     let data_path_type = page.data_path.get_current();
-
-    let data_path = &page.data_path.vec;
     let pos = page.data_path.pos;
+
+    let data_path = match page.data_path.pos {
+        Some(pos) => &page.data_path.vec[0..=pos],
+        None => &[],
+    };
 
     let content = match &node.node {
         Node::Bool(node_bool) => view_bool(data_path, pos, node, node_bool),
         Node::String(node_string) => view_string(data_path, pos, node, node_string),
         Node::Number(node_number) => view_number(data_path, pos, node, node_number),
         Node::Object(node_object) => view_object(data_path, pos, node, node_object),
-        Node::Enum(node_enum) => view_enum(data_path, pos, node, node_enum),
+        Node::Enum(node_enum) => view_enum(data_path, node, node_enum),
         Node::Value(node_value) => view_value(data_path_type, node, node_value),
         Node::Null => text("null").into(),
         Node::Array(node_array) => view_array(data_path_type, node, node_array),
@@ -369,7 +373,6 @@ fn view_number<'a>(
 
 fn view_enum<'a>(
     data_path: &'a [DataPathType],
-    pos: Option<usize>,
     node: &'a NodeContainer,
     node_enum: &'a NodeEnum,
 ) -> Element<'a, PageMsg> {
@@ -386,8 +389,22 @@ fn view_enum<'a>(
                 .title("Values")
                 .extend(node_enum.nodes.iter().enumerate().map(|(pos, node)| {
                     container(cosmic::widget::radio(
-                        text(node.name().unwrap_or(Cow::Owned(pos.to_string())))
-                            .width(Length::Fill),
+                        row()
+                            .push(text(node.name().unwrap_or(Cow::Owned(pos.to_string()))))
+                            .push(horizontal_space())
+                            .push_maybe(
+                                if let Some(active_pos) = node_enum.value
+                                    && active_pos == pos
+                                {
+                                    Some(
+                                        button::text("modify").on_press(PageMsg::OpenDataPath(
+                                            DataPathType::Indice(pos),
+                                        )),
+                                    )
+                                } else {
+                                    None
+                                },
+                            ),
                         pos,
                         node_enum.value,
                         |pos| PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeEnum(pos)),
