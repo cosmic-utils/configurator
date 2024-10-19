@@ -19,13 +19,13 @@ The schema must be stored in one of this locations:
   <tbody>
     <tr>
       <td><code>X_CONFIGURATOR_SOURCE_PATHS</code></td>
-      <td>Path to where the configuration will be sourced. The order matters. It can be a directory or a filename, depending on the format implementation.</td>
+      <td>Path to where the configuration will be sourced. The order matters.</td>
       <td>Required</td>
       <td>List of paths, separated by <code>;</code>. File or directory</td>
     </tr>
     <tr>
       <td><code>X_CONFIGURATOR_PATH</code></td>
-      <td>Path where the configuration will be written. It can be a directory or a filename, depending on the format implementation.</td>
+      <td>Path where the configuration will be written.</td>
       <td>Last path from <code>X_CONFIGURATOR_SOURCE_PATHS</code></td>
       <td>Path. File or directory</td>
     </tr>
