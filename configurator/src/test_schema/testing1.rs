@@ -1,12 +1,22 @@
+use std::collections::HashMap;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
-#[derive(Default)]
 pub struct Config {
-    is_active: bool,
-    opt: Option<String>,
+    hash_map: HashMap<String, i32>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let mut hash_map = HashMap::new();
+
+        hash_map.insert("k".into(), 0);
+
+        Self { hash_map }
+    }
 }
 
 const NAME: &str = "testing1";

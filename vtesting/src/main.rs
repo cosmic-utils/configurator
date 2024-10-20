@@ -9,4 +9,13 @@ pub struct Config {
     pub unique_session: bool,
 }
 
-fn main() {}
+fn main() {
+
+    let array: Vec<i32> = vec![];
+        
+    let s = &array[..1];
+    
+    dbg!(&s);
+    
+
+}

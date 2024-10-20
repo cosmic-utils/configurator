@@ -40,8 +40,6 @@ pub struct SubConfig {
     pub opt: Option<Option<String>>,
 }
 
-
-
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(default)]
 pub struct Hella {

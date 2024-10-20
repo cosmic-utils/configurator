@@ -220,7 +220,7 @@ impl Page {
 
         let data = Figment::new().merge(&self.tree);
 
-        dbg!(&data);
+        // dbg!(&data);
 
         let serde_bridge = FigmentSerdeBridge::new(&data);
 
