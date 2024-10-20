@@ -72,7 +72,11 @@ fn test_all_suite() {
     for test_groups in &tests {
         for test_group in test_groups {
             let tree = match catch_unwind(|| {
-                schema_object_to_node("test", &BTreeMap::new(), &test_group.schema.to_object())
+                schema_object_to_node(
+                    "test",
+                    &schemars::Map::new(),
+                    &test_group.schema.to_object(),
+                )
             }) {
                 Ok(n) => {
                     nb_of_passed_schema += 1;

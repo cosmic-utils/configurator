@@ -35,7 +35,7 @@ fn is_option(vec: &[InstanceType]) -> Option<&InstanceType> {
 // #[tracing::instrument]
 pub(crate) fn schema_object_to_node(
     from: &str,
-    def: &BTreeMap<String, Schema>,
+    def: &schemars::Map<String, Schema>,
     schema_object: &SchemaObject,
 ) -> NodeContainer {
     // info!("enter function from {from}");

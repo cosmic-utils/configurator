@@ -34,7 +34,7 @@ ron = "0.8"
 xdg = "2"
 directories = "5"
 figment = { version = "0.10", features = ["json"] }
-schemars = "0.8"
+schemars = { version = "0.8", features = ["preserve_order"] }
 serde = { version = "1" }
 json = { version = "1", package = "serde_json" }
 anyhow = "1"
