@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::{self},
     path::Path,
 };
@@ -16,39 +17,30 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 #[derive(Default)]
-pub struct Config {
-    // pub float: f32,
-    /// Activate something
-    // pub active: bool,
-    // pub sub: SubConfig,
-    // pub opt: Option<String>,
-    // pub vec: Vec<u32>,
-    // pub otros: u16,
-    // pub hella: String,
-    pub choice: Choice,
-    pub sub_enum: EnumSubConfig,
-    // pub hash: HashMap<String, String>,
+struct Config {
+    sub: SubConfig,
+    choice: Choice,
+    // sub_enum: EnumSubConfig,
+    // float: f32,
+    // active: bool,
+    // opt: Option<String>,
+    // vec: Vec<u32>,
+    // otros: u16,
+    // hella: String,
+    // hash: HashMap<String, String>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
 #[serde(default)]
 pub struct SubConfig {
+    pub hella: Hella,
     // pub active: bool,
     // pub otros: u16,
     // pub opt: Option<Option<String>>,
     // pub choice: Choice,
-    pub hella: Hella,
 }
 
-impl Default for SubConfig {
-    fn default() -> Self {
-        Self {
-            hella: Hella {
-                hella: "bonsoir".into(),
-            },
-        }
-    }
-}
+
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(default)]
@@ -62,7 +54,7 @@ pub struct Hella {
 impl Default for Hella {
     fn default() -> Self {
         Self {
-            hella: "mere".into(),
+            hella: "bonjour".into(),
         }
     }
 }
@@ -80,7 +72,7 @@ pub enum EnumSubConfig {
     B(B),
     #[default]
     C,
-    // D(i32),
+    D(i32),
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]

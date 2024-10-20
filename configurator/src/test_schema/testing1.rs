@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 #[derive(Default)]
 pub struct Config {
-    active: bool,
+    is_active: bool,
     opt: Option<String>,
 }
 
