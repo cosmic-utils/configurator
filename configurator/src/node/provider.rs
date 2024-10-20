@@ -20,7 +20,7 @@ impl Provider for NodeContainer {
     ) -> Result<figment::value::Map<figment::Profile, figment::value::Dict>, figment::Error> {
         let mut map = figment::value::Map::new();
 
-        if let Some(value) = self.to_value(&Tag::Default) {
+        if let Some(value) = self.to_value(&Tag::Default, false) {
             map.insert(Profile::default(), value.into_dict().unwrap());
         }
 
@@ -30,8 +30,8 @@ impl Provider for NodeContainer {
 
 enum Error {}
 impl NodeContainer {
-    fn to_value(&self, tag: &Tag) -> Option<Value> {
-        if !self.modified {
+    fn to_value(&self, tag: &Tag, override_modified: bool) -> Option<Value> {
+        if !override_modified && !self.modified {
             return None;
         }
 
@@ -50,14 +50,14 @@ impl NodeContainer {
                 let mut dict = Dict::new();
 
                 for (key, node) in &node_object.nodes {
-                    if let Some(value) = node.to_value(tag) {
+                    if let Some(value) = node.to_value(tag, false) {
                         dict.insert(key.clone(), value);
                     }
                 }
                 Some(Value::Dict(*tag, dict))
             }
             Node::Enum(node_enum) => node_enum.value.and_then(|pos| {
-                node_enum.nodes[pos].to_value(tag)
+                node_enum.nodes[pos].to_value(tag, true)
 
                 // Value::Dict(tag.clone(), Dict::new());
                 // todo!()

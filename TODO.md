@@ -5,21 +5,11 @@ for libcosmic
 - add_maybe for Setting Section
 - on_press_with for button
 
-
-
 [config](../../../.config/configurator/configurator.json)
 
 [schema](../../../.local/share/configurator/io.github.wiiznokes.configurator.json)
 
-
-solution 1: modified est appliqué dès le root
-problems: 
-- quand on set qq chose a default, on veut modifier seulement a partir du node en question
-advantages:
-- shortcircuit algos
-
-
-solution 2: modified est appliqué a partir du node n
-
-on veut:
-- 
+- reconnaitre les cas ou la modif est pas correct:
+  - quand un node accessible n'a aucunne valeur
+  - ecrire sur le fs que dans le cas contraire
+  - comprendre comment la modif des enum doit etre faite

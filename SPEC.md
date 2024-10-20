@@ -5,7 +5,7 @@ The schema must be stored in one of this locations
 - `$XDG_DATA_HOME/configurator/`
 - `$XDG_DATA_DIRS/configurator/`
 
-The filename should be the [Application ID](https://docs.flathub.org/docs/for-app-authors/requirements/#application-id) of the application.
+The filename should be the [Application ID](https://docs.flathub.org/docs/for-app-authors/requirements/#application-id) of the application, plus the `.json` extension. E.g: `io.github.wiiznokes.configurator.json`.
 
 ## Additional metadata
 
@@ -31,7 +31,7 @@ _note: list are separated by `;`._
       <td><code>X_CONFIGURATOR_SOURCE_HOME_PATH</code></td>
       <td>Where the configuration will be sourced, relative to <code>$HOME/</code></td>
       <td></td>
-      <td>List of paths</td>
+      <td>Path</td>
     </tr>
     <tr>
       <td><code>X_CONFIGURATOR_WRITE_PATH</code></td>

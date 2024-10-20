@@ -168,7 +168,12 @@ impl Page {
 
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
 
-        let title = path.file_name().unwrap().to_string_lossy().to_string();
+        let appid = path.file_name().unwrap().to_string_lossy();
+
+        let title = match appid.split('.').rev().nth(1) {
+            Some(app_name) => app_name.to_string(),
+            None => appid.to_string(),
+        };
 
         let mut page = Self {
             title,
@@ -208,8 +213,6 @@ impl Page {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-
-
         dbg!(&self.tree);
 
         let data = Figment::new().merge(&self.tree);
