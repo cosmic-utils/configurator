@@ -62,7 +62,7 @@ impl NodeContainer {
             Node::Array(node_array) => match &node_array.values {
                 Some(values) => Some(Value::Array(
                     *tag,
-                    values.iter().map(|n| n.to_value(tag)).flatten().collect(),
+                    values.iter().map(|n| n.to_value(tag).unwrap()).collect(),
                 )),
                 None => None,
             },
