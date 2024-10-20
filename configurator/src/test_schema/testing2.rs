@@ -25,7 +25,7 @@ pub struct Config {
     // pub vec: Vec<u32>,
     // pub otros: u16,
     // pub hella: String,
-    // pub choice: Choice,
+    pub choice: Choice,
     pub sub_enum: EnumSubConfig,
     // pub hash: HashMap<String, String>,
 }
