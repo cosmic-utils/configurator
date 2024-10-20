@@ -19,7 +19,7 @@ use xdg::BaseDirectories;
 use crate::{
     figment_serde_bridge::FigmentSerdeBridge,
     message::{ChangeMsg, PageMsg},
-    node::{data_path::DataPath, NodeContainer, NumberKind, NumberValue},
+    node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
 };
 
 struct BoxedProvider(Box<dyn Provider>);
@@ -307,6 +307,30 @@ impl Page {
                         node_enum.value = Some(value);
 
                         node_enum.nodes[value].modified = true;
+                        self.tree.set_modified(data_path.iter());
+                    }
+                    ChangeMsg::Remove(field) => {
+                        match &mut node.node {
+                            Node::Object(node_object) => {
+                                node_object.nodes.remove(field.unwrap_name_ref());
+
+                                for n in node_object.nodes.values_mut() {
+                                    n.modified = true;
+                                }
+                            }
+                            Node::Array(node_array) => {
+                                node_array
+                                    .values
+                                    .as_mut()
+                                    .unwrap()
+                                    .remove(field.unwrap_indice());
+
+                                for n in node_array.values.as_mut().unwrap() {
+                                    n.modified = true;
+                                }
+                            }
+                            _ => panic!(),
+                        }
                         self.tree.set_modified(data_path.iter());
                     }
                 }

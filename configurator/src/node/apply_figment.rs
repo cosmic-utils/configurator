@@ -79,11 +79,11 @@ impl NodeContainer {
                 }
 
                 // for hashmap ?
-                if let Some(node_type) = &node_object.node_type {
+                if let Some(template) = node_object.template() {
                     for (key, value) in values {
-                        let mut node_type = (*node_type).clone();
+                        let mut node_type = template.clone();
                         node_type.apply_value(value, modified)?;
-                        node_object.nodes.insert(key, *node_type);
+                        node_object.nodes.insert(key, node_type);
                     }
                 }
             }
@@ -107,7 +107,7 @@ impl NodeContainer {
                 let mut nodes = Vec::new();
 
                 for value in values {
-                    let mut new_node = (*node_array.node_type).clone();
+                    let mut new_node = node_array.template();
                     new_node.apply_value(value, modified)?;
                     nodes.push(new_node);
                 }

@@ -18,7 +18,11 @@ pub struct NodeContainer {
     pub default: Option<Value>,
     pub title: Option<String>,
     pub desc: Option<String>,
+    /// Node that are modified should be written to disk
     pub modified: bool,
+    /// Used for HashMap. We need to know if the node
+    /// was created by a "template"
+    pub removable: bool,
 }
 
 #[derive(Debug, Clone, Unwrap)]
@@ -89,13 +93,13 @@ pub struct NodeEnum {
 #[derive(Debug, Clone)]
 pub struct NodeObject {
     pub nodes: BTreeMap<String, NodeContainer>,
-    pub node_type: Option<Box<NodeContainer>>,
+    pub template: Option<Box<NodeContainer>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct NodeArray {
     pub values: Option<Vec<NodeContainer>>,
-    pub node_type: Box<NodeContainer>,
+    pub template: Box<NodeContainer>,
 }
 
 impl NodeBool {
@@ -147,7 +151,18 @@ impl NodeObject {
     pub fn new(nodes: BTreeMap<String, NodeContainer>, node_type: Option<NodeContainer>) -> Self {
         Self {
             nodes,
-            node_type: node_type.map(Box::new),
+            template: node_type.map(Box::new),
+        }
+    }
+
+    pub fn template(&self) -> Option<NodeContainer> {
+        match &self.template {
+            Some(template) => {
+                let mut template = *template.clone();
+                template.removable = true;
+                Some(template)
+            }
+            None => None,
         }
     }
 }
@@ -155,9 +170,15 @@ impl NodeObject {
 impl NodeArray {
     pub fn new(node_type: NodeContainer) -> Self {
         Self {
-            node_type: Box::new(node_type),
+            template: Box::new(node_type),
             values: None,
         }
+    }
+
+    pub fn template(&self) -> NodeContainer {
+        let mut template = *self.template.clone();
+        template.removable = true;
+        template
     }
 }
 
@@ -188,6 +209,7 @@ impl NodeContainer {
             title: None,
             desc: None,
             modified: false,
+            removable: false,
         }
         .set_metadata(metadata)
     }

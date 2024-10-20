@@ -24,4 +24,5 @@ pub enum ChangeMsg {
     ChangeString(String),
     ChangeNumber(String),
     ChangeEnum(usize),
+    Remove(DataPathType),
 }

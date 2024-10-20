@@ -16,7 +16,7 @@ use cosmic::{
 
 use crate::{
     app::App,
-    icon,
+    icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
         data_path::{DataPath, DataPathType},
@@ -215,6 +215,14 @@ fn view_object<'a>(
                             })
                             .push_maybe(if !inner_node.is_valid() {
                                 Some(no_value_defined_warning_icon())
+                            } else {
+                                None
+                            })
+                            .push_maybe(if inner_node.removable {
+                                Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+                                    data_path.to_vec(),
+                                    ChangeMsg::Remove(DataPathType::Name(name.to_string())),
+                                )))
                             } else {
                                 None
                             }),
