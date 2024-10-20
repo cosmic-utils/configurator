@@ -24,7 +24,7 @@ use xdg::BaseDirectories;
 use zconf2::ConfigManager;
 
 use crate::{
-    config::{Config, CONFIG_PATH, SCHEMAS_PATH},
+    config::Config,
     fl,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
@@ -162,11 +162,6 @@ impl cosmic::Application for App {
             AppMsg::ReloadLocalConfig => {
                 self.config.reload().unwrap();
             }
-            AppMsg::ConfigActive(value) => {
-                self.config.update(|settings| {
-                    settings.active = value;
-                });
-            }
         };
 
         let a = self.nav_model.active_data::<Page>().unwrap();
@@ -174,18 +169,6 @@ impl cosmic::Application for App {
         // dbg!(&a.data_path);
 
         Task::none()
-    }
-
-    fn header_center(&self) -> Vec<Element<Self::Message>> {
-        vec![
-            // text(fl!("hello")).into(),
-            // button::text(format!("is active = {}", self.config.active))
-            //     .on_press(AppMsg::ConfigActive(!self.config.active))
-            //     .into(),
-            // button::text("reload local config")
-            //     .on_press(AppMsg::ReloadLocalConfig)
-            //     .into(),
-        ]
     }
 
     fn header_end(&self) -> Vec<Element<Self::Message>> {

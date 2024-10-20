@@ -1,6 +1,7 @@
 use std::{
     fs::{self, File, OpenOptions},
     io::{Read, Write},
+    iter,
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -25,7 +26,7 @@ use xdg::BaseDirectories;
 use zconf2::ConfigManager;
 
 use crate::{
-    config::{Config, CONFIG_PATH, SCHEMAS_PATH},
+    config::Config,
     fl,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
@@ -96,7 +97,20 @@ pub fn create_pages() -> impl Iterator<Item = Page> {
         data_dirs.push(base_dirs.get_data_home());
         data_dirs.append(&mut base_dirs.get_data_dirs());
 
-        data_dirs.into_iter().map(|d| d.join("configurator"))
+        #[cfg(debug_assertions)]
+        data_dirs.push(PathBuf::from("test_schemas"));
+
+        let r = data_dirs.into_iter().map(|d| d.join("configurator"));
+
+        #[cfg(debug_assertions)]
+        {
+            r.chain(iter::once(PathBuf::from("configurator/test_schemas")))
+        }
+
+        #[cfg(not(debug_assertions))]
+        {
+            r
+        }
     }
 
     default_paths()

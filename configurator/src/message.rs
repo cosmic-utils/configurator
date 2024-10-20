@@ -7,7 +7,6 @@ pub enum AppMsg {
     PageMsg(Entity, PageMsg),
     ReloadActivePage,
     ReloadLocalConfig,
-    ConfigActive(bool),
 }
 
 #[derive(Clone, Debug)]

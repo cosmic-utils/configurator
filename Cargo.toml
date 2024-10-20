@@ -8,7 +8,7 @@ members = [
     "zconf_derive_impl",
     "vexpe",
     "zconf2",
-    # "vtesting",
+    "vtesting",
 ]
 resolver = "2"
 

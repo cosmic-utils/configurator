@@ -140,8 +140,8 @@ impl NodeContainer {
     pub fn set_modified<'a>(&mut self, mut data_path: impl Iterator<Item = &'a DataPathType>) {
         self.modified = true;
 
-        match data_path.next() {
-            Some(component) => match &mut self.node {
+        if let Some(component) = data_path.next() {
+            match &mut self.node {
                 Node::Object(node_object) => {
                     let name = component.unwrap_name_ref();
 
@@ -161,11 +161,8 @@ impl NodeContainer {
 
                     node.set_modified(data_path);
                 }
-                _ => {
-                    
-                },
-            },
-            None => {}
+                _ => {}
+            }
         }
     }
 }

@@ -15,6 +15,8 @@ mod localize;
 mod message;
 mod node;
 mod page;
+#[cfg(test)]
+mod testing1;
 mod utils;
 mod view;
 

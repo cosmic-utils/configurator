@@ -10,8 +10,8 @@ use schemars::schema::SchemaObject;
 
 use crate::utils::{figment_value_to_f64, figment_value_to_i128};
 
-#[cfg(test)]
-mod test;
+// #[cfg(test)]
+// mod test;
 
 mod apply_figment;
 pub mod data_path;
