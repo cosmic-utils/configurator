@@ -1,7 +1,12 @@
 use cosmic::{
     app::{Core, Task},
     executor,
-    widget::{self, button, segmented_button::SingleSelectModel},
+    iced_widget::text_input,
+    widget::{
+        self, button,
+        segmented_button::{Entity, SingleSelectModel},
+        text,
+    },
     Element,
 };
 use zconf2::ConfigManager;
@@ -9,8 +14,8 @@ use zconf2::ConfigManager;
 use crate::{
     config::Config,
     message::{AppMsg, ChangeMsg, PageMsg},
-    node::{NumberKind, NumberValue},
-    page::{create_pages, Page},
+    node::{data_path::DataPathType, NumberKind, NumberValue},
+    page::{self, create_pages, Page},
     view::view_app,
 };
 
@@ -19,10 +24,32 @@ pub const ORG: &str = "wiiznokes";
 pub const APP: &str = "configurator";
 pub const APPID: &str = "io.github.wiiznokes.configurator";
 
+#[derive(Debug)]
+pub enum Dialog {
+    AddNewNodeToObject {
+        name: String,
+        data_path: Vec<DataPathType>,
+        page_id: Entity,
+    },
+    RenameKey {
+        previous: String,
+        name: String,
+        data_path: Vec<DataPathType>,
+        page_id: Entity,
+    },
+}
+
 pub struct App {
     core: Core,
     pub nav_model: SingleSelectModel,
     pub config: ConfigManager<Config>,
+    pub dialog: Option<Dialog>,
+}
+
+impl App {
+    fn close_dialog(&mut self) {
+        self.dialog.take();
+    }
 }
 
 impl cosmic::Application for App {
@@ -71,6 +98,7 @@ impl cosmic::Application for App {
             core,
             nav_model,
             config,
+            dialog: None,
         };
 
         (app, Task::none())
@@ -99,7 +127,15 @@ impl cosmic::Application for App {
         match message {
             AppMsg::PageMsg(id, page_msg) => {
                 if let Some(page) = self.nav_model.data_mut::<Page>(id) {
-                    page.update(page_msg);
+                    match page.update(page_msg, id) {
+                        page::Action::CreateDialog(dialog) => {
+                            self.dialog.replace(dialog);
+                        }
+                        page::Action::None => {}
+                        page::Action::RemoveDialog => {
+                            self.close_dialog();
+                        }
+                    };
                 }
             }
             AppMsg::ReloadActivePage => {
@@ -110,12 +146,71 @@ impl cosmic::Application for App {
             AppMsg::ReloadLocalConfig => {
                 self.config.reload().unwrap();
             }
+            AppMsg::CloseDialog => {
+                self.close_dialog();
+            }
+            AppMsg::DialogInput(input) => match self.dialog.as_mut().unwrap() {
+                Dialog::AddNewNodeToObject {
+                    name,
+                    data_path,
+                    page_id,
+                } => {
+                    *name = input;
+                }
+                Dialog::RenameKey {
+                    previous,
+                    name,
+                    data_path,
+                    page_id,
+                } => {
+                    *name = input;
+                }
+            },
         };
 
         // let a = self.nav_model.active_data::<Page>().unwrap();
         // dbg!(&a.data_path);
 
         Task::none()
+    }
+
+    fn dialog(&self) -> Option<Element<Self::Message>> {
+        self.dialog.as_ref().map(|dialog| match dialog {
+            Dialog::AddNewNodeToObject {
+                name,
+                data_path,
+                page_id,
+            } => widget::dialog("Create")
+                .control(text_input("name", name).on_input(AppMsg::DialogInput))
+                .primary_action(button::text("create").on_press(AppMsg::PageMsg(
+                    *page_id,
+                    PageMsg::ChangeMsg(
+                        data_path.clone(),
+                        ChangeMsg::AddNewNodeToObject(name.clone()),
+                    ),
+                )))
+                .secondary_action(button::text("cancel").on_press(AppMsg::CloseDialog))
+                .into(),
+            Dialog::RenameKey {
+                previous,
+                name,
+                data_path,
+                page_id,
+            } => widget::dialog("Rename")
+                .control(text_input("name", name).on_input(AppMsg::DialogInput))
+                .primary_action(button::text("rename").on_press(AppMsg::PageMsg(
+                    *page_id,
+                    PageMsg::ChangeMsg(
+                        data_path.clone(),
+                        ChangeMsg::RenameKey {
+                            prev: previous.clone(),
+                            new: name.clone(),
+                        },
+                    ),
+                )))
+                .secondary_action(button::text("cancel").on_press(AppMsg::CloseDialog))
+                .into(),
+        })
     }
 
     fn header_end(&self) -> Vec<Element<Self::Message>> {

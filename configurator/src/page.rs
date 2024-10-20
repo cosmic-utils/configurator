@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
+use cosmic::widget::segmented_button::Entity;
 use directories::BaseDirs;
 use figment::{
     providers::{self, Format},
@@ -17,6 +18,7 @@ use json::Value;
 use xdg::BaseDirectories;
 
 use crate::{
+    app::Dialog,
     figment_serde_bridge::FigmentSerdeBridge,
     message::{ChangeMsg, PageMsg},
     node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
@@ -249,8 +251,17 @@ impl Page {
 
         Ok(())
     }
+}
 
-    pub fn update(&mut self, message: PageMsg) {
+#[must_use]
+pub enum Action {
+    CreateDialog(Dialog),
+    RemoveDialog,
+    None,
+}
+
+impl Page {
+    pub fn update(&mut self, message: PageMsg, page_id: Entity) -> Action {
         match message {
             PageMsg::SelectDataPath(pos) => {
                 self.data_path.change_to(pos);
@@ -289,14 +300,14 @@ impl Page {
                                 if let Ok(value) = node_number.value_string.parse() {
                                     node_number.value = Some(NumberValue::I128(value));
                                 } else {
-                                    return;
+                                    return Action::None;
                                 }
                             }
                             NumberKind::Float => {
                                 if let Ok(value) = node_number.value_string.parse() {
                                     node_number.value = Some(NumberValue::F64(value));
                                 } else {
-                                    return;
+                                    return Action::None;
                                 }
                             }
                         }
@@ -333,6 +344,38 @@ impl Page {
                         }
                         self.tree.set_modified(data_path.iter());
                     }
+                    ChangeMsg::AddNewNodeToObject(name) => {
+                        let node_object = node.node.unwrap_object_mut();
+                        if !node_object.nodes.contains_key(&name) {
+                            let new_node = node_object.template().unwrap();
+                            // todo: do we need this ?
+                            // new_node.modified = true;
+                            node_object.nodes.insert(name, new_node);
+
+                            self.tree.set_modified(data_path.iter());
+
+                            return Action::RemoveDialog;
+                        }
+                    }
+                    ChangeMsg::AddNewNodeToArray => {
+                        let node_array = node.node.unwrap_array_mut();
+
+                        let new_node = node_array.template();
+
+                        match &mut node_array.values {
+                            Some(values) => {
+                                values.push(new_node);
+                            }
+                            None => {
+                                node_array.values = Some(vec![new_node]);
+                            }
+                        }
+                        self.tree.set_modified(data_path.iter());
+                    }
+
+                    ChangeMsg::RenameKey { prev, new } => {
+                        // todo
+                    }
                 }
 
                 if self.tree.is_valid() {
@@ -342,6 +385,23 @@ impl Page {
             PageMsg::None => {
                 // pass
             }
-        }
+            PageMsg::DialogAddNewNodeToObject(data_path) => {
+                return Action::CreateDialog(Dialog::AddNewNodeToObject {
+                    name: String::new(),
+                    data_path,
+                    page_id,
+                });
+            }
+            PageMsg::DialogRenameKey(data_path, key) => {
+                return Action::CreateDialog(Dialog::RenameKey {
+                    previous: key,
+                    name: String::new(),
+                    data_path,
+                    page_id,
+                });
+            }
+        };
+
+        Action::None
     }
 }

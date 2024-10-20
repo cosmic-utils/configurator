@@ -7,6 +7,8 @@ pub enum AppMsg {
     PageMsg(Entity, PageMsg),
     ReloadActivePage,
     ReloadLocalConfig,
+    CloseDialog,
+    DialogInput(String),
 }
 
 #[derive(Clone, Debug)]
@@ -14,6 +16,8 @@ pub enum PageMsg {
     SelectDataPath(Option<usize>),
     OpenDataPath(DataPathType),
     ChangeMsg(Vec<DataPathType>, ChangeMsg),
+    DialogAddNewNodeToObject(Vec<DataPathType>),
+    DialogRenameKey(Vec<DataPathType>, String),
     None,
 }
 
@@ -25,4 +29,7 @@ pub enum ChangeMsg {
     ChangeNumber(String),
     ChangeEnum(usize),
     Remove(DataPathType),
+    AddNewNodeToObject(String),
+    AddNewNodeToArray,
+    RenameKey { prev: String, new: String },
 }

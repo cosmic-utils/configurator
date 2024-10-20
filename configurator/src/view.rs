@@ -100,7 +100,7 @@ fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
         icon!("report24").class(cosmic::theme::Svg::custom(|e| cosmic::widget::svg::Style {
             color: Some(Color::from_rgb(236.0, 194.0, 58.0)),
         })),
-        text("No value has been defined"),
+        text("You need to define some values that have no default!"),
         Position::Top,
     )
     .into()
@@ -230,6 +230,9 @@ fn view_object<'a>(
                     .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
                 })),
         )
+        .push_maybe(node_object.template.as_ref().map(|_| {
+            icon_button!("add24").on_press(PageMsg::DialogAddNewNodeToObject(data_path.to_vec()))
+        }))
         .push_maybe(node.default.as_ref().map(|default| {
             section().title("Default").add(
                 row()
