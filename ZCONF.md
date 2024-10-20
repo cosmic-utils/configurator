@@ -7,12 +7,3 @@ it could be replaced by `Figment::new().merge(providers::Serialized::from(&Confi
 ## Why we can't have setters on subtypes ?
 
 Imagine we use the struct `B` two times in struct `A`, how do we know where to put it in the file ?
-
-## How to add a new format ?
-
-- Implement `Provider` for the format. You don't need a `Serde` based implementation for this.
-- The format must have a `Serializer` implementation.
-
-## Others
-
-- hashmap values does not merge with default where deserialized

@@ -4,7 +4,7 @@
 
 Initially developed with tweaking the COSMIC(tm) desktop in mind, it could work for any client that satisfied these conditions:
 
-- A [`Provider`](https://docs.rs/figment/latest/figment/trait.Provider.html) implementation for their format (currently only json is supported, but this is relatively simple to add more)
+- A [`Provider`](https://docs.rs/figment/latest/figment/trait.Provider.html) implementation
 - A [`Serializer`](https://docs.rs/serde/latest/serde/trait.Serializer.html) implementation
 - Install a JSON Schema that satisfy [the spec of this app](./SPEC.md).
 
