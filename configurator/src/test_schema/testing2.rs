@@ -85,7 +85,7 @@ pub struct Hella {
 impl Default for Hella {
     fn default() -> Self {
         Self {
-            hella: "niquer sa mere".into(),
+            hella: "mere".into(),
         }
     }
 }
@@ -95,26 +95,6 @@ pub enum Choice {
     #[default]
     A,
     B,
-}
-
-#[test]
-pub fn gen_schema() {
-    let config_path = format!("{}/test_configs/testing1.json", env!("CARGO_MANIFEST_DIR"));
-
-    let schema = configurator_schema::gen_schema::<Config>()
-        .source_home_paths(&[&config_path])
-        .call()
-        .unwrap();
-
-    let schemas_path = Path::new("test_schemas");
-
-    if !schemas_path.exists() {
-        fs::create_dir_all(schemas_path).unwrap();
-    }
-
-    let schema_path = schemas_path.join("testing1.json");
-
-    fs::write(schema_path, &schema).unwrap();
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
@@ -141,59 +121,29 @@ impl Default for A {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 pub struct B {}
 
-#[cfg(test)]
-mod test {
-    use std::collections::HashMap;
+const NAME: &str = "testing2";
 
-    use figment::{providers, Figment, Profile};
-    use schemars::schema_for;
+#[test]
+pub fn gen_schema() {
+    super::gen_schema::<Config>(NAME);
+}
 
-    use super::*;
+#[test]
+fn print_default_figment() {
+    super::print_default_figment::<Config>();
+}
 
-    #[test]
-    fn print_default_figment() {
-        let figment = Figment::new().merge(providers::Serialized::from(
-            &Config::default(),
-            Profile::Default,
-        ));
+#[test]
+fn print_json() {
+    super::print_json::<Config>();
+}
 
-        dbg!(&figment);
-    }
+#[test]
+fn print_ron() {
+    super::print_ron::<Config>();
+}
 
-    #[test]
-    fn print_json() {
-        let e = json::to_string_pretty(&Config::default()).unwrap();
-
-        print!("{}", e);
-    }
-
-    #[test]
-    fn print_ron() {
-        let mut hash = HashMap::new();
-
-        hash.insert(
-            SubConfig {
-                hella: Hella {
-                    hella: "bonjour".into(),
-                },
-            },
-            "hello".to_string(),
-        );
-
-        let e = ron::to_string(&hash).unwrap();
-
-        print!("{}", e);
-    }
-
-    #[test]
-    fn gen_schema() {
-        super::gen_schema();
-    }
-
-    #[test]
-    fn print_schema() {
-        let schema = schema_for!(Config);
-
-        dbg!(&schema);
-    }
+#[test]
+fn print_schema() {
+    super::print_schema::<Config>(NAME);
 }
