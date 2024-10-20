@@ -37,7 +37,7 @@ impl NodeContainer {
                     .iter()
                     .position(|e| e.is_matching(&value))
                     .ok_or_else(|| {
-                        anyhow!("can't find a compatible enum variant for {value:?}. {node_enum:?}")
+                        anyhow!("can't find a compatible enum variant for {value:#?}. {node_enum:#?}")
                     })?;
 
                 node_enum.value = Some(pos);
@@ -63,7 +63,7 @@ impl NodeContainer {
                     .iter()
                     .position(|e| e.is_matching(&value))
                     .ok_or_else(|| {
-                        anyhow!("can't find a compatible enum variant for {value:?}. {node_enum:?}")
+                        anyhow!("can't find a compatible enum variant for {value:#?}. {node_enum:#?}")
                     })?;
 
                 node_enum.value = Some(pos);
@@ -96,7 +96,7 @@ impl NodeContainer {
                     })
                     .ok_or_else(|| {
                         anyhow!(
-                            "can't find a compatible enum variant for {values:?}. {node_enum:?}"
+                            "can't find a compatible enum variant for {values:#?}. {node_enum:#?}"
                         )
                     })?;
 

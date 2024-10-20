@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 #[derive(Default)]
 pub struct Config {
-    last_used_page: Option<String>,
+    active: bool,
+    opt: Option<String>,
 }
 
 const NAME: &str = "testing1";
