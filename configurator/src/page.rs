@@ -63,6 +63,7 @@ impl ConfigFormat {
 
 #[derive(Debug)]
 pub struct Page {
+    pub appid: String,
     pub title: String,
 
     pub source_paths: Vec<PathBuf>,
@@ -170,15 +171,15 @@ impl Page {
 
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
 
-        let appid = path.file_name().unwrap().to_string_lossy();
+        let schema_name = path.file_name().unwrap().to_string_lossy();
 
-        let title = match appid.split('.').rev().nth(1) {
-            Some(app_name) => app_name.to_string(),
-            None => appid.to_string(),
-        };
+        let appid = schema_name.strip_suffix(".json").unwrap().to_string();
+
+        let title = appid.split('.').last().unwrap().to_string();
 
         let mut page = Self {
             title,
+            appid,
             system_config,
             user_config: Figment::new(),
             full_config: Figment::new(),

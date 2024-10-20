@@ -41,15 +41,31 @@ impl cosmic::Application for App {
     }
 
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
+        let config: ConfigManager<Config> = ConfigManager::new(QUALIFIER, ORG, APP).unwrap();
+
         let mut nav_model = SingleSelectModel::default();
 
+        let mut active = false;
+
         for page in create_pages() {
-            nav_model.insert().text(page.title()).data::<Page>(page);
+            if let Some(appid) = &config.settings().last_used_page
+                && appid == &page.appid
+            {
+                let entity = nav_model
+                    .insert()
+                    .text(page.title())
+                    .data::<Page>(page)
+                    .id();
+                nav_model.activate(entity);
+                active = true;
+            } else {
+                nav_model.insert().text(page.title()).data::<Page>(page);
+            }
         }
 
-        nav_model.activate_position(0);
-
-        let config = ConfigManager::new(QUALIFIER, ORG, APP).unwrap();
+        if !active {
+            nav_model.activate_position(0);
+        }
 
         let app = App {
             core,
@@ -66,6 +82,12 @@ impl cosmic::Application for App {
 
     fn on_nav_select(&mut self, id: widget::nav_bar::Id) -> Task<Self::Message> {
         self.nav_model.activate(id);
+
+        let page: &Page = self.nav_model.data(self.nav_model.active()).unwrap();
+
+        self.config.update(|s| {
+            s.last_used_page = Some(page.appid.clone());
+        });
         Task::none()
     }
 

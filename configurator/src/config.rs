@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct Config {
-    last_used_page: Option<String>,
+    pub last_used_page: Option<String>,
 }
 
 #[cfg(test)]

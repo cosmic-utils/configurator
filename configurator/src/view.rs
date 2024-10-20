@@ -30,12 +30,16 @@ const SPACING: f32 = 10.;
 
 pub fn view_app(app: &App) -> Element<'_, AppMsg> {
     let entity = app.nav_model.active();
-    let page = app.nav_model.data::<Page>(entity).unwrap();
 
-    container(view_page(entity, page).map(move |msg| AppMsg::PageMsg(entity, msg)))
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .into()
+    match app.nav_model.data::<Page>(entity) {
+        Some(page) => {
+            container(view_page(entity, page).map(move |msg| AppMsg::PageMsg(entity, msg)))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .into()
+        }
+        None => text("no page selected").into(),
+    }
 }
 
 fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
