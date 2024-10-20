@@ -24,6 +24,7 @@ impl NodeContainer {
         }
     }
 
+    // todo: the modified logic in the function seems wrong
     pub fn apply_value(&mut self, value: Value, modified: bool) -> anyhow::Result<()> {
         // info!("merge_figment_rec");
         // dbg!(&self, &value);
@@ -152,6 +153,7 @@ impl NodeContainer {
             }
             Node::Value(node_value) => {}
         };
+        self.modified = false;
     }
 
     fn is_matching(&self, value: &Value) -> bool {

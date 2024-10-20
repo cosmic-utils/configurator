@@ -136,4 +136,34 @@ impl NodeContainer {
             None => Some(self),
         }
     }
+
+    pub fn set_modified<'a>(&mut self, mut data_path: impl Iterator<Item = &'a DataPathType>) {
+        self.modified = true;
+
+        match data_path.next() {
+            Some(component) => match &mut self.node {
+                Node::Object(node_object) => {
+                    let name = component.unwrap_name_ref();
+
+                    let node = node_object.nodes.get_mut(name).unwrap();
+
+                    node.set_modified(data_path);
+                }
+                Node::Enum(node_enum) => {
+                    let p = component.unwrap_indice_ref();
+                    let node = &mut node_enum.nodes[*p];
+
+                    node.set_modified(data_path);
+                }
+                Node::Array(node_array) => {
+                    let p = component.unwrap_indice_ref();
+                    let node = &mut node_array.values.as_mut().unwrap()[*p];
+
+                    node.set_modified(data_path);
+                }
+                _ => panic!(),
+            },
+            None => {}
+        }
+    }
 }

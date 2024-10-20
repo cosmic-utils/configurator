@@ -208,7 +208,13 @@ impl Page {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
+
+
+        dbg!(&self.tree);
+
         let data = Figment::new().merge(&self.tree);
+
+        dbg!(&data);
 
         let serde_bridge = FigmentSerdeBridge::new(&data);
 

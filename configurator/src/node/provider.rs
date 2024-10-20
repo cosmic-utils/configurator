@@ -82,6 +82,7 @@ mod test {
     #[derive(Debug, Serialize, JsonSchema)]
     struct A {
         e: E,
+        bool: bool
     }
 
     #[derive(Debug, Serialize, JsonSchema)]
@@ -98,6 +99,7 @@ mod test {
         fn default() -> Self {
             Self {
                 e: E::F(B { k: "kaka".into() }),
+                bool: false
             }
         }
     }
