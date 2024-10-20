@@ -15,42 +15,19 @@ use serde::{Deserialize, Serialize};
 /// Config description
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct Config {
-    pub float: f32,
+    // pub float: f32,
     /// Activate something
-    pub active: bool,
-    pub sub: SubConfig,
-    pub opt: Option<String>,
+    // pub active: bool,
+    // pub sub: SubConfig,
+    // pub opt: Option<String>,
     // pub vec: Vec<u32>,
-    pub otros: u16,
+    // pub otros: u16,
     // pub hella: String,
-    pub choice: Choice,
+    // pub choice: Choice,
     pub sub_enum: EnumSubConfig,
     // pub hash: HashMap<String, String>,
-}
-impl Default for Config {
-    fn default() -> Self {
-        // let mut hash = HashMap::new();
-
-        // hash.insert("hello".into(), "mais non".into());
-
-        Self {
-            active: Default::default(),
-            sub: SubConfig {
-                hella: Hella {
-                    hella: "bonjour".into(),
-                },
-            },
-            sub_enum: Default::default(),
-            choice: Choice::A,
-            otros: 0,
-            // hella: "hello".into(),
-            opt: None,
-            float: 13.2,
-            // vec: vec![1],
-            // hash,
-        }
-    }
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -99,11 +76,11 @@ pub enum Choice {
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 pub enum EnumSubConfig {
-    A(A),
+    // A(A),
     B(B),
     #[default]
     C,
-    D(i32),
+    // D(i32),
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]

@@ -146,6 +146,9 @@ impl cosmic::Application for App {
                                 ChangeMsg::ChangeEnum(value) => {
                                     let node_enum = node.node.unwrap_enum_mut();
                                     node_enum.value = Some(value);
+
+                                    node_enum.nodes[value].modified = true;
+
                                     page.tree.set_modified(data_path.iter());
                                 }
                             }

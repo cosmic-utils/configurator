@@ -47,7 +47,7 @@ impl NodeContainer {
                 let mut dict = Dict::new();
 
                 for (key, node) in &node_object.nodes {
-                    if let Some(value) = node.to_value(tag, false) {
+                    if let Some(value) = node.to_value(tag, override_modified) {
                         dict.insert(key.clone(), value);
                     }
                 }
