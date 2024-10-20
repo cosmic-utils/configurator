@@ -284,6 +284,10 @@ fn view_array<'a>(
                     }),
             ),
         )
+        .push(icon_button!("add24").on_press(PageMsg::ChangeMsg(
+            data_path.to_vec(),
+            ChangeMsg::AddNewNodeToArray,
+        )))
         .spacing(SPACING)
         .into()
 }
