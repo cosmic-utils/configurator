@@ -13,6 +13,7 @@ use cosmic::{
     widget::{self, button, segmented_button::SingleSelectModel},
     Element,
 };
+use directories::BaseDirs;
 use figment::{
     providers::{self, Format},
     Figment, Provider,
@@ -129,7 +130,9 @@ impl Page {
 
         let source_home_path = {
             if let Some(Value::String(path)) = json_obj.get("X_CONFIGURATOR_SOURCE_HOME_PATH") {
-                PathBuf::from(path)
+                let base_dirs = BaseDirs::new().unwrap();
+
+                base_dirs.home_dir().join(path)
             } else {
                 bail!("no X_CONFIGURATOR_SOURCE_HOME_PATH")
             }
@@ -215,7 +218,7 @@ impl Page {
         ) -> anyhow::Result<()> {
             if !path.as_ref().exists() {
                 let parent = path.as_ref().parent().ok_or(anyhow!("no parent"))?;
-                fs::create_dir_all(&parent)?;
+                fs::create_dir_all(parent)?;
             }
 
             fs::write(path, contents)?;

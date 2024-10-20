@@ -29,11 +29,16 @@ figment_schemars_bridge = { path = "figment_schemars_bridge" }
 zconf = { path = "zconf" }
 zconf2 = { path = "zconf2" }
 
+derive_more = { version = "1", features = ["unwrap"] }
+ron = "0.8"
+xdg = "2"
+directories = "5"
 figment = { version = "0.10", features = ["json"] }
 schemars = "0.8"
 serde = { version = "1" }
 json = { version = "1", package = "serde_json" }
 anyhow = "1"
+log = "0.4"
 # kaydle = "0.2.0"
 # kdl = "4.6.0"
 # knuffel = "3.2.0"

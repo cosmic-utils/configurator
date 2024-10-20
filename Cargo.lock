@@ -630,6 +630,7 @@ dependencies = [
  "anyhow",
  "configurator_schema",
  "derive_more",
+ "directories",
  "figment",
  "figment_schemars_bridge",
  "i18n-embed",
