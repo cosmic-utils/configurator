@@ -24,10 +24,12 @@ impl NodeContainer {
         }
     }
 
-    // todo: the modified logic in the function seems wrong
+    // todo: the modified logic in the function seems wrong (i probably fixed it)
+    // todo2: analyze the entire logic
     pub fn apply_value(&mut self, value: Value, modified: bool) -> anyhow::Result<()> {
         // info!("merge_figment_rec");
         // dbg!(&self, &value);
+        self.modified = modified;
 
         match (value, &mut self.node) {
             (Value::String(tag, value), Node::String(node_string)) => {
@@ -45,7 +47,7 @@ impl NodeContainer {
                     })?;
 
                 node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value(value, true)?;
+                node_enum.nodes[pos].apply_value(value, modified)?;
             }
             (Value::String(tag, value), Node::Value(node_value)) => {
                 // pass
@@ -76,7 +78,7 @@ impl NodeContainer {
                 // for known object field ?
                 for (key, n) in &mut node_object.nodes {
                     if let Some(value) = values.remove(key) {
-                        n.apply_value(value, true)?;
+                        n.apply_value(value, modified)?;
                     } else if let Some(default) = &n.default {
                         n.apply_value(default.clone(), false)?;
                     }
@@ -86,7 +88,7 @@ impl NodeContainer {
                 if let Some(node_type) = &node_object.node_type {
                     for (key, value) in values {
                         let mut node_type = (*node_type).clone();
-                        node_type.apply_value(value, true)?;
+                        node_type.apply_value(value, modified)?;
                         node_object.nodes.insert(key, *node_type);
                     }
                 }
@@ -105,14 +107,14 @@ impl NodeContainer {
                     })?;
 
                 node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value(Value::Dict(tag, values), true)?;
+                node_enum.nodes[pos].apply_value(Value::Dict(tag, values), modified)?;
             }
             (Value::Array(tag, values), Node::Array(node_array)) => {
                 let mut nodes = Vec::new();
 
                 for value in values {
                     let mut new_node = (*node_array.node_type).clone();
-                    new_node.apply_value(value, true)?;
+                    new_node.apply_value(value, modified)?;
                     nodes.push(new_node);
                 }
 
@@ -120,7 +122,6 @@ impl NodeContainer {
             }
             (value, node) => bail!("no compatible node for value = {value:?}. {node:?}"),
         };
-        self.modified = modified;
 
         Ok(())
     }

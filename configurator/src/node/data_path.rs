@@ -161,7 +161,9 @@ impl NodeContainer {
 
                     node.set_modified(data_path);
                 }
-                _ => panic!(),
+                _ => {
+                    
+                },
             },
             None => {}
         }

@@ -50,10 +50,9 @@ impl NodeContainer {
                 let mut dict = Dict::new();
 
                 for (key, node) in &node_object.nodes {
-                    dict.insert(
-                        key.clone(),
-                        node.to_value(tag).unwrap_or(Value::Dict(*tag, Dict::new())),
-                    );
+                    if let Some(value) = node.to_value(tag) {
+                        dict.insert(key.clone(), value);
+                    }
                 }
                 Some(Value::Dict(*tag, dict))
             }
@@ -82,7 +81,7 @@ mod test {
     #[derive(Debug, Serialize, JsonSchema)]
     struct A {
         e: E,
-        bool: bool
+        bool: bool,
     }
 
     #[derive(Debug, Serialize, JsonSchema)]
@@ -99,7 +98,7 @@ mod test {
         fn default() -> Self {
             Self {
                 e: E::F(B { k: "kaka".into() }),
-                bool: false
+                bool: false,
             }
         }
     }

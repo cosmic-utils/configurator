@@ -114,10 +114,12 @@ impl cosmic::Application for App {
                                 ChangeMsg::ChangeBool(value) => {
                                     let node_bool = node.node.unwrap_bool_mut();
                                     node_bool.value = Some(value);
+                                    page.tree.set_modified(data_path.iter());
                                 }
                                 ChangeMsg::ChangeString(value) => {
                                     let node_string = node.node.unwrap_string_mut();
                                     node_string.value = Some(value);
+                                    page.tree.set_modified(data_path.iter());
                                 }
                                 ChangeMsg::ChangeNumber(value) => {
                                     let node_number = node.node.unwrap_number_mut();
@@ -135,10 +137,12 @@ impl cosmic::Application for App {
                                         }
                                     }
                                     node_number.value_string = value;
+                                    page.tree.set_modified(data_path.iter());
                                 }
                                 ChangeMsg::ChangeEnum(value) => {
                                     let node_enum = node.node.unwrap_enum_mut();
                                     node_enum.value = Some(value);
+                                    page.tree.set_modified(data_path.iter());
                                 }
                             }
 
