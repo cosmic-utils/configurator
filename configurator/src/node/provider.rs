@@ -68,7 +68,6 @@ impl NodeContainer {
 
 #[cfg(test)]
 mod test {
-    
 
     use figment::{providers, Figment, Profile, Provider};
     use schemars::{schema_for, JsonSchema};
