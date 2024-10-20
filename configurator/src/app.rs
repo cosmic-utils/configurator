@@ -1,33 +1,15 @@
-use std::{
-    fs::{self, File},
-    io::Read,
-    path::{Path, PathBuf},
-    str::FromStr,
-};
-
-use anyhow::bail;
 use cosmic::{
     app::{Core, Task},
     executor,
-    iced_widget::text,
     widget::{self, button, segmented_button::SingleSelectModel},
     Element,
 };
-use figment::{
-    providers::{self, Format},
-    Figment, Provider,
-};
-use figment_schemars_bridge::JsonSchemaProvider;
-use json::Value;
-use schemars::schema::RootSchema;
-use xdg::BaseDirectories;
 use zconf2::ConfigManager;
 
 use crate::{
     config::Config,
-    fl,
     message::{AppMsg, ChangeMsg, PageMsg},
-    node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
+    node::{NumberKind, NumberValue},
     page::{create_pages, Page},
     view::view_app,
 };
@@ -164,8 +146,7 @@ impl cosmic::Application for App {
             }
         };
 
-        let a = self.nav_model.active_data::<Page>().unwrap();
-
+        // let a = self.nav_model.active_data::<Page>().unwrap();
         // dbg!(&a.data_path);
 
         Task::none()

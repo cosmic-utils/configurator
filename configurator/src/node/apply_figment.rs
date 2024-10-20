@@ -3,16 +3,10 @@ use std::collections::BTreeMap;
 use anyhow::{anyhow, bail};
 use figment::{
     value::{Tag, Value},
-    Figment, Profile, Provider,
+    Figment,
 };
 
-use crate::{
-    node::{NumberKind, NumberValue},
-    utils::{
-        data_default_profile_figment, figment_value_to_f64, figment_value_to_i128,
-        json_value_eq_figment_value,
-    },
-};
+use crate::utils::{data_default_profile_figment, json_value_eq_figment_value};
 
 use super::{Node, NodeContainer};
 

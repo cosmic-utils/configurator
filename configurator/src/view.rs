@@ -1,16 +1,15 @@
-use std::{borrow::Cow, rc::Rc};
+use std::borrow::Cow;
 
 use cosmic::{
     iced::{alignment, Color, Length},
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
-        button, column, container, dropdown, horizontal_space, mouse_area, row,
+        button, column, container, horizontal_space, mouse_area, row,
         segmented_button::Entity,
         settings::section,
         text, text_input,
         tooltip::{tooltip, Position},
-        Row,
     },
     Element,
 };

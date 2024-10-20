@@ -1,20 +1,4 @@
-use std::{collections::BTreeMap, fs::File, io::Read, path::Path, str::FromStr};
-
 use figment::{value::Dict, Figment, Profile, Provider};
-use schemars::schema::RootSchema;
-
-pub fn get_json_schema(path: &Path) -> anyhow::Result<RootSchema> {
-    let mut file = File::open(path).unwrap();
-    let mut contents = String::new();
-
-    file.read_to_string(&mut contents).unwrap();
-
-    let value = json::value::Value::from_str(&contents).unwrap();
-
-    let json_schema: RootSchema = json::from_value(value)?;
-
-    Ok(json_schema)
-}
 
 pub fn data_default_profile_figment(figment: &Figment) -> Option<Dict> {
     // todo: support profile ?

@@ -1,9 +1,4 @@
-use cosmic::{
-    iced_core::Length,
-    widget::{self, icon::Handle, Icon, IconButton},
-};
-
-use crate::icon_handle;
+use cosmic::iced_core::Length;
 
 pub static ICON_LENGTH: Length = Length::Fixed(25.0);
 

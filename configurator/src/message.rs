@@ -1,6 +1,6 @@
 use cosmic::widget::segmented_button::Entity;
 
-use crate::node::data_path::{DataPath, DataPathType};
+use crate::node::data_path::DataPathType;
 
 #[derive(Clone, Debug)]
 pub enum AppMsg {

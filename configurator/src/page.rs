@@ -1,37 +1,22 @@
 use std::{
-    fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    fs::{self, File},
+    io::Read,
     iter,
     path::{Path, PathBuf},
     str::FromStr,
 };
 
 use anyhow::{anyhow, bail};
-use cosmic::{
-    app::{Core, Task},
-    executor,
-    iced_widget::text,
-    widget::{self, button, segmented_button::SingleSelectModel},
-    Element,
-};
 use directories::BaseDirs;
 use figment::{
     providers::{self, Format},
     Figment, Provider,
 };
-use figment_schemars_bridge::{FigmentSerdeBridge, JsonSchemaProvider};
+use figment_schemars_bridge::FigmentSerdeBridge;
 use json::Value;
-use schemars::schema::RootSchema;
 use xdg::BaseDirectories;
-use zconf2::ConfigManager;
 
-use crate::{
-    config::Config,
-    fl,
-    message::{AppMsg, ChangeMsg, PageMsg},
-    node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
-    view::view_app,
-};
+use crate::node::{data_path::DataPath, NodeContainer};
 
 struct BoxedProvider(Box<dyn Provider>);
 

@@ -1,10 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
 
 use derive_more::derive::Unwrap;
-use figment::{
-    value::{Tag, Value},
-    Profile, Provider,
-};
+use figment::value::{Tag, Value};
 use from_json_schema::json_value_to_figment_value;
 use schemars::schema::SchemaObject;
 

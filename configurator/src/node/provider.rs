@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 use figment::{
     value::{Dict, Empty, Num, Tag, Value},
     Metadata, Profile, Provider,
@@ -70,13 +68,13 @@ impl NodeContainer {
 
 #[cfg(test)]
 mod test {
-    use std::default;
+    
 
     use figment::{providers, Figment, Profile, Provider};
     use schemars::{schema_for, JsonSchema};
     use serde::Serialize;
 
-    use crate::node::{Node, NodeContainer};
+    use crate::node::NodeContainer;
 
     #[derive(Debug, Serialize, JsonSchema)]
     struct A {

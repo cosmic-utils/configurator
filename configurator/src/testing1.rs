@@ -1,16 +1,10 @@
 use std::{
-    collections::HashMap,
-    fs::{self, File},
+    fs::{self},
     path::Path,
 };
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use crate::app::APPID;
-
-pub const SCHEMAS_PATH: &str = "configurator/schemas";
-pub const CONFIG_PATH: &str = "configurator/config";
 
 // note:
 // Serialize is only needed for subtype
