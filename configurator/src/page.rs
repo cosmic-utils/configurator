@@ -282,24 +282,24 @@ impl Page {
                     }
                     ChangeMsg::ChangeNumber(value) => {
                         let node_number = node.node.unwrap_number_mut();
+                        node_number.value_string = value;
 
                         match node_number.kind {
                             NumberKind::Integer => {
-                                if let Ok(value) = value.parse() {
+                                if let Ok(value) = node_number.value_string.parse() {
                                     node_number.value = Some(NumberValue::I128(value));
                                 } else {
                                     return;
                                 }
                             }
                             NumberKind::Float => {
-                                if let Ok(value) = value.parse() {
+                                if let Ok(value) = node_number.value_string.parse() {
                                     node_number.value = Some(NumberValue::F64(value));
                                 } else {
                                     return;
                                 }
                             }
                         }
-                        node_number.value_string = value;
                         self.tree.set_modified(data_path.iter());
                     }
                     ChangeMsg::ChangeEnum(value) => {
