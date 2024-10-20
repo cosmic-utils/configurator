@@ -29,7 +29,6 @@ schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 json = { workspace = true }
 zconf2 = { workspace = true }
-figment_schemars_bridge.workspace = true
 derive_more = { version = "1", features = ["unwrap"] }
 ron.workspace = true
 xdg.workspace = true

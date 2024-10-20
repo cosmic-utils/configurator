@@ -170,14 +170,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37bf3594c4c988a53154954629820791dde498571819ae4ca50ca811e060cc95"
 
 [[package]]
-name = "app_testing"
-version = "0.1.0"
-dependencies = [
- "serde",
- "zconf",
-]
-
-[[package]]
 name = "apply"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -361,15 +353,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brownstone"
-version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5839ee4f953e811bfdcf223f509cb2c6a3e1447959b0bff459405575bc17f22"
-dependencies = [
- "arrayvec",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -486,15 +469,6 @@ dependencies = [
  "num-traits",
  "wasm-bindgen",
  "windows-targets 0.52.6",
-]
-
-[[package]]
-name = "chumsky"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8eebd66744a15ded14960ab4ccdbfb51ad3b81f51f3f04a80adac98c985396c9"
-dependencies = [
- "hashbrown 0.14.5",
 ]
 
 [[package]]
@@ -640,7 +614,6 @@ dependencies = [
  "derive_more",
  "directories",
  "figment",
- "figment_schemars_bridge",
  "i18n-embed",
  "i18n-embed-fl",
  "libcosmic",
@@ -997,12 +970,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diff"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
-
-[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1202,20 +1169,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "expe"
-version = "0.1.0"
-dependencies = [
- "figment",
- "kaydle",
- "kdl",
- "knuffel",
- "pretty_assertions",
- "schemars",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "exr"
 version = "1.72.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1263,17 +1216,6 @@ dependencies = [
  "serde_json",
  "uncased",
  "version_check",
-]
-
-[[package]]
-name = "figment_schemars_bridge"
-version = "0.1.0"
-dependencies = [
- "figment",
- "pretty_assertions",
- "schemars",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -1775,9 +1717,6 @@ name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
-dependencies = [
- "unicode-segmentation",
-]
 
 [[package]]
 name = "hermit-abi"
@@ -2156,12 +2095,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indent_write"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cfe9645a18782869361d9c8732246be7b410ad4e919d3609ebabdac00ba12c3"
-
-[[package]]
 name = "indexmap"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2266,12 +2199,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "joinery"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72167d68f5fce3b8655487b8038691a3c9984ee769590f93f2a631f4ad64e4f5"
-
-[[package]]
 name = "jpeg-decoder"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2299,45 +2226,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kaydle"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b2de193d14f7d6f3288f5ee1c38b0d7869e95c322fc5e54d1c385765172db53"
-dependencies = [
- "kaydle-primitives",
- "lazy_format",
- "nom",
- "nom-supreme",
- "serde",
- "serde-mobile",
- "thiserror",
-]
-
-[[package]]
-name = "kaydle-primitives"
-version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f31f657f34304c4853f1e3a3f3c9a556d0462d7004460791728713d61d88272"
-dependencies = [
- "arrayvec",
- "memchr",
- "nom",
- "nom-supreme",
- "serde",
-]
-
-[[package]]
-name = "kdl"
-version = "4.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "062c875482ccb676fd40c804a40e3824d4464c18c364547456d1c8e8e951ae47"
-dependencies = [
- "miette",
- "nom",
- "thiserror",
-]
-
-[[package]]
 name = "khronos-egl"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2361,33 +2249,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b7d9a1740cc8b46e259a0eb787d79d855e79ff10b9855a5eba58868d5da7927c"
 dependencies = [
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "knuffel"
-version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04bee6ddc6071011314b1ce4f7705fef6c009401dba4fd22cb0009db6a177413"
-dependencies = [
- "base64 0.21.7",
- "chumsky",
- "knuffel-derive",
- "miette",
- "thiserror",
- "unicode-width",
-]
-
-[[package]]
-name = "knuffel-derive"
-version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91977f56c49cfb961e3d840e2e7c6e4a56bde7283898cf606861f1421348283d"
-dependencies = [
- "heck",
- "proc-macro-error",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -2429,12 +2290,6 @@ dependencies = [
  "arrayvec",
  "smallvec",
 ]
-
-[[package]]
-name = "lazy_format"
-version = "1.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b05662be9cd63006934464f935195ae936460edb75de7b9a07e0509795afbdc3"
 
 [[package]]
 name = "lazy_static"
@@ -2678,41 +2533,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "miette"
-version = "5.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59bb584eaeeab6bd0226ccf3509a69d7936d148cf3d036ad350abe35e8c6856e"
-dependencies = [
- "miette-derive",
- "once_cell",
- "thiserror",
- "unicode-width",
-]
-
-[[package]]
-name = "miette-derive"
-version = "5.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49e7bc1560b95a3c4a25d03de42fe76ca718ab92d1a22a55b9b4cf67b3ae635c"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.79",
-]
-
-[[package]]
 name = "mime"
 version = "0.1.0"
 source = "git+https://github.com/pop-os/window_clipboard.git?tag=pop-0.13#1832d5637b27ad9b0c781724ab30bec844366c63"
 dependencies = [
  "smithay-clipboard",
 ]
-
-[[package]]
-name = "minimal-lexical"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "miniz_oxide"
@@ -2809,29 +2635,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee6cda3051665f1fb8d9e08fc35c96d5a244fb1be711a03b71118828afc9a873"
 dependencies = [
  "jni-sys",
-]
-
-[[package]]
-name = "nom"
-version = "7.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
-dependencies = [
- "memchr",
- "minimal-lexical",
-]
-
-[[package]]
-name = "nom-supreme"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bd3ae6c901f1959588759ff51c95d24b491ecb9ff91aa9c2ef4acc5b1dcab27"
-dependencies = [
- "brownstone",
- "indent_write",
- "joinery",
- "memchr",
- "nom",
 ]
 
 [[package]]
@@ -3477,16 +3280,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8cf8e6a8aa66ce33f63993ffc4ea4271eb5b0530a9002db8455ea6050c77bfa"
 
 [[package]]
-name = "pretty_assertions"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ae130e2f271fbc2ac3a40fb1d07180839cdbbe443c7a27e1e3c13c5cac0116d"
-dependencies = [
- "diff",
- "yansi",
-]
-
-[[package]]
 name = "proc-macro-crate"
 version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3946,15 +3739,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8e3592472072e6e22e0a54d5904d9febf8508f65fb8552499a1abc7d1078c3a"
 dependencies = [
  "serde_derive",
-]
-
-[[package]]
-name = "serde-mobile"
-version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c32e12ac49f4f1fde3b44b9eccfcc6cb70bbb2622dac40698b34c3d607cf21a4"
-dependencies = [
- "serde",
 ]
 
 [[package]]
@@ -5536,43 +5320,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c94451ac9513335b5e23d7a8a2b61a7102398b8cca5160829d313e84c9d98be1"
 
 [[package]]
-name = "zconf"
-version = "0.1.0"
-dependencies = [
- "zconf_derive",
- "zconf_derive_impl",
-]
-
-[[package]]
 name = "zconf2"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "directories",
  "log",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "zconf_derive"
-version = "0.1.0"
-dependencies = [
- "figment",
- "quote",
- "serde",
- "static_assertions",
- "syn 2.0.79",
- "zconf_derive_impl",
-]
-
-[[package]]
-name = "zconf_derive_impl"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "figment",
- "figment_schemars_bridge",
  "serde",
  "serde_json",
 ]

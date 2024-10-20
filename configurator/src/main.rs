@@ -11,6 +11,7 @@ extern crate tracing;
 
 mod app;
 mod config;
+mod figment_serde_bridge;
 mod localize;
 mod message;
 mod node;

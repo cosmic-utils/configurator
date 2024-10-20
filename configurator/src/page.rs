@@ -12,11 +12,14 @@ use figment::{
     providers::{self, Format},
     Figment, Provider,
 };
-use figment_schemars_bridge::FigmentSerdeBridge;
+
 use json::Value;
 use xdg::BaseDirectories;
 
-use crate::node::{data_path::DataPath, NodeContainer};
+use crate::{
+    figment_serde_bridge::FigmentSerdeBridge,
+    node::{data_path::DataPath, NodeContainer},
+};
 
 struct BoxedProvider(Box<dyn Provider>);
 

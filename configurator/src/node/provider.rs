@@ -2,11 +2,10 @@ use figment::{
     value::{Dict, Empty, Num, Tag, Value},
     Metadata, Profile, Provider,
 };
-use figment_schemars_bridge::json_value_to_figment_value;
 
 use crate::node::Node;
 
-use super::{NodeContainer, NumberValue};
+use super::{from_json_schema::json_value_to_figment_value, NodeContainer, NumberValue};
 
 impl Provider for NodeContainer {
     fn metadata(&self) -> figment::Metadata {

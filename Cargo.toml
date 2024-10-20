@@ -2,13 +2,13 @@
 members = [
     "configurator",
     "configurator_schema",
-    "figment_schemars_bridge",
-    "zconf",
-    "zconf_derive",
-    "zconf_derive_impl",
-    "vexpe",
     "zconf2",
-    "vtesting",
+    # "figment_schemars_bridge",
+    # "zconf",
+    # "zconf_derive",
+    # "zconf_derive_impl",
+    # "vexpe",
+    # "vtesting",
 ]
 resolver = "2"
 
