@@ -4,6 +4,7 @@ use std::{
     path::Path,
 };
 
+use cosmic::iced_futures::backend::default;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -34,10 +35,9 @@ struct Config {
 #[serde(default)]
 pub struct SubConfig {
     pub hella: Hella,
-    // pub active: bool,
-    // pub otros: u16,
-    // pub opt: Option<Option<String>>,
-    // pub choice: Choice,
+    pub active: bool,
+    pub otros: u16,
+    pub opt: Option<Option<String>>,
 }
 
 
@@ -45,16 +45,18 @@ pub struct SubConfig {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(default)]
 pub struct Hella {
-    // pub active: bool,
-    // pub otros: u16,
-    // pub opt: Option<Option<String>>,
-    // pub choice: Choice,
+    pub active: bool,
+    pub otros: u16,
+    pub opt: Option<Option<String>>,
     pub hella: String,
 }
 impl Default for Hella {
     fn default() -> Self {
         Self {
             hella: "bonjour".into(),
+            active: Default::default(),
+            otros: Default::default(),
+            opt: Default::default(),
         }
     }
 }
