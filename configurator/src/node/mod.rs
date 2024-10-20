@@ -162,7 +162,7 @@ impl NodeArray {
 }
 
 impl NodeContainer {
-    // only used for test rn
+    /// Return true if all active note have a value
     pub fn is_valid(&self) -> bool {
         match &self.node {
             Node::Null => true,

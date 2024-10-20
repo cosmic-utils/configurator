@@ -150,7 +150,9 @@ impl cosmic::Application for App {
                                 }
                             }
 
-                            page.write().unwrap();
+                            if page.tree.is_valid() {
+                                page.write().unwrap();
+                            }
                         }
                         PageMsg::None => {
                             // pass

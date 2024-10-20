@@ -95,6 +95,26 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         .into()
 }
 
+fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
+    tooltip(
+        icon!("report24").class(cosmic::theme::Svg::custom(|e| cosmic::widget::svg::Style {
+            color: Some(Color::from_rgb(236.0, 194.0, 58.0)),
+        })),
+        text("No value has been defined"),
+        Position::Top,
+    )
+    .into()
+}
+
+fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
+    tooltip(
+        icon!("info24"),
+        text("This will remove all children"),
+        Position::Top,
+    )
+    .into()
+}
+
 fn view_object<'a>(
     data_path: &'a [DataPathType],
     node: &'a NodeContainer,
@@ -116,10 +136,12 @@ fn view_object<'a>(
         .push(
             section()
                 .title("Values")
-                .extend(node_object.nodes.iter().map(|(name, node)| {
+                .extend(node_object.nodes.iter().map(|(name, inner_node)| {
                     mouse_area(
-                        row().push(text(name)).push(horizontal_space()).push_maybe(
-                            match &node.node {
+                        row()
+                            .push(text(name))
+                            .push(horizontal_space())
+                            .push_maybe(match &inner_node.node {
                                 Node::Null => Some(Element::from(text("null"))),
                                 Node::Bool(node_bool) => Some(
                                     toggler(node_bool.value.unwrap_or_default())
@@ -190,8 +212,12 @@ fn view_object<'a>(
                                 }
 
                                 _ => None,
-                            },
-                        ),
+                            })
+                            .push_maybe(if !inner_node.is_valid() {
+                                Some(no_value_defined_warning_icon())
+                            } else {
+                                None
+                            }),
                     )
                     .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
                 })),
@@ -207,26 +233,11 @@ fn view_object<'a>(
                             ChangeMsg::ApplyDefault,
                         )),
                     )
-                    .push(tooltip(
-                        icon!("report24"),
-                        text("This will remove all children"),
-                        Position::Top,
-                    )),
+                    .push(this_will_remove_all_children()),
             )
         }))
         .spacing(SPACING)
         .into()
-}
-
-fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
-    tooltip(
-        icon!("report24").class(cosmic::theme::Svg::custom(|e| cosmic::widget::svg::Style {
-            color: Some(Color::from_rgb(236.0, 194.0, 58.0)),
-        })),
-        text("No value has been defined"),
-        Position::Top,
-    )
-    .into()
 }
 
 fn view_bool<'a>(
@@ -425,24 +436,34 @@ fn view_enum<'a>(
         .push(
             section()
                 .title("Values")
-                .extend(node_enum.nodes.iter().enumerate().map(|(pos, node)| {
+                .extend(node_enum.nodes.iter().enumerate().map(|(pos, inner_node)| {
                     container(cosmic::widget::radio(
-                        row()
-                            .push(text(node.name().unwrap_or(Cow::Owned(pos.to_string()))))
-                            .push(horizontal_space())
-                            .push_maybe(
-                                if let Some(active_pos) = node_enum.value
-                                    && active_pos == pos
-                                {
-                                    Some(
-                                        button::text("modify").on_press(PageMsg::OpenDataPath(
-                                            DataPathType::Indice(pos),
-                                        )),
-                                    )
-                                } else {
-                                    None
-                                },
-                            ),
+                        {
+                            let is_active = if let Some(active_pos) = node_enum.value
+                                && active_pos == pos
+                            {
+                                Some(())
+                            } else {
+                                None
+                            };
+
+                            row()
+                                .push(text(
+                                    inner_node.name().unwrap_or(Cow::Owned(pos.to_string())),
+                                ))
+                                .push(horizontal_space())
+                                .push_maybe(is_active.map(|_| {
+                                    button::text("modify")
+                                        .on_press(PageMsg::OpenDataPath(DataPathType::Indice(pos)))
+                                }))
+                                .push_maybe(is_active.and_then(|_| {
+                                    if !inner_node.is_valid() {
+                                        Some(no_value_defined_warning_icon())
+                                    } else {
+                                        None
+                                    }
+                                }))
+                        },
                         pos,
                         node_enum.value,
                         |pos| PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeEnum(pos)),
@@ -472,11 +493,7 @@ fn view_enum<'a>(
                                 ChangeMsg::ApplyDefault,
                             )),
                         )
-                        .push(tooltip(
-                            icon!("report24"),
-                            text("This will remove all children"),
-                            Position::Top,
-                        )),
+                        .push(this_will_remove_all_children()),
                 )
         }))
         .spacing(SPACING)
