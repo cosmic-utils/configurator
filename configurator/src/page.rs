@@ -17,7 +17,7 @@ use figment::{
     providers::{self, Format},
     Figment, Provider,
 };
-use figment_schemars_bridge::JsonSchemaProvider;
+use figment_schemars_bridge::{FigmentSerdeBridge, JsonSchemaProvider};
 use json::Value;
 use schemars::schema::RootSchema;
 use xdg::BaseDirectories;
@@ -45,14 +45,30 @@ impl Provider for BoxedProvider {
     }
 }
 
-fn provider_from_format(path: &Path, format: &str) -> anyhow::Result<BoxedProvider> {
+fn provider_for_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
     let provider = match format {
-        "json" => providers::Json::file(path),
-
-        _ => bail!("unknown format: {}", format),
+        ConfigFormat::Json => providers::Json::file(path),
+        ConfigFormat::CosmicRon => todo!(),
     };
 
-    Ok(BoxedProvider(Box::new(provider)))
+    BoxedProvider(Box::new(provider))
+}
+
+#[derive(Debug)]
+pub enum ConfigFormat {
+    Json,
+    CosmicRon,
+}
+
+impl ConfigFormat {
+    pub fn try_new(format: &str) -> anyhow::Result<Self> {
+        let format = match format {
+            "json" => ConfigFormat::Json,
+            "cosmic_ron" => ConfigFormat::CosmicRon,
+            _ => bail!("unknown format: {}", format),
+        };
+        Ok(format)
+    }
 }
 
 #[derive(Debug)]
@@ -62,7 +78,7 @@ pub struct Page {
     pub source_paths: Vec<PathBuf>,
     pub source_home_path: PathBuf,
     pub write_path: PathBuf,
-    pub format: String,
+    pub format: ConfigFormat,
 
     pub system_config: Figment,
     pub user_config: Figment,
@@ -129,21 +145,22 @@ impl Page {
 
         let format = {
             if let Some(Value::String(format)) = json_obj.get("X_CONFIGURATOR_FORMAT") {
-                format.clone()
+                format
             } else {
                 source_home_path
                     .extension()
                     .expect("no format defined")
                     .to_str()
                     .unwrap()
-                    .to_string()
             }
         };
+
+        let format = ConfigFormat::try_new(format)?;
 
         let mut system_config = Figment::new();
 
         for path in &source_paths {
-            system_config = system_config.merge(provider_from_format(path, &format)?)
+            system_config = system_config.merge(provider_for_format(path, &format))
         }
 
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
@@ -174,7 +191,7 @@ impl Page {
 
     pub fn reload(&mut self) -> anyhow::Result<()> {
         self.user_config =
-            Figment::new().merge(provider_from_format(&self.source_home_path, &self.format)?);
+            Figment::new().merge(provider_for_format(&self.source_home_path, &self.format));
 
         self.full_config = Figment::new()
             .merge(self.system_config.clone())
@@ -183,6 +200,22 @@ impl Page {
         self.tree.apply_figment(&self.full_config)?;
 
         assert!(self.tree.is_valid());
+
+        Ok(())
+    }
+
+    pub fn write(&self) -> anyhow::Result<()> {
+        let data = Figment::new().merge(&self.tree);
+
+        let serde_bridge = FigmentSerdeBridge::new(&data);
+
+        match self.format {
+            ConfigFormat::Json => {
+                let content = json::to_string_pretty(&serde_bridge)?;
+                fs::write(&self.write_path, content)?;
+            }
+            ConfigFormat::CosmicRon => todo!(),
+        }
 
         Ok(())
     }

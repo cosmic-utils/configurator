@@ -41,7 +41,7 @@ _note: list are separated by `;`._
     </tr>
     <tr>
       <td><code>X_CONFIGURATOR_FORMAT</code></td>
-      <td>Format of the configuration. For COSMIC, it will be <code>ron_cosmic</code>.</td>
+      <td>Format of the configuration. For COSMIC, it will be <code>cosmic_ron</code>.</td>
       <td>Extension of <code>X_CONFIGURATOR_SOURCE_HOME_PATH</code></td>
       <td>String</td>
     </tr>

@@ -61,8 +61,7 @@ impl cosmic::Application for App {
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
         let mut nav_model = SingleSelectModel::default();
 
-        for mut page in create_pages() {
-            page.reload().unwrap();
+        for page in create_pages() {
             nav_model.insert().text(page.title()).data::<Page>(page);
         }
 
@@ -142,6 +141,8 @@ impl cosmic::Application for App {
                                     node_enum.value = Some(value);
                                 }
                             }
+
+                            page.write().unwrap();
                         }
                         PageMsg::None => {
                             // pass
@@ -154,13 +155,13 @@ impl cosmic::Application for App {
                     page.reload().unwrap();
                 }
             }
+            AppMsg::ReloadLocalConfig => {
+                self.config.reload().unwrap();
+            }
             AppMsg::ConfigActive(value) => {
                 self.config.update(|settings| {
                     settings.active = value;
                 });
-            }
-            AppMsg::ReloadLocalConfig => {
-                self.config.reload().unwrap();
             }
         };
 
