@@ -616,6 +616,7 @@ dependencies = [
  "figment",
  "i18n-embed",
  "i18n-embed-fl",
+ "indexmap 2.6.0",
  "libcosmic",
  "ron",
  "rust-embed",

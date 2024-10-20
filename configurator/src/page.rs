@@ -312,7 +312,7 @@ impl Page {
                     ChangeMsg::Remove(field) => {
                         match &mut node.node {
                             Node::Object(node_object) => {
-                                node_object.nodes.remove(field.unwrap_name_ref());
+                                node_object.nodes.shift_remove(field.unwrap_name_ref());
 
                                 for n in node_object.nodes.values_mut() {
                                     n.modified = true;

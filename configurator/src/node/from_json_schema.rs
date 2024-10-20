@@ -1,6 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
 use figment::value::{Empty, Num, Tag};
+use json::value::Index;
 use schemars::schema::{
     InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation,
 };
@@ -45,7 +46,7 @@ pub(crate) fn schema_object_to_node(
     let metadata = &schema_object.metadata;
 
     if let Some(obj) = &schema_object.object {
-        let mut nodes = BTreeMap::new();
+        let mut nodes = IndexMap::new();
 
         for (name, type_definition) in &obj.properties {
             let node = schema_object_to_node("object", def, &type_definition.to_object());
@@ -110,7 +111,7 @@ pub(crate) fn schema_object_to_node(
             match *instance_type {
                 InstanceType::Null => Node::Null,
                 InstanceType::Boolean => Node::Bool(NodeBool::new()),
-                InstanceType::Object => Node::Object(NodeObject::new(BTreeMap::new(), None)),
+                InstanceType::Object => Node::Object(NodeObject::new(IndexMap::new(), None)),
                 InstanceType::Array => todo!(),
                 InstanceType::Number => Node::Number(NodeNumber::new(NumberKind::Float)),
                 InstanceType::String => Node::String(NodeString::new()),

@@ -33,6 +33,7 @@ derive_more = { version = "1", features = ["unwrap"] }
 ron.workspace = true
 xdg.workspace = true
 directories.workspace = true
+indexmap.workspace = true
 
 [dependencies.libcosmic]
 # git = "https://github.com/pop-os/libcosmic"

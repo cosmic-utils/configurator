@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
 use derive_more::derive::Unwrap;
 use figment::value::{Tag, Value};
 use from_json_schema::json_value_to_figment_value;
+use indexmap::IndexMap;
 use schemars::schema::SchemaObject;
 
 use crate::utils::{figment_value_to_f64, figment_value_to_i128};
@@ -92,7 +93,7 @@ pub struct NodeEnum {
 
 #[derive(Debug, Clone)]
 pub struct NodeObject {
-    pub nodes: BTreeMap<String, NodeContainer>,
+    pub nodes: IndexMap<String, NodeContainer>,
     pub template: Option<Box<NodeContainer>>,
 }
 
@@ -148,7 +149,7 @@ impl NodeEnum {
 }
 
 impl NodeObject {
-    pub fn new(nodes: BTreeMap<String, NodeContainer>, node_type: Option<NodeContainer>) -> Self {
+    pub fn new(nodes: IndexMap<String, NodeContainer>, node_type: Option<NodeContainer>) -> Self {
         Self {
             nodes,
             template: node_type.map(Box::new),
