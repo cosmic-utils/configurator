@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct Config {
     hash_map: HashMap<String, i32>,
+    vec: Vec<i32>,
 }
 
 impl Default for Config {
@@ -15,7 +16,10 @@ impl Default for Config {
 
         hash_map.insert("k".into(), 0);
 
-        Self { hash_map }
+        Self {
+            hash_map,
+            vec: vec![0, 1],
+        }
     }
 }
 

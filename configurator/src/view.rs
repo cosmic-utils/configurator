@@ -115,18 +115,117 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
     .into()
 }
 
+fn node_list<'a>(
+    name: DataPathType,
+    inner_node: &'a NodeContainer,
+    data_path: &'a [DataPathType],
+) -> Element<'a, PageMsg> {
+    fn append_data_path(data_path: &[DataPathType], field: &DataPathType) -> Vec<DataPathType> {
+        let mut new_vec = Vec::with_capacity(data_path.len() + 1);
+        new_vec.extend_from_slice(data_path);
+        new_vec.push(field.clone());
+        new_vec
+    }
+
+    let name_cloned = name.clone();
+
+    mouse_area(
+        row()
+            .push(text(format!("{}", name)))
+            .push(horizontal_space())
+            .push_maybe(match &inner_node.node {
+                Node::Null => Some(Element::from(text("null"))),
+                Node::Bool(node_bool) => Some(
+                    toggler(node_bool.value.unwrap_or_default())
+                        .on_toggle(move |value| {
+                            PageMsg::ChangeMsg(
+                                append_data_path(data_path, &name),
+                                ChangeMsg::ChangeBool(value),
+                            )
+                        })
+                        .into(),
+                ),
+
+                Node::Enum(node_enum) => {
+                    #[derive(Eq, Clone)]
+                    struct Key<'a> {
+                        pub pos: usize,
+                        pub value: Cow<'a, str>,
+                    }
+
+                    impl PartialEq for Key<'_> {
+                        fn eq(&self, other: &Self) -> bool {
+                            self.pos == other.pos
+                        }
+                    }
+
+                    #[allow(clippy::to_string_trait_impl)]
+                    impl ToString for Key<'_> {
+                        fn to_string(&self) -> String {
+                            self.value.to_string()
+                        }
+                    }
+
+                    Some(
+                        row()
+                            .push_maybe(node_enum.value.map(|pos| {
+                                text(
+                                    node_enum.nodes[pos]
+                                        .name()
+                                        .unwrap_or(Cow::Owned(pos.to_string())),
+                                )
+                            }))
+                            .push(pick_list(
+                                node_enum
+                                    .nodes
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(pos, node)| Key {
+                                        pos,
+                                        value: node.name().unwrap_or(Cow::Owned(pos.to_string())),
+                                    })
+                                    .collect::<Vec<_>>(),
+                                node_enum.value.map(|pos| Key {
+                                    pos,
+                                    value: Cow::Borrowed(""),
+                                }),
+                                move |key| {
+                                    PageMsg::ChangeMsg(
+                                        append_data_path(data_path, &name),
+                                        ChangeMsg::ChangeEnum(key.pos),
+                                    )
+                                },
+                            ))
+                            .align_y(alignment::Vertical::Center)
+                            .into(),
+                    )
+                }
+
+                _ => None,
+            })
+            .push_maybe(if !inner_node.is_valid() {
+                Some(no_value_defined_warning_icon())
+            } else {
+                None
+            })
+            .push_maybe(if inner_node.removable {
+                Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+                    data_path.to_vec(),
+                    ChangeMsg::Remove(name_cloned.clone()),
+                )))
+            } else {
+                None
+            }),
+    )
+    .on_press(PageMsg::OpenDataPath(name_cloned))
+    .into()
+}
+
 fn view_object<'a>(
     data_path: &'a [DataPathType],
     node: &'a NodeContainer,
     node_object: &'a NodeObject,
 ) -> Element<'a, PageMsg> {
-    fn append_data_path(data_path: &[DataPathType], name: &str) -> Vec<DataPathType> {
-        let mut new_vec = Vec::with_capacity(data_path.len() + 1);
-        new_vec.extend_from_slice(data_path);
-        new_vec.push(DataPathType::Name(name.to_string()));
-        new_vec
-    }
-
     column()
         .push_maybe(
             node.desc
@@ -137,97 +236,7 @@ fn view_object<'a>(
             section()
                 .title("Values")
                 .extend(node_object.nodes.iter().map(|(name, inner_node)| {
-                    mouse_area(
-                        row()
-                            .push(text(name))
-                            .push(horizontal_space())
-                            .push_maybe(match &inner_node.node {
-                                Node::Null => Some(Element::from(text("null"))),
-                                Node::Bool(node_bool) => Some(
-                                    toggler(node_bool.value.unwrap_or_default())
-                                        .on_toggle(move |value| {
-                                            PageMsg::ChangeMsg(
-                                                append_data_path(data_path, name),
-                                                ChangeMsg::ChangeBool(value),
-                                            )
-                                        })
-                                        .into(),
-                                ),
-
-                                Node::Enum(node_enum) => {
-                                    #[derive(Eq, Clone)]
-                                    struct Key<'a> {
-                                        pub pos: usize,
-                                        pub value: Cow<'a, str>,
-                                    }
-
-                                    impl PartialEq for Key<'_> {
-                                        fn eq(&self, other: &Self) -> bool {
-                                            self.pos == other.pos
-                                        }
-                                    }
-
-                                    #[allow(clippy::to_string_trait_impl)]
-                                    impl ToString for Key<'_> {
-                                        fn to_string(&self) -> String {
-                                            self.value.to_string()
-                                        }
-                                    }
-
-                                    Some(
-                                        row()
-                                            .push_maybe(node_enum.value.map(|pos| {
-                                                text(
-                                                    node_enum.nodes[pos]
-                                                        .name()
-                                                        .unwrap_or(Cow::Owned(pos.to_string())),
-                                                )
-                                            }))
-                                            .push(pick_list(
-                                                node_enum
-                                                    .nodes
-                                                    .iter()
-                                                    .enumerate()
-                                                    .map(|(pos, node)| Key {
-                                                        pos,
-                                                        value: node
-                                                            .name()
-                                                            .unwrap_or(Cow::Owned(pos.to_string())),
-                                                    })
-                                                    .collect::<Vec<_>>(),
-                                                node_enum.value.map(|pos| Key {
-                                                    pos,
-                                                    value: Cow::Borrowed(""),
-                                                }),
-                                                |key| {
-                                                    PageMsg::ChangeMsg(
-                                                        append_data_path(data_path, name),
-                                                        ChangeMsg::ChangeEnum(key.pos),
-                                                    )
-                                                },
-                                            ))
-                                            .align_y(alignment::Vertical::Center)
-                                            .into(),
-                                    )
-                                }
-
-                                _ => None,
-                            })
-                            .push_maybe(if !inner_node.is_valid() {
-                                Some(no_value_defined_warning_icon())
-                            } else {
-                                None
-                            })
-                            .push_maybe(if inner_node.removable {
-                                Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
-                                    data_path.to_vec(),
-                                    ChangeMsg::Remove(DataPathType::Name(name.to_string())),
-                                )))
-                            } else {
-                                None
-                            }),
-                    )
-                    .on_press(PageMsg::OpenDataPath(DataPathType::Name(name.to_string())))
+                    node_list(DataPathType::Name(name.clone()), inner_node, data_path)
                 })),
         )
         .push_maybe(node_object.template.as_ref().map(|_| {
@@ -246,6 +255,114 @@ fn view_object<'a>(
                     )
                     .push(this_will_remove_all_children()),
             )
+        }))
+        .spacing(SPACING)
+        .into()
+}
+
+fn view_array<'a>(
+    data_path: &'a [DataPathType],
+    node: &'a NodeContainer,
+    node_array: &'a NodeArray,
+) -> Element<'a, PageMsg> {
+    column()
+        .push_maybe(
+            node.desc
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
+        .push(
+            section().title("Values").extend(
+                node_array
+                    .values
+                    .as_ref()
+                    .map_or(&[] as &[NodeContainer], |v| v.as_slice())
+                    .iter()
+                    .enumerate()
+                    .map(|(pos, inner_node)| {
+                        node_list(DataPathType::Indice(pos), inner_node, data_path)
+                    }),
+            ),
+        )
+        .spacing(SPACING)
+        .into()
+}
+
+fn view_enum<'a>(
+    data_path: &'a [DataPathType],
+    node: &'a NodeContainer,
+    node_enum: &'a NodeEnum,
+) -> Element<'a, PageMsg> {
+    let (value_pos, value) = node_enum.unwrap_value();
+
+    column()
+        .push_maybe(
+            node.desc
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
+        .push(
+            section()
+                .title("Values")
+                .extend(node_enum.nodes.iter().enumerate().map(|(pos, inner_node)| {
+                    container(cosmic::widget::radio(
+                        {
+                            let is_active = if let Some(active_pos) = node_enum.value
+                                && active_pos == pos
+                            {
+                                Some(())
+                            } else {
+                                None
+                            };
+
+                            row()
+                                .push(text(
+                                    inner_node.name().unwrap_or(Cow::Owned(pos.to_string())),
+                                ))
+                                .push(horizontal_space())
+                                .push_maybe(is_active.map(|_| {
+                                    button::text("modify")
+                                        .on_press(PageMsg::OpenDataPath(DataPathType::Indice(pos)))
+                                }))
+                                .push_maybe(is_active.and_then(|_| {
+                                    if !inner_node.is_valid() {
+                                        Some(no_value_defined_warning_icon())
+                                    } else {
+                                        None
+                                    }
+                                }))
+                        },
+                        pos,
+                        node_enum.value,
+                        |pos| PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeEnum(pos)),
+                    ))
+                    .padding(5)
+                })),
+        )
+        .push_maybe(node.default.as_ref().map(|default| {
+            section()
+                .title("Default")
+                .add_maybe(default.clone().into_string().map(|default| {
+                    container(
+                        row()
+                            .push(text("Default value"))
+                            .push(horizontal_space())
+                            .push(text(default)),
+                    )
+                    .padding(10)
+                }))
+                .add(
+                    row()
+                        .push(horizontal_space())
+                        .push(
+                            // xxx: the on_press need to be lazy
+                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
+                                data_path.to_vec(),
+                                ChangeMsg::ApplyDefault,
+                            )),
+                        )
+                        .push(this_will_remove_all_children()),
+                )
         }))
         .spacing(SPACING)
         .into()
@@ -431,86 +548,6 @@ fn view_number<'a>(
         .into()
 }
 
-fn view_enum<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_enum: &'a NodeEnum,
-) -> Element<'a, PageMsg> {
-    let (value_pos, value) = node_enum.unwrap_value();
-
-    column()
-        .push_maybe(
-            node.desc
-                .as_ref()
-                .map(|desc| section().title("Description").add(text(desc))),
-        )
-        .push(
-            section()
-                .title("Values")
-                .extend(node_enum.nodes.iter().enumerate().map(|(pos, inner_node)| {
-                    container(cosmic::widget::radio(
-                        {
-                            let is_active = if let Some(active_pos) = node_enum.value
-                                && active_pos == pos
-                            {
-                                Some(())
-                            } else {
-                                None
-                            };
-
-                            row()
-                                .push(text(
-                                    inner_node.name().unwrap_or(Cow::Owned(pos.to_string())),
-                                ))
-                                .push(horizontal_space())
-                                .push_maybe(is_active.map(|_| {
-                                    button::text("modify")
-                                        .on_press(PageMsg::OpenDataPath(DataPathType::Indice(pos)))
-                                }))
-                                .push_maybe(is_active.and_then(|_| {
-                                    if !inner_node.is_valid() {
-                                        Some(no_value_defined_warning_icon())
-                                    } else {
-                                        None
-                                    }
-                                }))
-                        },
-                        pos,
-                        node_enum.value,
-                        |pos| PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeEnum(pos)),
-                    ))
-                    .padding(5)
-                })),
-        )
-        .push_maybe(node.default.as_ref().map(|default| {
-            section()
-                .title("Default")
-                .add_maybe(default.clone().into_string().map(|default| {
-                    container(
-                        row()
-                            .push(text("Default value"))
-                            .push(horizontal_space())
-                            .push(text(default)),
-                    )
-                    .padding(10)
-                }))
-                .add(
-                    row()
-                        .push(horizontal_space())
-                        .push(
-                            // xxx: the on_press need to be lazy
-                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                                data_path.to_vec(),
-                                ChangeMsg::ApplyDefault,
-                            )),
-                        )
-                        .push(this_will_remove_all_children()),
-                )
-        }))
-        .spacing(SPACING)
-        .into()
-}
-
 fn view_value<'a>(
     data_path: &'a [DataPathType],
     node: &'a NodeContainer,
@@ -521,21 +558,4 @@ fn view_value<'a>(
         .push(text(format!("name: {:?}", data_path.last())))
         .push(text(format!("{:?}", node_value.value)))
         .into()
-}
-
-fn view_array<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_array: &'a NodeArray,
-) -> Element<'a, PageMsg> {
-    let mut elements = Vec::new();
-
-    for (pos, node) in node_array.values.iter().enumerate() {
-        let element = button::text(format!("{}", pos))
-            .on_press(PageMsg::OpenDataPath(DataPathType::Indice(pos)))
-            .into();
-        elements.push(element);
-    }
-
-    column::with_children(elements).into()
 }
