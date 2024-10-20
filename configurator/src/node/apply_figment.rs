@@ -37,7 +37,7 @@ impl NodeContainer {
                     .iter()
                     .position(|e| e.is_matching(&value))
                     .ok_or_else(|| {
-                        anyhow!("can't find a compatible enum variant for {value:#?}. {node_enum:#?}")
+                        anyhow!("can't find a compatible enum variant for string {value:#?}. {node_enum:#?}")
                     })?;
 
                 node_enum.value = Some(pos);
@@ -63,7 +63,7 @@ impl NodeContainer {
                     .iter()
                     .position(|e| e.is_matching(&value))
                     .ok_or_else(|| {
-                        anyhow!("can't find a compatible enum variant for {value:#?}. {node_enum:#?}")
+                        anyhow!("can't find a compatible enum variant for empty {value:#?}. {node_enum:#?}")
                     })?;
 
                 node_enum.value = Some(pos);
@@ -96,7 +96,7 @@ impl NodeContainer {
                     })
                     .ok_or_else(|| {
                         anyhow!(
-                            "can't find a compatible enum variant for {values:#?}. {node_enum:#?}"
+                            "can't find a compatible enum variant for dict {values:#?}. {node_enum:#?}"
                         )
                     })?;
 
@@ -114,7 +114,7 @@ impl NodeContainer {
 
                 node_array.values = Some(nodes);
             }
-            (value, node) => bail!("no compatible node for value = {value:?}. {node:?}"),
+            (value, node) => bail!("no compatible node for array. value = {value:#?}. {node:#?}"),
         };
 
         Ok(())
