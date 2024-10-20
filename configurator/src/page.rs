@@ -1,11 +1,11 @@
 use std::{
-    fs::{self, File},
-    io::Read,
+    fs::{self, File, OpenOptions},
+    io::{Read, Write},
     path::{Path, PathBuf},
     str::FromStr,
 };
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use cosmic::{
     app::{Core, Task},
     executor,
@@ -197,7 +197,7 @@ impl Page {
             .merge(self.system_config.clone())
             .merge(self.user_config.clone());
 
-        self.tree.apply_figment(&self.full_config)?;
+        self.tree.apply_figment(&self.full_config).unwrap();
 
         assert!(self.tree.is_valid());
 
@@ -209,10 +209,24 @@ impl Page {
 
         let serde_bridge = FigmentSerdeBridge::new(&data);
 
+        fn write_and_create_parent<P: AsRef<Path>, C: AsRef<[u8]>>(
+            path: P,
+            contents: C,
+        ) -> anyhow::Result<()> {
+            if !path.as_ref().exists() {
+                let parent = path.as_ref().parent().ok_or(anyhow!("no parent"))?;
+                fs::create_dir_all(&parent)?;
+            }
+
+            fs::write(path, contents)?;
+
+            Ok(())
+        }
+
         match self.format {
             ConfigFormat::Json => {
                 let content = json::to_string_pretty(&serde_bridge)?;
-                fs::write(&self.write_path, content)?;
+                write_and_create_parent(&self.write_path, &content)?;
             }
             ConfigFormat::CosmicRon => todo!(),
         }
