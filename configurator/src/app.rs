@@ -99,70 +99,7 @@ impl cosmic::Application for App {
         match message {
             AppMsg::PageMsg(id, page_msg) => {
                 if let Some(page) = self.nav_model.data_mut::<Page>(id) {
-                    match page_msg {
-                        PageMsg::SelectDataPath(pos) => {
-                            page.data_path.change_to(pos);
-                        }
-                        PageMsg::OpenDataPath(data_path_type) => {
-                            page.data_path.open(data_path_type);
-                        }
-                        PageMsg::ChangeMsg(data_path, change_msg) => {
-                            let node = page.tree.get_at_mut(data_path.iter()).unwrap();
-
-                            match change_msg {
-                                ChangeMsg::ApplyDefault => {
-                                    node.remove_value_rec();
-                                    node.apply_value(node.default.clone().unwrap(), false)
-                                        .unwrap();
-
-                                    page.tree
-                                        .set_modified(data_path[..data_path.len() - 1].iter());
-                                }
-                                ChangeMsg::ChangeBool(value) => {
-                                    let node_bool = node.node.unwrap_bool_mut();
-                                    node_bool.value = Some(value);
-                                    page.tree.set_modified(data_path.iter());
-                                }
-                                ChangeMsg::ChangeString(value) => {
-                                    let node_string = node.node.unwrap_string_mut();
-                                    node_string.value = Some(value);
-                                    page.tree.set_modified(data_path.iter());
-                                }
-                                ChangeMsg::ChangeNumber(value) => {
-                                    let node_number = node.node.unwrap_number_mut();
-
-                                    match node_number.kind {
-                                        NumberKind::Integer => {
-                                            if let Ok(value) = value.parse() {
-                                                node_number.value = Some(NumberValue::I128(value));
-                                            }
-                                        }
-                                        NumberKind::Float => {
-                                            if let Ok(value) = value.parse() {
-                                                node_number.value = Some(NumberValue::F64(value));
-                                            }
-                                        }
-                                    }
-                                    node_number.value_string = value;
-                                    page.tree.set_modified(data_path.iter());
-                                }
-                                ChangeMsg::ChangeEnum(value) => {
-                                    let node_enum = node.node.unwrap_enum_mut();
-                                    node_enum.value = Some(value);
-
-                                    node_enum.nodes[value].modified = true;
-                                    page.tree.set_modified(data_path.iter());
-                                }
-                            }
-
-                            if page.tree.is_valid() {
-                                page.write().unwrap();
-                            }
-                        }
-                        PageMsg::None => {
-                            // pass
-                        }
-                    }
+                    page.update(page_msg);
                 }
             }
             AppMsg::ReloadActivePage => {

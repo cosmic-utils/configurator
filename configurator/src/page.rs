@@ -18,7 +18,8 @@ use xdg::BaseDirectories;
 
 use crate::{
     figment_serde_bridge::FigmentSerdeBridge,
-    node::{data_path::DataPath, NodeContainer},
+    message::{ChangeMsg, PageMsg},
+    node::{data_path::DataPath, NodeContainer, NumberKind, NumberValue},
 };
 
 struct BoxedProvider(Box<dyn Provider>);
@@ -247,5 +248,76 @@ impl Page {
         }
 
         Ok(())
+    }
+
+    pub fn update(&mut self, message: PageMsg) {
+        match message {
+            PageMsg::SelectDataPath(pos) => {
+                self.data_path.change_to(pos);
+            }
+            PageMsg::OpenDataPath(data_path_type) => {
+                self.data_path.open(data_path_type);
+            }
+            PageMsg::ChangeMsg(data_path, change_msg) => {
+                let node = self.tree.get_at_mut(data_path.iter()).unwrap();
+
+                match change_msg {
+                    ChangeMsg::ApplyDefault => {
+                        node.remove_value_rec();
+                        node.apply_value(node.default.clone().unwrap(), false)
+                            .unwrap();
+
+                        self.tree
+                            .set_modified(data_path[..data_path.len() - 1].iter());
+                    }
+                    ChangeMsg::ChangeBool(value) => {
+                        let node_bool = node.node.unwrap_bool_mut();
+                        node_bool.value = Some(value);
+                        self.tree.set_modified(data_path.iter());
+                    }
+                    ChangeMsg::ChangeString(value) => {
+                        let node_string = node.node.unwrap_string_mut();
+                        node_string.value = Some(value);
+                        self.tree.set_modified(data_path.iter());
+                    }
+                    ChangeMsg::ChangeNumber(value) => {
+                        let node_number = node.node.unwrap_number_mut();
+
+                        match node_number.kind {
+                            NumberKind::Integer => {
+                                if let Ok(value) = value.parse() {
+                                    node_number.value = Some(NumberValue::I128(value));
+                                } else {
+                                    return;
+                                }
+                            }
+                            NumberKind::Float => {
+                                if let Ok(value) = value.parse() {
+                                    node_number.value = Some(NumberValue::F64(value));
+                                } else {
+                                    return;
+                                }
+                            }
+                        }
+                        node_number.value_string = value;
+                        self.tree.set_modified(data_path.iter());
+                    }
+                    ChangeMsg::ChangeEnum(value) => {
+                        let node_enum = node.node.unwrap_enum_mut();
+                        node_enum.value = Some(value);
+
+                        node_enum.nodes[value].modified = true;
+                        self.tree.set_modified(data_path.iter());
+                    }
+                }
+
+                if self.tree.is_valid() {
+                    self.write().unwrap();
+                }
+            }
+            PageMsg::None => {
+                // pass
+            }
+        }
     }
 }
