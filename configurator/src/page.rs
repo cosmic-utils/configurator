@@ -196,6 +196,8 @@ impl Page {
 
         page.reload().unwrap();
 
+        dbg!(&page.tree);
+
         Ok(page)
     }
 
@@ -326,8 +328,7 @@ impl Page {
                         match &mut node.node {
                             Node::Object(node_object) => {
                                 node_object.nodes.shift_remove(field.unwrap_name_ref());
-                                
-                                
+
                                 for n in node_object.nodes.values_mut() {
                                     n.modified = true;
                                 }
@@ -345,6 +346,8 @@ impl Page {
                             }
                             _ => panic!(),
                         }
+                        dbg!(&self.data_path);
+
                         self.tree.set_modified(data_path.iter());
                     }
                     ChangeMsg::AddNewNodeToObject(name) => {
@@ -363,10 +366,14 @@ impl Page {
                     ChangeMsg::AddNewNodeToArray => {
                         let node_array = node.node.unwrap_array_mut();
 
-                        let new_node = node_array.template();
+                        let mut new_node = node_array.template();
+                        new_node.modified = true;
 
                         match &mut node_array.values {
                             Some(values) => {
+                                for n in &mut *values {
+                                    n.modified = true;
+                                }
                                 values.push(new_node);
                             }
                             None => {

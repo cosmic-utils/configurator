@@ -72,6 +72,38 @@ impl DataPath {
             None => &[],
         }
     }
+
+    pub fn keep_max(&mut self, tree: &NodeContainer) {
+        match &tree.node {
+            Node::Null => todo!(),
+            Node::Bool(node_bool) => todo!(),
+            Node::String(node_string) => todo!(),
+            Node::Number(node_number) => todo!(),
+            Node::Object(node_object) => todo!(),
+            Node::Enum(node_enum) => todo!(),
+            Node::Array(node_array) => todo!(),
+            Node::Value(node_value) => todo!(),
+        }
+    }
+
+    pub fn keep_max_rec<'a>(
+        mut data_path: impl Iterator<Item = &'a DataPathType>,
+        tree: &NodeContainer,
+    ) -> Option<bool> {
+        match data_path.next() {
+            Some(component) => match &tree.node {
+                Node::Null => todo!(),
+                Node::Bool(node_bool) => todo!(),
+                Node::String(node_string) => todo!(),
+                Node::Number(node_number) => todo!(),
+                Node::Object(node_object) => todo!(),
+                Node::Enum(node_enum) => todo!(),
+                Node::Array(node_array) => todo!(),
+                Node::Value(node_value) => todo!(),
+            },
+            None => None,
+        }
+    }
 }
 
 impl NodeContainer {

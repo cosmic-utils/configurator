@@ -7,5 +7,4 @@ for libcosmic
 
 
 - data path on top should remove deleted nodes
-- reset to default do not remove all hashmap elements
 - reorder array

@@ -5,6 +5,7 @@ use figment::{
     value::{Tag, Value},
     Figment,
 };
+use indexmap::map::MutableKeys;
 
 use crate::utils::{data_default_profile_figment, json_value_eq_figment_value};
 
@@ -22,7 +23,7 @@ impl NodeContainer {
     // todo2: analyze the entire logic
     pub fn apply_value(&mut self, value: Value, modified: bool) -> anyhow::Result<()> {
         // info!("merge_figment_rec");
-        // dbg!(&self, &value);
+        dbg!(&self, &value);
         self.modified = modified;
 
         match (value, &mut self.node) {
@@ -78,6 +79,7 @@ impl NodeContainer {
                     }
                 }
 
+                node_object.nodes.retain(|_, node| !node.removable);
                 // for hashmap ?
                 if let Some(template) = node_object.template() {
                     for (key, value) in values {
