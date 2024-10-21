@@ -29,29 +29,17 @@ impl Default for Config {
     }
 }
 
-const NAME: &str = "testing1";
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::fs;
 
-#[test]
-fn gen_schema() {
-    super::gen_schema::<Config>(NAME);
-}
+    #[test]
+    fn deser() {
+        let content = fs::read_to_string("test3.json").unwrap();
 
-#[test]
-fn print_default_figment() {
-    super::print_default_figment::<Config>();
-}
+        let s = serde_json::from_str::<Config>(&content).unwrap();
 
-#[test]
-fn print_json() {
-    super::print_json::<Config>();
-}
-
-#[test]
-fn print_ron() {
-    super::print_ron::<Config>();
-}
-
-#[test]
-fn print_schema() {
-    super::print_schema::<Config>(NAME);
+        dbg!(&s);
+    }
 }

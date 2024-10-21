@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 mod expe_serde1;
 mod expe_serde2;
+mod expe_serde3;
 
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(default)]

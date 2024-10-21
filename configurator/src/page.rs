@@ -11,10 +11,10 @@ use cosmic::widget::segmented_button::Entity;
 use directories::BaseDirs;
 use figment::{
     providers::{self, Format},
+    value::{Dict, Tag, Value},
     Figment, Provider,
 };
 
-use json::Value;
 use xdg::BaseDirectories;
 
 use crate::{
@@ -119,7 +119,7 @@ impl Page {
             let mut contents = String::new();
             file.read_to_string(&mut contents).unwrap();
 
-            json::value::Value::from_str(&contents).unwrap()
+            json::Value::from_str(&contents).unwrap()
         };
 
         let Some(json_obj) = json_value.as_object() else {
@@ -127,7 +127,7 @@ impl Page {
         };
 
         let source_paths = {
-            if let Some(Value::String(paths)) = json_obj.get("X_CONFIGURATOR_SOURCE_PATHS") {
+            if let Some(json::Value::String(paths)) = json_obj.get("X_CONFIGURATOR_SOURCE_PATHS") {
                 paths.split_terminator(';').map(PathBuf::from).collect()
             } else {
                 vec![]
@@ -135,7 +135,8 @@ impl Page {
         };
 
         let source_home_path = {
-            if let Some(Value::String(path)) = json_obj.get("X_CONFIGURATOR_SOURCE_HOME_PATH") {
+            if let Some(json::Value::String(path)) = json_obj.get("X_CONFIGURATOR_SOURCE_HOME_PATH")
+            {
                 let base_dirs = BaseDirs::new().unwrap();
 
                 base_dirs.home_dir().join(path)
@@ -145,7 +146,7 @@ impl Page {
         };
 
         let write_path = {
-            if let Some(Value::String(path)) = json_obj.get("X_CONFIGURATOR_WRITE_PATH") {
+            if let Some(json::Value::String(path)) = json_obj.get("X_CONFIGURATOR_WRITE_PATH") {
                 PathBuf::from(path)
             } else {
                 source_home_path.clone()
@@ -153,7 +154,7 @@ impl Page {
         };
 
         let format = {
-            if let Some(Value::String(format)) = json_obj.get("X_CONFIGURATOR_FORMAT") {
+            if let Some(json::Value::String(format)) = json_obj.get("X_CONFIGURATOR_FORMAT") {
                 format
             } else {
                 source_home_path
@@ -356,9 +357,16 @@ impl Page {
                     ChangeMsg::AddNewNodeToObject(name) => {
                         let node_object = node.node.unwrap_object_mut();
                         if !node_object.nodes.contains_key(&name) {
-                            let new_node = node_object.template().unwrap();
-                            // todo: do we need this ?
-                            // new_node.modified = true;
+                            let mut new_node = node_object.template().unwrap();
+
+                            if let Some(default) = &new_node.default {
+                                new_node.apply_value(default.clone(), false).unwrap();
+                            } else {
+                                new_node
+                                    .apply_value(Value::Dict(Tag::Default, Dict::new()), false)
+                                    .unwrap();
+                            }
+
                             node_object.nodes.insert(name, new_node);
 
                             for n in node_object.nodes.values_mut() {
@@ -374,6 +382,14 @@ impl Page {
                         let node_array = node.node.unwrap_array_mut();
 
                         let mut new_node = node_array.template();
+
+                        if let Some(default) = &new_node.default {
+                            new_node.apply_value(default.clone(), false).unwrap();
+                        } else {
+                            new_node
+                                .apply_value(Value::Dict(Tag::Default, Dict::new()), false)
+                                .unwrap();
+                        }
                         new_node.modified = true;
 
                         match &mut node_array.values {
