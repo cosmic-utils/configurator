@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use cosmic::{
-    iced::{alignment, Color, Length},
+    iced::{alignment, Alignment, Color, Length},
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
@@ -131,7 +131,20 @@ fn node_list<'a>(
 
     mouse_area(
         row()
+            .align_y(Alignment::Center)
             .push(text(format!("{}", name)))
+            .push_maybe(
+                if inner_node.removable
+                    && let DataPathType::Name(name) = &name
+                {
+                    Some(
+                        button::text("edit key")
+                            .on_press(PageMsg::DialogRenameKey(data_path.to_vec(), name.clone())),
+                    )
+                } else {
+                    None
+                },
+            )
             .push(horizontal_space())
             .push_maybe(match &inner_node.node {
                 Node::Null => Some(Element::from(text("null"))),

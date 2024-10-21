@@ -6,10 +6,6 @@ for libcosmic
 - on_press_with for button
 
 
-- modal to create a key
-- add in object
-- add in array
-- test array
-- reorder array
 - data path on top should remove deleted nodes
 - reset to default do not remove all hashmap elements
+- reorder array

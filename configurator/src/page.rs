@@ -262,6 +262,8 @@ pub enum Action {
 
 impl Page {
     pub fn update(&mut self, message: PageMsg, page_id: Entity) -> Action {
+        let mut action = Action::None;
+
         match message {
             PageMsg::SelectDataPath(pos) => {
                 self.data_path.change_to(pos);
@@ -324,7 +326,8 @@ impl Page {
                         match &mut node.node {
                             Node::Object(node_object) => {
                                 node_object.nodes.shift_remove(field.unwrap_name_ref());
-
+                                
+                                
                                 for n in node_object.nodes.values_mut() {
                                     n.modified = true;
                                 }
@@ -354,7 +357,7 @@ impl Page {
 
                             self.tree.set_modified(data_path.iter());
 
-                            return Action::RemoveDialog;
+                            action = Action::RemoveDialog;
                         }
                     }
                     ChangeMsg::AddNewNodeToArray => {
@@ -374,7 +377,17 @@ impl Page {
                     }
 
                     ChangeMsg::RenameKey { prev, new } => {
-                        // todo
+                        let node_object = node.node.unwrap_object_mut();
+
+                        if node_object.nodes.contains_key(&new) {
+                            return Action::None;
+                        }
+
+                        let node = node_object.nodes.get(&prev).unwrap().clone();
+                        node_object.nodes.insert(new, node);
+                        node_object.nodes.swap_remove(&prev);
+                        self.tree.set_modified(data_path.iter());
+                        action = Action::RemoveDialog;
                     }
                 }
 
@@ -402,6 +415,6 @@ impl Page {
             }
         };
 
-        Action::None
+        action
     }
 }
