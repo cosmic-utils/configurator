@@ -6,4 +6,7 @@ for libcosmic
 - on_press_with for button
 
 - data path on top should remove deleted nodes
+- tester avec des types plus complex
+  - default ne marche pas
+  - est-ce que ca se serialize bien ?
 - reorder array

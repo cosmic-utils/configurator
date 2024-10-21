@@ -6,23 +6,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
-    hash_map: HashMap<String, I32>,
-    vec: Vec<I32>,
+    hash_map: HashMap<String, Complex>,
+    vec: Vec<Complex>,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
-struct I32(i32);
+struct Complex {
+    str: String,
+}
 
 impl Default for Config {
     fn default() -> Self {
         let mut hash_map = HashMap::new();
 
-        hash_map.insert("k".into(), I32(0));
+        hash_map.insert("k".into(), Complex { str: "0".into() });
 
         Self {
             hash_map,
-            vec: vec![I32(0), I32(12)],
+            vec: vec![Complex { str: "0".into() }, Complex { str: "12".into() }],
         }
     }
 }
