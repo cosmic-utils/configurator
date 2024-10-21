@@ -23,8 +23,8 @@ zconf\* are just alternative to [cosmic-config](https://github.com/pop-os/libcos
   - [ ] Ron serializer
   - [x] Better API to define the JSON Schema (system/home paths, ect.., define the spec)
   - [ ] Provide an option to install the schema from the app (and hopefully upsteam it when we are in a good shape)
-- [ ] UI to create a value (this will be difficult, but it should be possible)
-- [ ] Improve the UI a lot
+- [x] UI to create a value (this will be difficult, but it should be possible)
+- [x] Improve the UI a lot
 - [ ] ...
 
 ## Other

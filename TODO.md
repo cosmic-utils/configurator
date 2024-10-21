@@ -5,5 +5,4 @@ for libcosmic
 - add_maybe for Setting Section
 - on_press_with for button
 
-- data path on top should remove deleted nodes
 - reorder array

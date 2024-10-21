@@ -216,16 +216,19 @@ impl Page {
 
         self.tree.apply_figment(&self.full_config).unwrap();
 
-        dbg!(&self.tree);
-        dbg!(&self.full_config);
+        // dbg!(&self.tree);
+        // dbg!(&self.full_config);
+        // dbg!(&self.data_path);
 
         assert!(self.tree.is_valid());
+
+        self.data_path.sanitize_path(&self.tree);
 
         Ok(())
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        dbg!(&self.tree);
+        // dbg!(&self.tree);
 
         let data = Figment::new().merge(&self.tree);
 
@@ -350,33 +353,36 @@ impl Page {
                             }
                             _ => panic!(),
                         }
-                        dbg!(&self.data_path);
+                        // dbg!(&self.data_path);
 
                         self.tree.set_modified(data_path.iter());
                     }
                     ChangeMsg::AddNewNodeToObject(name) => {
                         let node_object = node.node.unwrap_object_mut();
-                        if !node_object.nodes.contains_key(&name) {
-                            let mut new_node = node_object.template().unwrap();
 
-                            if let Some(default) = &new_node.default {
-                                new_node.apply_value(default.clone(), false).unwrap();
-                            } else {
-                                new_node
-                                    .apply_value(Value::Dict(Tag::Default, Dict::new()), false)
-                                    .unwrap();
-                            }
-
-                            node_object.nodes.insert(name, new_node);
-
-                            for n in node_object.nodes.values_mut() {
-                                n.modified = true;
-                            }
-
-                            self.tree.set_modified(data_path.iter());
-
-                            action = Action::RemoveDialog;
+                        if node_object.nodes.contains_key(&name) {
+                            return Action::None;
                         }
+
+                        let mut new_node = node_object.template().unwrap();
+
+                        if let Some(default) = &new_node.default {
+                            new_node.apply_value(default.clone(), false).unwrap();
+                        } else {
+                            new_node
+                                .apply_value(Value::Dict(Tag::Default, Dict::new()), false)
+                                .unwrap();
+                        }
+
+                        node_object.nodes.insert(name, new_node);
+
+                        for n in node_object.nodes.values_mut() {
+                            n.modified = true;
+                        }
+
+                        self.tree.set_modified(data_path.iter());
+
+                        action = Action::RemoveDialog;
                     }
                     ChangeMsg::AddNewNodeToArray => {
                         let node_array = node.node.unwrap_array_mut();
@@ -420,6 +426,8 @@ impl Page {
                         action = Action::RemoveDialog;
                     }
                 }
+
+                self.data_path.sanitize_path(&self.tree);
 
                 if self.tree.is_valid() {
                     self.write().unwrap();
