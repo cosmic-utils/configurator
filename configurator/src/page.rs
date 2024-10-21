@@ -196,7 +196,7 @@ impl Page {
 
         page.reload().unwrap();
 
-        dbg!(&page.tree);
+        // dbg!(&page.tree);
 
         Ok(page)
     }
@@ -214,6 +214,9 @@ impl Page {
             .merge(self.user_config.clone());
 
         self.tree.apply_figment(&self.full_config).unwrap();
+
+        dbg!(&self.tree);
+        dbg!(&self.full_config);
 
         assert!(self.tree.is_valid());
 
