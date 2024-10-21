@@ -59,10 +59,12 @@ impl NodeContainer {
                 // Value::Dict(tag.clone(), Dict::new());
                 // todo!()
             }),
-            Node::Array(node_array) => node_array.values.as_ref().map(|values| Value::Array(
+            Node::Array(node_array) => node_array.values.as_ref().map(|values| {
+                Value::Array(
                     *tag,
                     values.iter().map(|n| n.to_value(tag).unwrap()).collect(),
-                )),
+                )
+            }),
             Node::Value(node_value) => Some(json_value_to_figment_value(&node_value.value)),
         }
     }

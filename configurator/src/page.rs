@@ -361,6 +361,10 @@ impl Page {
                             // new_node.modified = true;
                             node_object.nodes.insert(name, new_node);
 
+                            for n in node_object.nodes.values_mut() {
+                                n.modified = true;
+                            }
+
                             self.tree.set_modified(data_path.iter());
 
                             action = Action::RemoveDialog;
