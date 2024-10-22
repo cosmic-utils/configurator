@@ -39,12 +39,12 @@ impl Provider for BoxedProvider {
 }
 
 fn provider_for_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
-    let provider = match format {
-        ConfigFormat::Json => providers::Json::file(path),
-        ConfigFormat::CosmicRon => todo!(),
-    };
-
-    BoxedProvider(Box::new(provider))
+    match format {
+        ConfigFormat::Json => BoxedProvider(Box::new(providers::Json::file(path))),
+        ConfigFormat::CosmicRon => {
+            BoxedProvider(Box::new(crate::providers::CosmicRonProvider::new(path)))
+        }
+    }
 }
 
 #[derive(Debug)]

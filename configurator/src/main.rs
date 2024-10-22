@@ -18,6 +18,7 @@ mod node;
 mod page;
 mod utils;
 mod view;
+mod providers;
 #[macro_use]
 mod icon;
 #[cfg(test)]

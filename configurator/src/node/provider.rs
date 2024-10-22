@@ -9,7 +9,7 @@ use super::{from_json_schema::json_value_to_figment_value, NodeContainer, Number
 
 impl Provider for NodeContainer {
     fn metadata(&self) -> figment::Metadata {
-        Metadata::named("name")
+        Metadata::named("node provider")
     }
 
     fn data(
