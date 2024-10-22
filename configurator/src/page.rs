@@ -24,6 +24,8 @@ use crate::{
     node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
 };
 
+use configurator_utils::ConfigFormat;
+
 struct BoxedProvider(Box<dyn Provider>);
 
 impl Provider for BoxedProvider {
@@ -44,23 +46,6 @@ fn provider_for_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
         ConfigFormat::CosmicRon => {
             BoxedProvider(Box::new(crate::providers::CosmicRonProvider::new(path)))
         }
-    }
-}
-
-#[derive(Debug)]
-pub enum ConfigFormat {
-    Json,
-    CosmicRon,
-}
-
-impl ConfigFormat {
-    pub fn try_new(format: &str) -> anyhow::Result<Self> {
-        let format = match format {
-            "json" => ConfigFormat::Json,
-            "cosmic_ron" => ConfigFormat::CosmicRon,
-            _ => bail!("unknown format: {}", format),
-        };
-        Ok(format)
     }
 }
 
@@ -165,7 +150,7 @@ impl Page {
             }
         };
 
-        let format = ConfigFormat::try_new(format)?;
+        let format = ConfigFormat::try_from(format)?;
 
         let mut system_config = Figment::new();
 

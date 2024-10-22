@@ -11,7 +11,7 @@ fn get_schema<C: JsonSchema>(name: &str) -> String {
     let config_path = format!("{}/test_configs/{}.json", env!("CARGO_MANIFEST_DIR"), name);
 
     configurator_schema::gen_schema::<C>()
-        .source_home_paths(&[&config_path])
+        .source_home_path(&config_path)
         .call()
         .unwrap()
 }

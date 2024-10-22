@@ -611,6 +611,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "configurator_schema",
+ "configurator_utils",
  "derive_more",
  "directories",
  "figment",
@@ -635,8 +636,16 @@ name = "configurator_schema"
 version = "0.1.0"
 dependencies = [
  "bon",
+ "configurator_utils",
  "schemars",
  "serde_json",
+]
+
+[[package]]
+name = "configurator_utils"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
 ]
 
 [[package]]

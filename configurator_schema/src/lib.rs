@@ -1,13 +1,15 @@
 use bon::builder;
+pub use configurator_utils::ConfigFormat;
 use json::Value;
+pub use schemars;
 use schemars::{schema_for, JsonSchema};
 
 #[builder]
 pub fn gen_schema<S: JsonSchema>(
     source_paths: Option<&[&str]>,
-    source_home_paths: Option<&[&str]>,
+    source_home_path: Option<&str>,
     write_path: Option<&str>,
-    format: Option<&str>,
+    format: Option<ConfigFormat>,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let schema = schema_for!(S);
 
@@ -22,10 +24,10 @@ pub fn gen_schema<S: JsonSchema>(
         );
     }
 
-    if let Some(source_home_paths) = source_home_paths {
+    if let Some(source_home_paths) = source_home_path {
         obj.insert(
             "X_CONFIGURATOR_SOURCE_HOME_PATH".into(),
-            Value::String(source_home_paths.join(";")),
+            Value::String(source_home_paths.to_string()),
         );
     }
 
@@ -46,3 +48,5 @@ pub fn gen_schema<S: JsonSchema>(
     let str = json::to_string_pretty(&value)?;
     Ok(str)
 }
+
+

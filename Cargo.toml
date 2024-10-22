@@ -2,6 +2,7 @@
 members = [
     "configurator",
     "configurator_schema",
+    "configurator_utils",
     "zconf2",
     # "figment_schemars_bridge",
     # "zconf",
@@ -25,6 +26,7 @@ unused_imports = "allow"
 
 [workspace.dependencies]
 configurator_schema = { path = "configurator_schema" }
+configurator_utils = { path = "configurator_utils" }
 figment_schemars_bridge = { path = "figment_schemars_bridge" }
 zconf = { path = "zconf" }
 zconf2 = { path = "zconf2" }

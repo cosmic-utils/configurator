@@ -20,7 +20,7 @@ mod test {
         let path = Path::new("../configurator/res").join(format!("{}.json", APPID));
 
         let schema = configurator_schema::gen_schema::<Config>()
-            .source_home_paths(&[".config/configurator/configurator.json"])
+            .source_home_path(".config/configurator/configurator.json")
             .call()
             .unwrap();
 

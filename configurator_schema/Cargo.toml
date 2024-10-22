@@ -10,5 +10,6 @@ keywords.workspace = true
 [dependencies]
 schemars = { workspace = true }
 json = { workspace = true }
+configurator_utils.workspace = true
 bon = "2"
 # anyhow = "1"

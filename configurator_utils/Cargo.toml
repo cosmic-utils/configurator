@@ -1,0 +1,13 @@
+[package]
+name = "configurator_utils"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+
+[lints]
+workspace = true
