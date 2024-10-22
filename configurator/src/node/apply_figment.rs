@@ -118,7 +118,7 @@ impl NodeContainer {
 
                 node_array.values = Some(nodes);
             }
-            (value, node) => bail!("no compatible node for array. value = {value:#?}. {node:#?}"),
+            (value, node) => bail!("no compatible node for value = {value:#?}. {node:#?}"),
         };
 
         Ok(())

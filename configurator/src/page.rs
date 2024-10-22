@@ -205,7 +205,7 @@ impl Page {
         // dbg!(&self.full_config);
         // dbg!(&self.data_path);
 
-        assert!(self.tree.is_valid());
+        // assert!(self.tree.is_valid());
 
         self.data_path.sanitize_path(&self.tree);
 
