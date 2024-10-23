@@ -180,9 +180,11 @@ impl Page {
             format,
         };
 
-        page.reload().unwrap();
+        dbg!(&page.tree);
 
-        // dbg!(&page.tree);
+        if let Err(err) = page.reload() {
+            // error!("{err}");
+        }
 
         Ok(page)
     }
@@ -199,7 +201,7 @@ impl Page {
             .merge(self.system_config.clone())
             .merge(self.user_config.clone());
 
-        self.tree.apply_figment(&self.full_config).unwrap();
+        self.tree.apply_figment(&self.full_config)?;
 
         // dbg!(&self.tree);
         // dbg!(&self.full_config);

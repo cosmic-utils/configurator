@@ -140,7 +140,9 @@ impl cosmic::Application for App {
             }
             AppMsg::ReloadActivePage => {
                 if let Some(page) = self.nav_model.active_data_mut::<Page>() {
-                    page.reload().unwrap();
+                    if let Err(err) = page.reload() {
+                        error!("{err}");
+                    }
                 }
             }
             AppMsg::ReloadLocalConfig => {
