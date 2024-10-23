@@ -47,6 +47,14 @@ impl NodeContainer {
                 )
             }),
             Node::Value(node_value) => Some(json_value_to_figment_value(&node_value.value)),
+            Node::UnNamedObject(un_named_object) => Some(Value::Array(
+                *tag,
+                un_named_object
+                    .values
+                    .iter()
+                    .map(|n| n.to_value(tag).unwrap())
+                    .collect(),
+            )),
         }
     }
 }

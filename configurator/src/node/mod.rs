@@ -43,6 +43,18 @@ pub enum Node {
     /// represent a final value
     /// currently only string is supported
     Value(NodeValue),
+    UnNamedObject(UnNamedObject),
+}
+
+#[derive(Debug, Clone)]
+pub struct UnNamedObject {
+    pub values: Vec<NodeContainer>,
+}
+
+impl UnNamedObject {
+    pub fn new(values: Vec<NodeContainer>) -> Self {
+        Self { values }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -161,6 +173,9 @@ impl NodeContainer {
                 .as_ref()
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
             Node::Value(node_value) => true,
+            Node::UnNamedObject(un_named_object) => {
+                un_named_object.values.iter().all(|n| n.is_valid())
+            }
         }
     }
 
@@ -198,6 +213,7 @@ impl NodeContainer {
             Node::Enum(node_enum) => None,
             Node::Array(node_array) => None,
             Node::Value(node_value) => node_value.value.as_str().map(Cow::Borrowed),
+            Node::UnNamedObject(un_named_object) => None,
         }
     }
 }

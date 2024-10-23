@@ -100,8 +100,18 @@ pub(crate) fn schema_object_to_node(
                     node
                 }
                 SingleOrVec::Vec(vec) => {
-                    dbg!(&schema_object);
-                    todo!()
+                    // dbg!(&schema_object);
+                    let values = vec
+                        .iter()
+                        .map(|schema| {
+                            schema_object_to_node("array single", def, &schema.to_object())
+                        })
+                        .collect::<Vec<_>>();
+
+                    NodeContainer::from_metadata(
+                        Node::UnNamedObject(UnNamedObject::new(values)),
+                        metadata,
+                    )
                 }
             },
             None => todo!(),
