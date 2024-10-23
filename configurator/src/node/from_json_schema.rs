@@ -99,7 +99,10 @@ pub(crate) fn schema_object_to_node(
                     let node = schema_object_to_node("array single", def, &schema.to_object());
                     node
                 }
-                SingleOrVec::Vec(vec) => todo!(),
+                SingleOrVec::Vec(vec) => {
+                    dbg!(&schema_object);
+                    todo!()
+                }
             },
             None => todo!(),
         };
@@ -168,6 +171,19 @@ pub(crate) fn schema_object_to_node(
         if let Some(one_of) = &subschemas.one_of {
             let mut nodes = Vec::new();
             for schema in one_of {
+                let node = schema_object_to_node("one_of", def, &schema.to_object());
+
+                // dbg!(&node);
+
+                nodes.push(node);
+            }
+
+            return NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata);
+        }
+
+        if let Some(any_of) = &subschemas.any_of {
+            let mut nodes = Vec::new();
+            for schema in any_of {
                 let node = schema_object_to_node("one_of", def, &schema.to_object());
 
                 // dbg!(&node);

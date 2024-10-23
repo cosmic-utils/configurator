@@ -9,6 +9,10 @@
         "string",
         "null"
       ]
+    },
+    "cosmic_compat": {
+      "default": false,
+      "type": "boolean"
     }
   },
   "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/configurator/configurator.json"
