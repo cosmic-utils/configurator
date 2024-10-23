@@ -76,8 +76,8 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> {
 
     fn schema_test_path() -> impl Iterator<Item = PathBuf> {
         #[cfg(debug_assertions)]
-        {
-            iter::once(PathBuf::from("configurator/test_schemas"))
+        {   
+            iter::once(PathBuf::from(format!("{}/test_schemas", env!("CARGO_MANIFEST_DIR"))))
         }
 
         #[cfg(not(debug_assertions))]
@@ -187,7 +187,7 @@ impl Page {
             format,
         };
 
-        // dbg!(&page.tree);
+        dbg!(&page.tree);
 
         if let Err(err) = page.reload() {
             error!("{err}");
