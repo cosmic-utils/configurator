@@ -183,7 +183,7 @@ impl Page {
         dbg!(&page.tree);
 
         if let Err(err) = page.reload() {
-            // error!("{err}");
+            error!("{err}");
         }
 
         Ok(page)
