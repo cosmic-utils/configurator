@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     io::Read,
-    iter,
+    iter::{self},
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -45,7 +45,7 @@ pub struct Page {
 }
 
 pub fn create_pages() -> impl Iterator<Item = Page> {
-    fn default_paths() -> Vec<PathBuf> {
+    fn default_paths() -> impl Iterator<Item = PathBuf> {
         let base_dirs = BaseDirectories::new().unwrap();
         let mut data_dirs: Vec<PathBuf> = vec![];
         data_dirs.push(base_dirs.get_data_home());
@@ -54,40 +54,64 @@ pub fn create_pages() -> impl Iterator<Item = Page> {
         #[cfg(debug_assertions)]
         data_dirs.push(PathBuf::from("test_schemas"));
 
-        let mut paths = data_dirs
-            .into_iter()
-            .map(|d| d.join("configurator"))
-            .collect::<Vec<_>>();
+        data_dirs.into_iter().map(|d| d.join("configurator"))
+    }
 
-        let cosmic_compat = include_dir!("cosmic_compat/schemas");
+    fn cosmic_compat() -> impl Iterator<Item = Page> {
+        let dir = include_dir!("$CARGO_MANIFEST_DIR/../cosmic_compat/schemas");
 
-        paths.push(cosmic_compat.path().to_path_buf());
+        dir.entries().iter().map(|entry| {
+            let file = entry.as_file().unwrap();
 
+            let content = file.contents_utf8().unwrap();
+
+            Page::from_str(appid_from_schema_path(file.path()), content).unwrap()
+        })
+    }
+
+    fn schema_test_path() -> impl Iterator<Item = PathBuf> {
         #[cfg(debug_assertions)]
         {
-            paths.push(PathBuf::from("configurator/test_schemas"));
+            iter::once(PathBuf::from("configurator/test_schemas"))
         }
 
-        paths
+        #[cfg(not(debug_assertions))]
+        {
+            iter::empty()
+        }
     }
 
     default_paths()
-        .into_iter()
+        .chain(schema_test_path())
         .filter_map(|xdg_path| fs::read_dir(xdg_path).ok())
         .flatten()
         .flatten()
-        .map(|entry| Page::new(&entry.path()).unwrap())
+        .filter_map(|entry| match Page::from_path(&entry.path()) {
+            Ok(page) => Some(page),
+            Err(e) => {
+                error!("{}", e);
+                None
+            }
+        })
+        .chain(cosmic_compat())
+}
+
+fn appid_from_schema_path(schema_path: &Path) -> String {
+    let schema_name = schema_path.file_name().unwrap().to_string_lossy();
+
+    let appid = schema_name.strip_suffix(".json").unwrap().to_string();
+    appid
 }
 
 impl Page {
-    fn new(path: &Path) -> anyhow::Result<Self> {
-        let json_value = {
-            let mut file = File::open(path).unwrap();
-            let mut contents = String::new();
-            file.read_to_string(&mut contents).unwrap();
+    fn from_path(schema_path: &Path) -> anyhow::Result<Self> {
+        let content = fs::read_to_string(schema_path)?;
 
-            json::Value::from_str(&contents).unwrap()
-        };
+        Self::from_str(appid_from_schema_path(schema_path), &content)
+    }
+
+    fn from_str(appid: String, content: &str) -> anyhow::Result<Self> {
+        let json_value = json::Value::from_str(content)?;
 
         let Some(json_obj) = json_value.as_object() else {
             bail!("no obj")
@@ -141,10 +165,6 @@ impl Page {
         }
 
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
-
-        let schema_name = path.file_name().unwrap().to_string_lossy();
-
-        let appid = schema_name.strip_suffix(".json").unwrap().to_string();
 
         let title = appid.split('.').last().unwrap().to_string();
 
