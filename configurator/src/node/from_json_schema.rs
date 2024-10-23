@@ -113,10 +113,16 @@ pub(crate) fn schema_object_to_node(
                 InstanceType::Boolean => Node::Bool(NodeBool::new()),
                 InstanceType::Object => Node::Object(NodeObject::new(IndexMap::new(), None)),
                 InstanceType::Array => todo!(),
-                InstanceType::Number => Node::Number(NodeNumber::new(NumberValueLight::F32)),
+                InstanceType::Number => Node::Number(NodeNumber::new(
+                    format
+                        .and_then(|s| NumberValue::kind_from_str(s))
+                        .unwrap_or(NumberValueLight::F64),
+                )),
                 InstanceType::String => Node::String(NodeString::new()),
                 InstanceType::Integer => Node::Number(NodeNumber::new(
-                    format.and_then(|s| NumberValue::kind_from_str(s)).unwrap(),
+                    format
+                        .and_then(|s| NumberValue::kind_from_str(s))
+                        .unwrap_or(NumberValueLight::I128),
                 )),
             }
         }

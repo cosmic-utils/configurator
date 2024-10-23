@@ -66,7 +66,7 @@ impl NodeContainer {
                 // dbg!(&value);
                 // dbg!(&node_number);
 
-                let value = node_number.try_from_figment_num(value).unwrap();
+                let value = node_number.try_from_figment_num(value)?;
 
                 node_number.value_string = value.to_string();
                 node_number.value = Some(value);
