@@ -74,7 +74,7 @@ impl cosmic::Application for App {
 
         let mut active = false;
 
-        for page in create_pages() {
+        for page in create_pages(config.settings()) {
             if let Some(appid) = &config.settings().last_used_page
                 && appid == &page.appid
             {

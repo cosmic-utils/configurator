@@ -20,6 +20,7 @@ use xdg::BaseDirectories;
 
 use crate::{
     app::Dialog,
+    config::Config,
     message::{ChangeMsg, PageMsg},
     node::{data_path::DataPath, Node, NodeContainer, NumberValue},
 };
@@ -44,7 +45,7 @@ pub struct Page {
     pub data_path: DataPath,
 }
 
-pub fn create_pages() -> impl Iterator<Item = Page> {
+pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> {
     fn default_paths() -> impl Iterator<Item = PathBuf> {
         let base_dirs = BaseDirectories::new().unwrap();
         let mut data_dirs: Vec<PathBuf> = vec![];
@@ -57,16 +58,20 @@ pub fn create_pages() -> impl Iterator<Item = Page> {
         data_dirs.into_iter().map(|d| d.join("configurator"))
     }
 
-    fn cosmic_compat() -> impl Iterator<Item = Page> {
-        let dir = include_dir!("$CARGO_MANIFEST_DIR/../cosmic_compat/schemas");
+    fn cosmic_compat(active: bool) -> Box<dyn Iterator<Item = Page>> {
+        if active {
+            let dir = include_dir!("$CARGO_MANIFEST_DIR/../cosmic_compat/schemas");
 
-        dir.entries().iter().map(|entry| {
-            let file = entry.as_file().unwrap();
+            Box::new(dir.entries().iter().map(|entry| {
+                let file = entry.as_file().unwrap();
 
-            let content = file.contents_utf8().unwrap();
+                let content = file.contents_utf8().unwrap();
 
-            Page::from_str(appid_from_schema_path(file.path()), content).unwrap()
-        })
+                Page::from_str(appid_from_schema_path(file.path()), content).unwrap()
+            }))
+        } else {
+            Box::new(iter::empty())
+        }
     }
 
     fn schema_test_path() -> impl Iterator<Item = PathBuf> {
@@ -93,7 +98,7 @@ pub fn create_pages() -> impl Iterator<Item = Page> {
                 None
             }
         })
-        .chain(cosmic_compat())
+        .chain(cosmic_compat(config.cosmic_compat))
 }
 
 fn appid_from_schema_path(schema_path: &Path) -> String {

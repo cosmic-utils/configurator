@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct Config {
     pub last_used_page: Option<String>,
+    pub cosmic_compat: bool,
 }
 
 #[cfg(test)]
