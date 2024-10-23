@@ -1,0 +1,422 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "X_CONFIGURATOR_FORMAT": "cosmic_ron",
+  "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/cosmic/com.system76.CosmicPanel/v1",
+  "X_CONFIGURATOR_SOURCE_PATHS": "/usr/share/cosmic/com.system76.CosmicPanel/v1",
+  "additionalProperties": false,
+  "definitions": {
+    "AutoHide": {
+      "additionalProperties": false,
+      "description": "configurable autohide behavior",
+      "properties": {
+        "handle_size": {
+          "description": "size of the handle in pixels should be > 0",
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "transition_time": {
+          "description": "time in milliseconds that it should take to transition",
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "wait_time": {
+          "description": "time in milliseconds without pointer focus before hiding",
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "handle_size",
+        "transition_time",
+        "wait_time"
+      ],
+      "type": "object"
+    },
+    "CosmicPanelBackground": {
+      "description": "configurable backgrounds for the cosmic panel",
+      "oneOf": [
+        {
+          "description": "theme default color with optional transparency",
+          "enum": [
+            "ThemeDefault"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "theme default dark",
+          "enum": [
+            "Dark"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "theme default light",
+          "enum": [
+            "Light"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "description": "RGBA",
+          "properties": {
+            "Color": {
+              "items": {
+                "format": "float",
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "type": "array"
+            }
+          },
+          "required": [
+            "Color"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "CosmicPanelConfig": {
+      "additionalProperties": false,
+      "description": "Config structure for the cosmic panel",
+      "properties": {
+        "anchor": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/PanelAnchor"
+            }
+          ],
+          "description": "edge which the panel is locked to"
+        },
+        "anchor_gap": {
+          "description": "gap between the panel and the edge of the ouput",
+          "type": "boolean"
+        },
+        "autohide": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AutoHide"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "enable autohide feature with the transitions lasting the supplied wait time and duration in millis"
+        },
+        "background": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/CosmicPanelBackground"
+            }
+          ],
+          "description": "customized background, or"
+        },
+        "border_radius": {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "exclusive_zone": {
+          "description": "exclusive zone",
+          "type": "boolean"
+        },
+        "expand_to_edges": {
+          "description": "whether the panel should stretch to the edges of output",
+          "type": "boolean"
+        },
+        "keyboard_interactivity": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/KeyboardInteractivity"
+            }
+          ],
+          "description": "configured interactivity level for the panel"
+        },
+        "layer": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/Layer"
+            }
+          ],
+          "description": "configured layer which the panel is on"
+        },
+        "margin": {
+          "description": "margin between the panel and the edge of the output",
+          "format": "uint16",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "name": {
+          "description": "profile name for this config, should be unique",
+          "type": "string"
+        },
+        "opacity": {
+          "description": "opacity of the panel",
+          "format": "float",
+          "type": "number"
+        },
+        "output": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/CosmicPanelOuput"
+            }
+          ],
+          "description": "name of configured output (Intended for dock or panel), or None to place on active output (Intended for wrapping a single application)"
+        },
+        "padding": {
+          "description": "padding around the panel",
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        "plugins_center": {
+          "description": "list of plugins in the center of the panel",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "plugins_wings": {
+          "description": "list of plugins on the left / top and right / bottom of the panel",
+          "items": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "size": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/PanelSize"
+            }
+          ],
+          "description": "configured size for the panel"
+        },
+        "spacing": {
+          "description": "space between panel plugins",
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "anchor",
+        "anchor_gap",
+        "background",
+        "border_radius",
+        "exclusive_zone",
+        "expand_to_edges",
+        "keyboard_interactivity",
+        "layer",
+        "margin",
+        "name",
+        "opacity",
+        "output",
+        "padding",
+        "size",
+        "spacing"
+      ],
+      "type": "object"
+    },
+    "CosmicPanelOuput": {
+      "description": "Configuration for the panel's ouput",
+      "oneOf": [
+        {
+          "description": "show panel on all outputs",
+          "enum": [
+            "All"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "show panel on the active output",
+          "enum": [
+            "Active"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "description": "show panel on a specific output",
+          "properties": {
+            "Name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Name"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "KeyboardInteractivity": {
+      "description": "Interactivity level of the cosmic panel",
+      "oneOf": [
+        {
+          "description": "Not interactible",
+          "enum": [
+            "None"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Only surface which is interactible",
+          "enum": [
+            "Exclusive"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Interactible when given keyboard focus",
+          "enum": [
+            "OnDemand"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "Layer": {
+      "description": "Layer which the cosmic panel is on",
+      "oneOf": [
+        {
+          "description": "background layer",
+          "enum": [
+            "Background"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Bottom layer",
+          "enum": [
+            "Bottom"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Top layer",
+          "enum": [
+            "Top"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "Overlay layer",
+          "enum": [
+            "Overlay"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "PanelAnchor": {
+      "description": "Edge to which the panel is anchored",
+      "oneOf": [
+        {
+          "description": "anchored to left edge",
+          "enum": [
+            "Left"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "anchored to right edge",
+          "enum": [
+            "Right"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "anchored to top edge",
+          "enum": [
+            "Top"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "anchored to bottom edge",
+          "enum": [
+            "Bottom"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "PanelSize": {
+      "description": "Configurable size for the cosmic panel",
+      "oneOf": [
+        {
+          "description": "XS",
+          "enum": [
+            "XS"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "S",
+          "enum": [
+            "S"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "M",
+          "enum": [
+            "M"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "L",
+          "enum": [
+            "L"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "XL",
+          "enum": [
+            "XL"
+          ],
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "description": "Config structure for the cosmic panel",
+  "properties": {
+    "config_list": {
+      "items": {
+        "$ref": "#/definitions/CosmicPanelConfig"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "config_list"
+  ],
+  "title": "CosmicPanelContainerConfig",
+  "type": "object"
+}

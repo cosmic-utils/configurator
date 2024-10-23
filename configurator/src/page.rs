@@ -15,6 +15,7 @@ use figment::{
     Figment, Profile, Provider,
 };
 
+use include_dir::include_dir;
 use xdg::BaseDirectories;
 
 use crate::{
@@ -44,7 +45,7 @@ pub struct Page {
 }
 
 pub fn create_pages() -> impl Iterator<Item = Page> {
-    fn default_paths() -> impl Iterator<Item = PathBuf> {
+    fn default_paths() -> Vec<PathBuf> {
         let base_dirs = BaseDirectories::new().unwrap();
         let mut data_dirs: Vec<PathBuf> = vec![];
         data_dirs.push(base_dirs.get_data_home());
@@ -53,7 +54,11 @@ pub fn create_pages() -> impl Iterator<Item = Page> {
         #[cfg(debug_assertions)]
         data_dirs.push(PathBuf::from("test_schemas"));
 
-        let r = data_dirs.into_iter().map(|d| d.join("configurator"));
+        let mut r = data_dirs.into_iter().map(|d| d.join("configurator")).collect::<Vec<_>>();
+
+        let a = include_dir!("cosmic_compat/schemas");
+
+        // r = r.chain(other);
 
         #[cfg(debug_assertions)]
         {
