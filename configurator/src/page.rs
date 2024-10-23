@@ -156,7 +156,7 @@ impl Page {
             format,
         };
 
-        dbg!(&page.tree);
+        // dbg!(&page.tree);
 
         if let Err(err) = page.reload() {
             error!("{err}");
