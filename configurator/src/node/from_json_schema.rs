@@ -40,8 +40,8 @@ pub(crate) fn schema_object_to_node(
     def: &schemars::Map<String, Schema>,
     schema_object: &SchemaObject,
 ) -> NodeContainer {
-    // info!("enter function from {from}");
-    // dbg!(&schema_object);
+    info!("enter function from {from}");
+    dbg!(&schema_object);
 
     let metadata = &schema_object.metadata;
 
