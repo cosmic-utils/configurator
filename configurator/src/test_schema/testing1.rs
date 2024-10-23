@@ -20,13 +20,13 @@ struct Complex {
 impl Default for Config {
     fn default() -> Self {
         // let mut hash_map = HashMap::new();
-// 
+        //
         // hash_map.insert("k".into(), Complex { str: "0".into() });
 
         Self {
             // hash_map,
             // vec: vec![Complex { str: "0".into() }, Complex { str: "12".into() }],
-            opt: Some(30)
+            opt: Some(30),
         }
     }
 }

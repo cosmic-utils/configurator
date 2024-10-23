@@ -251,11 +251,3 @@ impl NodeEnum {
         (pos, &self.nodes[pos])
     }
 }
-
-fn custom_fmt(obj: &SchemaObject) {
-    if let Some(obj) = &obj.object {
-        dbg!(obj);
-    } else if let Some(obj) = &obj.instance_type {
-        dbg!(obj);
-    }
-}

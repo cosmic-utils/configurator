@@ -48,5 +48,3 @@ pub fn gen_schema<S: JsonSchema>(
     let str = json::to_string_pretty(&value)?;
     Ok(str)
 }
-
-

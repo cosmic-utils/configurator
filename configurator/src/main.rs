@@ -16,9 +16,9 @@ mod localize;
 mod message;
 mod node;
 mod page;
+mod providers;
 mod utils;
 mod view;
-mod providers;
 #[macro_use]
 mod icon;
 #[cfg(test)]

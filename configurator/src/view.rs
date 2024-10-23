@@ -324,8 +324,6 @@ fn view_enum<'a>(
     node: &'a NodeContainer,
     node_enum: &'a NodeEnum,
 ) -> Element<'a, PageMsg> {
-    let (value_pos, value) = node_enum.unwrap_value();
-
     column()
         .push_maybe(
             node.desc
@@ -586,8 +584,16 @@ fn view_value<'a>(
     node_value: &'a NodeValue,
 ) -> Element<'a, PageMsg> {
     column()
-        .push(text("i'm just a value"))
-        .push(text(format!("name: {:?}", data_path.last())))
-        .push(text(format!("{:?}", node_value.value)))
+        .push_maybe(
+            node.desc
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
+        .push(
+            section()
+                .title("Value")
+                .add(text(format!("{:?}", node_value.value))),
+        )
+        .spacing(SPACING)
         .into()
 }

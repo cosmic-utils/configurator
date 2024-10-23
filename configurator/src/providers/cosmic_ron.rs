@@ -28,11 +28,11 @@ impl Provider for CosmicRonProvider {
     fn data(
         &self,
     ) -> Result<figment::value::Map<figment::Profile, figment::value::Dict>, figment::Error> {
-        let map = self.data_impl().map_err(figment::Error::custom);
+        
 
         // dbg!(&map);
 
-        Ok(map?)
+        self.data_impl().map_err(figment::Error::custom)
     }
 }
 
@@ -44,33 +44,23 @@ impl CosmicRonProvider {
             let mut max: Option<u64> = None;
 
             for dir_entry in fs::read_dir(&self.path)? {
-                match dir_entry?.file_name().to_str() {
-                    Some(filename) => match filename.strip_prefix('v') {
-                        Some(version) => match version.parse::<u64>() {
-                            Ok(version) => {
-                                max = match max {
-                                    Some(old) => {
-                                        if old < version {
-                                            Some(version)
-                                        } else {
-                                            Some(old)
-                                        }
-                                    }
-                                    None => Some(version),
-                                };
+                if let Some(filename) = dir_entry?.file_name().to_str() { if let Some(version) = filename.strip_prefix('v') { if let Ok(version) = version.parse::<u64>() {
+                    max = match max {
+                        Some(old) => {
+                            if old < version {
+                                Some(version)
+                            } else {
+                                Some(old)
                             }
-                            Err(_) => {}
-                        },
-                        None => {}
-                    },
-                    None => {}
-                }
+                        }
+                        None => Some(version),
+                    };
+                } } }
             }
             max.ok_or(anyhow!("no version found"))?
         };
 
         let path = self.path.join(format!("v{}", version));
-
 
         let mut ron_map = ron::Map::new();
 
