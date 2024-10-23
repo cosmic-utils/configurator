@@ -20,14 +20,20 @@ run: install_schema
     cargo r --bin configurator
 
 gen_schema:
-    cargo test gen_schema
+    cargo test --package configurator config::test::gen_schema
 
 install_schema: gen_schema
     install -Dm0644 configurator/res/{{appid}}.json ~/.local/share/configurator/{{appid}}.json
 
 
+uninstall_schema:
+    rm ~/.local/share/configurator/{{appid}}.json
+
+
 install: install_schema
   install -Dm0755 {{bin-src}} {{bin-dst}}
+
+
 
 
 
