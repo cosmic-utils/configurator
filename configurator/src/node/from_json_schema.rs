@@ -40,7 +40,7 @@ pub(crate) fn schema_object_to_node(
     schema_object: &SchemaObject,
 ) -> NodeContainer {
     // info!("enter function from {from}");
-    // dbg!(&schema_object);
+    dbg!(&schema_object);
 
     let metadata = &schema_object.metadata;
 
