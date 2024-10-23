@@ -190,14 +190,11 @@ impl Page {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        let data = Figment::new().merge(&self.tree);
-
-        if let Some(dict) = data.data()?.remove(&Profile::Default) {
-            crate::providers::write(
-                &self.write_path,
-                &self.format,
-                &Value::Dict(Tag::Default, dict),
-            )?;
+        match self.tree.to_value(&Tag::Default) {
+            Some(value) => {
+                crate::providers::write(&self.write_path, &self.format, &value)?;
+            }
+            None => bail!("no value to write"),
         }
 
         Ok(())

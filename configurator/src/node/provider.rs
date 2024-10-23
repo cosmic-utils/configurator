@@ -7,27 +7,8 @@ use crate::node::Node;
 
 use super::{from_json_schema::json_value_to_figment_value, NodeContainer, NumberValue};
 
-impl Provider for NodeContainer {
-    fn metadata(&self) -> figment::Metadata {
-        Metadata::named("node provider")
-    }
-
-    fn data(
-        &self,
-    ) -> Result<figment::value::Map<figment::Profile, figment::value::Dict>, figment::Error> {
-        let mut map = figment::value::Map::new();
-
-        if let Some(value) = self.to_value(&Tag::Default) {
-            map.insert(Profile::default(), value.into_dict().unwrap());
-        }
-
-        Ok(map)
-    }
-}
-
-enum Error {}
 impl NodeContainer {
-    fn to_value(&self, tag: &Tag) -> Option<Value> {
+    pub fn to_value(&self, tag: &Tag) -> Option<Value> {
         if !self.modified {
             return None;
         }
@@ -117,10 +98,6 @@ mod test {
 
         node.apply_figment(&default).unwrap();
 
-        let from_node = Figment::new().merge(&node);
-
         dbg!(&default.data().unwrap());
-
-        dbg!(&from_node.data().unwrap());
     }
 }

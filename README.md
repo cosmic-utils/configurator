@@ -2,11 +2,12 @@
 
 ### Note: i'm open for suggestion for the app name
 
-Initially developed with tweaking the COSMIC(tm) desktop in mind, it could work for any client that satisfied these conditions:
+Initially developed with tweaking the COSMIC(tm) desktop in mind, it could work for any client that have installed [a compatible JSON Schema](./SPEC.md) and using a format compatible with this app.
 
-- A [`Provider`](https://docs.rs/figment/latest/figment/trait.Provider.html) implementation
-- A [`Serializer`](https://docs.rs/serde/latest/serde/trait.Serializer.html) implementation
-- Install a JSON Schema that satisfy [the spec of this app](./SPEC.md).
+Current formats supported
+
+- Cosmic ron
+- Json
 
 Currently, only 2 crates are relevant
 
@@ -17,10 +18,10 @@ zconf\* are just alternative to [cosmic-config](https://github.com/pop-os/libcos
 
 # MVP todo
 
-- [ ] Plug the config system of COSMIC
+- [x] Plug the config system of COSMIC
   - [ ] Full compatibility with the config
-  - [ ] Provider for ron syntax in multiple files
-  - [ ] Ron serializer
+  - [x] Provider for ron syntax in multiple files
+  - [x] Ron serializer
   - [x] Better API to define the JSON Schema (system/home paths, ect.., define the spec)
   - [ ] Provide an option to install the schema from the app (and hopefully upsteam it when we are in a good shape)
 - [x] UI to create a value (this will be difficult, but it should be possible)
