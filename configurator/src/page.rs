@@ -54,24 +54,25 @@ pub fn create_pages() -> impl Iterator<Item = Page> {
         #[cfg(debug_assertions)]
         data_dirs.push(PathBuf::from("test_schemas"));
 
-        let mut r = data_dirs.into_iter().map(|d| d.join("configurator")).collect::<Vec<_>>();
+        let mut paths = data_dirs
+            .into_iter()
+            .map(|d| d.join("configurator"))
+            .collect::<Vec<_>>();
 
-        let a = include_dir!("cosmic_compat/schemas");
+        let cosmic_compat = include_dir!("cosmic_compat/schemas");
 
-        // r = r.chain(other);
+        paths.push(cosmic_compat.path().to_path_buf());
 
         #[cfg(debug_assertions)]
         {
-            r.chain(iter::once(PathBuf::from("configurator/test_schemas")))
+            paths.push(PathBuf::from("configurator/test_schemas"));
         }
 
-        #[cfg(not(debug_assertions))]
-        {
-            r
-        }
+        paths
     }
 
     default_paths()
+        .into_iter()
         .filter_map(|xdg_path| fs::read_dir(xdg_path).ok())
         .flatten()
         .flatten()
