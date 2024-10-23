@@ -12,42 +12,18 @@ use directories::BaseDirs;
 use figment::{
     providers::{self, Format},
     value::{Dict, Tag, Value},
-    Figment, Provider,
+    Figment, Profile, Provider,
 };
 
 use xdg::BaseDirectories;
 
 use crate::{
     app::Dialog,
-    figment_serde_bridge::FigmentSerdeBridge,
     message::{ChangeMsg, PageMsg},
     node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
 };
 
 use configurator_utils::ConfigFormat;
-
-struct BoxedProvider(Box<dyn Provider>);
-
-impl Provider for BoxedProvider {
-    fn metadata(&self) -> figment::Metadata {
-        self.0.metadata()
-    }
-
-    fn data(
-        &self,
-    ) -> Result<figment::value::Map<figment::Profile, figment::value::Dict>, figment::Error> {
-        self.0.data()
-    }
-}
-
-fn provider_for_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
-    match format {
-        ConfigFormat::Json => BoxedProvider(Box::new(providers::Json::file(path))),
-        ConfigFormat::CosmicRon => {
-            BoxedProvider(Box::new(crate::providers::CosmicRonProvider::new(path)))
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct Page {
@@ -155,7 +131,7 @@ impl Page {
         let mut system_config = Figment::new();
 
         for path in &source_paths {
-            system_config = system_config.merge(provider_for_format(path, &format))
+            system_config = system_config.merge(crate::providers::from_format(path, &format))
         }
 
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
@@ -194,8 +170,10 @@ impl Page {
     }
 
     pub fn reload(&mut self) -> anyhow::Result<()> {
-        self.user_config =
-            Figment::new().merge(provider_for_format(&self.source_home_path, &self.format));
+        self.user_config = Figment::new().merge(crate::providers::from_format(
+            &self.source_home_path,
+            &self.format,
+        ));
 
         self.full_config = Figment::new()
             .merge(self.system_config.clone())
@@ -203,46 +181,20 @@ impl Page {
 
         self.tree.apply_figment(&self.full_config)?;
 
-        // dbg!(&self.tree);
-        // dbg!(&self.full_config);
-        // dbg!(&self.data_path);
-
-        // assert!(self.tree.is_valid());
-
         self.data_path.sanitize_path(&self.tree);
 
         Ok(())
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        // dbg!(&self.tree);
-
         let data = Figment::new().merge(&self.tree);
 
-        // dbg!(&data);
-
-        let serde_bridge = FigmentSerdeBridge::new(&data);
-
-        fn write_and_create_parent<P: AsRef<Path>, C: AsRef<[u8]>>(
-            path: P,
-            contents: C,
-        ) -> anyhow::Result<()> {
-            if !path.as_ref().exists() {
-                let parent = path.as_ref().parent().ok_or(anyhow!("no parent"))?;
-                fs::create_dir_all(parent)?;
-            }
-
-            fs::write(path, contents)?;
-
-            Ok(())
-        }
-
-        match self.format {
-            ConfigFormat::Json => {
-                let content = json::to_string_pretty(&serde_bridge)?;
-                write_and_create_parent(&self.write_path, &content)?;
-            }
-            ConfigFormat::CosmicRon => todo!(),
+        if let Some(dict) = data.data()?.remove(&Profile::Default) {
+            crate::providers::write(
+                &self.write_path,
+                &self.format,
+                &Value::Dict(Tag::Default, dict),
+            )?;
         }
 
         Ok(())

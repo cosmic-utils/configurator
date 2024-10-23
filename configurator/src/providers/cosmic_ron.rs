@@ -28,8 +28,6 @@ impl Provider for CosmicRonProvider {
     fn data(
         &self,
     ) -> Result<figment::value::Map<figment::Profile, figment::value::Dict>, figment::Error> {
-        
-
         // dbg!(&map);
 
         self.data_impl().map_err(figment::Error::custom)
@@ -40,31 +38,35 @@ impl CosmicRonProvider {
     fn data_impl(
         &self,
     ) -> anyhow::Result<figment::value::Map<figment::Profile, figment::value::Dict>> {
-        let version = {
-            let mut max: Option<u64> = None;
+        // let version = {
+        //     let mut max: Option<u64> = None;
 
-            for dir_entry in fs::read_dir(&self.path)? {
-                if let Some(filename) = dir_entry?.file_name().to_str() { if let Some(version) = filename.strip_prefix('v') { if let Ok(version) = version.parse::<u64>() {
-                    max = match max {
-                        Some(old) => {
-                            if old < version {
-                                Some(version)
-                            } else {
-                                Some(old)
-                            }
-                        }
-                        None => Some(version),
-                    };
-                } } }
-            }
-            max.ok_or(anyhow!("no version found"))?
-        };
+        //     for dir_entry in fs::read_dir(&self.path)? {
+        //         if let Some(filename) = dir_entry?.file_name().to_str() {
+        //             if let Some(version) = filename.strip_prefix('v') {
+        //                 if let Ok(version) = version.parse::<u64>() {
+        //                     max = match max {
+        //                         Some(old) => {
+        //                             if old < version {
+        //                                 Some(version)
+        //                             } else {
+        //                                 Some(old)
+        //                             }
+        //                         }
+        //                         None => Some(version),
+        //                     };
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     max.ok_or(anyhow!("no version found"))?
+        // };
 
-        let path = self.path.join(format!("v{}", version));
+        // let path = self.path.join(format!("v{}", version));
 
         let mut ron_map = ron::Map::new();
 
-        for dir_entry in fs::read_dir(&path)? {
+        for dir_entry in fs::read_dir(&self.path)? {
             let dir_entry = dir_entry?;
 
             let filename = dir_entry.file_name();
