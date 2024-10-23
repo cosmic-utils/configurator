@@ -64,8 +64,9 @@ impl NodeContainer {
             (Value::Bool(tag, value), Node::Bool(node_bool)) => node_bool.value = Some(value),
             (Value::Num(tag, value), Node::Number(node_number)) => {
                 // dbg!(&value);
+                // dbg!(&node_number);
 
-                let value = node_number.parse_number(value).unwrap();
+                let value = node_number.try_from_figment_num(value).unwrap();
 
                 node_number.value_string = value.to_string();
                 node_number.value = Some(value);

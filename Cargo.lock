@@ -619,6 +619,7 @@ dependencies = [
  "i18n-embed-fl",
  "indexmap 2.6.0",
  "libcosmic",
+ "light_enum",
  "ron",
  "rust-embed",
  "schemars",
@@ -2395,6 +2396,16 @@ dependencies = [
  "bitflags 2.6.0",
  "libc",
  "redox_syscall 0.5.7",
+]
+
+[[package]]
+name = "light_enum"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcb64f856d7b5144b0c102ec029f4d8a474c91c86336a2f5e96494e3d2f72db3"
+dependencies = [
+ "quote",
+ "syn 2.0.79",
 ]
 
 [[package]]

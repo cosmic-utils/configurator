@@ -39,10 +39,10 @@ impl NodeContainer {
                 .value
                 .as_ref()
                 .map(|value| Value::String(*tag, value.clone())),
-            Node::Number(node_number) => node_number.value.as_ref().map(|value| match value {
-                NumberValue::I128(value) => Value::Num(*tag, Num::I128(*value)),
-                NumberValue::F64(value) => Value::Num(*tag, Num::F64(*value)),
-            }),
+            Node::Number(node_number) => node_number
+                .value
+                .as_ref()
+                .map(|value| Value::Num(*tag, value.clone().into_num())),
             Node::Object(node_object) => {
                 let mut dict = Dict::new();
 

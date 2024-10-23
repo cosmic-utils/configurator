@@ -20,7 +20,7 @@ use xdg::BaseDirectories;
 use crate::{
     app::Dialog,
     message::{ChangeMsg, PageMsg},
-    node::{data_path::DataPath, Node, NodeContainer, NumberKind, NumberValue},
+    node::{data_path::DataPath, Node, NodeContainer, NumberValue},
 };
 
 use configurator_utils::ConfigFormat;
@@ -179,6 +179,9 @@ impl Page {
             .merge(self.system_config.clone())
             .merge(self.user_config.clone());
 
+        // dbg!(&self.tree);
+        // dbg!(&self.full_config);
+
         self.tree.apply_figment(&self.full_config)?;
 
         self.data_path.sanitize_path(&self.tree);
@@ -245,22 +248,15 @@ impl Page {
                         let node_number = node.node.unwrap_number_mut();
                         node_number.value_string = value;
 
-                        match node_number.kind {
-                            NumberKind::Integer => {
-                                if let Ok(value) = node_number.value_string.parse() {
-                                    node_number.value = Some(NumberValue::I128(value));
-                                } else {
-                                    return Action::None;
-                                }
+                        match node_number.try_parse_from_str(&node_number.value_string) {
+                            Ok(v) => {
+                                node_number.value = Some(v);
                             }
-                            NumberKind::Float => {
-                                if let Ok(value) = node_number.value_string.parse() {
-                                    node_number.value = Some(NumberValue::F64(value));
-                                } else {
-                                    return Action::None;
-                                }
+                            Err(_) => {
+                                return Action::None;
                             }
                         }
+
                         self.tree.set_modified(data_path.iter());
                     }
                     ChangeMsg::ChangeEnum(value) => {

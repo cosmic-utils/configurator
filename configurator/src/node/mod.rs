@@ -1,9 +1,10 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
 
 use derive_more::derive::Unwrap;
-use figment::value::{Tag, Value};
+use figment::value::{Num, Tag, Value};
 use from_json_schema::json_value_to_figment_value;
 use indexmap::IndexMap;
+use light_enum::LightEnum;
 use schemars::schema::SchemaObject;
 
 use crate::utils::{figment_value_to_f64, figment_value_to_i128};
@@ -11,6 +12,8 @@ use crate::utils::{figment_value_to_f64, figment_value_to_i128};
 mod apply_figment;
 pub mod data_path;
 pub mod from_json_schema;
+mod number;
+pub use number::{NumberValue, NumberValueLight};
 mod provider;
 
 #[derive(Debug, Clone)]
@@ -53,29 +56,8 @@ pub struct NodeString {
 }
 
 #[derive(Debug, Clone)]
-pub enum NumberValue {
-    I128(i128),
-    F64(f64),
-}
-
-impl Display for NumberValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            NumberValue::I128(n) => write!(f, "{}", n),
-            NumberValue::F64(n) => write!(f, "{:.3}", n),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum NumberKind {
-    Integer,
-    Float,
-}
-
-#[derive(Debug, Clone)]
 pub struct NodeNumber {
-    pub kind: NumberKind,
+    pub kind: NumberValueLight,
     pub value: Option<NumberValue>,
     pub value_string: String,
 }
@@ -112,27 +94,6 @@ impl NodeBool {
 impl NodeString {
     pub fn new() -> Self {
         Self { value: None }
-    }
-}
-
-impl NodeNumber {
-    pub fn new(kind: NumberKind) -> Self {
-        Self {
-            value: None,
-            value_string: String::new(),
-            kind,
-        }
-    }
-
-    pub fn parse_number(&self, value: figment::value::Num) -> Option<NumberValue> {
-        match self.kind {
-            NumberKind::Integer => {
-                figment_value_to_i128(&Value::Num(Tag::Default, value)).map(NumberValue::I128)
-            }
-            NumberKind::Float => {
-                figment_value_to_f64(&Value::Num(Tag::Default, value)).map(NumberValue::F64)
-            }
-        }
     }
 }
 

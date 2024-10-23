@@ -38,7 +38,7 @@ pub fn from_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
 }
 
 pub fn write(path: &Path, format: &ConfigFormat, data: &Value) -> anyhow::Result<()> {
-    dbg!(&data);
+    // dbg!(&data);
     match format {
         ConfigFormat::Json => {
             let content = json::to_string_pretty(&data)?;
@@ -47,7 +47,8 @@ pub fn write(path: &Path, format: &ConfigFormat, data: &Value) -> anyhow::Result
         ConfigFormat::CosmicRon => {
             if let Some(dict) = data.as_dict() {
                 for (key, value) in dict {
-                    let content = ron::ser::to_string_pretty(value, ron::ser::PrettyConfig::new()).unwrap();
+                    let content =
+                        ron::ser::to_string_pretty(value, ron::ser::PrettyConfig::new()).unwrap();
                     write_and_create_parent(path.join(key), &content)?;
                 }
             }

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 struct Config {
     opt: Option<u32>,
+    a: f32,
     // hash_map: HashMap<String, Complex>,
     // vec: Vec<Complex>,
 }
@@ -27,6 +28,7 @@ impl Default for Config {
             // hash_map,
             // vec: vec![Complex { str: "0".into() }, Complex { str: "12".into() }],
             opt: Some(30),
+            a: 0.,
         }
     }
 }

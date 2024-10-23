@@ -1,3 +1,4 @@
+use core::num;
 use std::{borrow::Cow, collections::BTreeMap};
 
 use figment::value::{Empty, Num, Tag};
@@ -40,7 +41,7 @@ pub(crate) fn schema_object_to_node(
     schema_object: &SchemaObject,
 ) -> NodeContainer {
     // info!("enter function from {from}");
-    dbg!(&schema_object);
+    // dbg!(&schema_object);
 
     let metadata = &schema_object.metadata;
 
@@ -106,28 +107,35 @@ pub(crate) fn schema_object_to_node(
     }
 
     if let Some(single_or_vec) = &schema_object.instance_type {
-        fn instance_type_to_node(instance_type: &InstanceType) -> Node {
+        fn instance_type_to_node(instance_type: &InstanceType, format: Option<&String>) -> Node {
             match *instance_type {
                 InstanceType::Null => Node::Null,
                 InstanceType::Boolean => Node::Bool(NodeBool::new()),
                 InstanceType::Object => Node::Object(NodeObject::new(IndexMap::new(), None)),
                 InstanceType::Array => todo!(),
-                InstanceType::Number => Node::Number(NodeNumber::new(NumberKind::Float)),
+                InstanceType::Number => Node::Number(NodeNumber::new(NumberValueLight::F32)),
                 InstanceType::String => Node::String(NodeString::new()),
-                InstanceType::Integer => Node::Number(NodeNumber::new(NumberKind::Integer)),
+                InstanceType::Integer => Node::Number(NodeNumber::new(
+                    format.and_then(|s| NumberValue::kind_from_str(s)).unwrap(),
+                )),
             }
         }
 
         return match single_or_vec {
-            SingleOrVec::Single(instance_type) => {
-                NodeContainer::from_metadata(instance_type_to_node(instance_type), metadata)
-            }
+            SingleOrVec::Single(instance_type) => NodeContainer::from_metadata(
+                instance_type_to_node(instance_type, schema_object.format.as_ref()),
+                metadata,
+            ),
             SingleOrVec::Vec(vec) => {
                 let nodes = vec
                     .iter()
                     .map(|instance_type| {
                         // xxx: why do we not pass metadata here ?
-                        NodeContainer::from_metadata(instance_type_to_node(instance_type), &None)
+
+                        NodeContainer::from_metadata(
+                            instance_type_to_node(instance_type, schema_object.format.as_ref()),
+                            &None,
+                        )
                     })
                     .collect();
                 NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata)

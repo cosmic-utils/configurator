@@ -21,7 +21,7 @@ use crate::{
     node::{
         data_path::{DataPath, DataPathType},
         Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
-        NodeValue, NumberKind,
+        NodeValue,
     },
     page::Page,
 };
@@ -534,10 +534,10 @@ fn view_number<'a>(
                     )
                     .push_maybe(if node_number.value.is_none() {
                         Some(no_value_defined_warning_icon())
-                    } else if match node_number.kind {
-                        NumberKind::Integer => node_number.value_string.parse::<i128>().is_err(),
-                        NumberKind::Float => node_number.value_string.parse::<f64>().is_err(),
-                    } {
+                    } else if node_number
+                        .try_parse_from_str(&node_number.value_string)
+                        .is_err()
+                    {
                         Some(
                             tooltip(
                                 icon!("report24"),
@@ -555,7 +555,7 @@ fn view_number<'a>(
             node.default
                 .as_ref()
                 .and_then(|v| v.to_num())
-                .and_then(|v| node_number.parse_number(v))
+                .and_then(|v| node_number.try_from_figment_num(v).ok())
                 .map(|default| {
                     section()
                         .title("Default")
