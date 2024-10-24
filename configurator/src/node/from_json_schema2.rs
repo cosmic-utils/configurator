@@ -57,7 +57,7 @@ fn schema_object_to_node2(
                 InstanceType::Null => Node::Null,
                 InstanceType::Boolean => Node::Bool(NodeBool::new()),
                 InstanceType::Object => Node::Object(NodeObject::new(IndexMap::new(), None)),
-                InstanceType::Array => todo!(),
+                InstanceType::Array => Node::Array(NodeArray::new2(vec![])),
                 InstanceType::Number => Node::Number(NodeNumber::new(
                     format
                         .and_then(|s| NumberValue::kind_from_str(s))
@@ -93,7 +93,7 @@ fn schema_object_to_node2(
             }
         };
 
-        res = res.merge(node)?;
+        res = res.merge(&node)?;
     };
 
     if let Some(obj) = &schema_object.object {
@@ -117,7 +117,7 @@ fn schema_object_to_node2(
         let node =
             NodeContainer::from_node(Node::Object(NodeObject::new(nodes, additional_properties)));
 
-        res = res.merge(node)?;
+        res = res.merge(&node)?;
     }
 
     if let Some(enum_values) = &schema_object.enum_values {
@@ -142,7 +142,7 @@ fn schema_object_to_node2(
             NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata)
         };
 
-        res = res.merge(node)?;
+        res = res.merge(&node)?;
     }
 
     if let Some(array) = &schema_object.array {
@@ -172,7 +172,7 @@ fn schema_object_to_node2(
 
         let node = NodeContainer::from_metadata(Node::Array(NodeArray::new2(template)), metadata);
 
-        res = res.merge(node)?;
+        res = res.merge(&node)?;
     }
 
     if let Some(subschemas) = &schema_object.subschemas {
@@ -189,7 +189,7 @@ fn schema_object_to_node2(
             } else {
                 nodes.remove(0).set_metadata(metadata)
             };
-            res = res.merge(node)?;
+            res = res.merge(&node)?;
         }
 
         if let Some(one_of) = &subschemas.one_of {
@@ -203,7 +203,7 @@ fn schema_object_to_node2(
             }
 
             let node = NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata);
-            res = res.merge(node)?;
+            res = res.merge(&node)?;
         }
 
         if let Some(any_of) = &subschemas.any_of {
@@ -217,7 +217,7 @@ fn schema_object_to_node2(
             }
 
             let node = NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata);
-            res = res.merge(node)?;
+            res = res.merge(&node)?;
         }
     }
 
@@ -229,7 +229,7 @@ fn schema_object_to_node2(
             let schema = def.get(definition).unwrap();
 
             let node = schema_object_to_node2("definition", def, &schema.to_object())?;
-            res = res.merge(node)?;
+            res = res.merge(&node)?;
         }
     }
 
@@ -291,7 +291,23 @@ fn json_value_to_figment_value(json_value: &json::Value) -> Value {
 }
 
 impl NodeContainer {
-    fn merge(self, other: NodeContainer) -> Option<NodeContainer> {
-        todo!()
+    fn merge(&self, other: &NodeContainer) -> Option<NodeContainer> {
+        
+
+        match (&self.node, &other.node) {
+            (Node::Null, Node::Null) => Some(other.clone()),
+            (Node::Null, Node::Any) => Some(other.clone()),
+            (Node::Bool(node_bool), Node::Null) => Some(other.clone()),
+            (Node::Bool(node_bool), Node::Bool(node_bool2)) => Some(other.clone()),
+            (Node::String(node_string), Node::String(node_string2)) => Some(other.clone()),
+            (Node::Number(node_number), Node::Number(node_number2)) => Some(other.clone()),
+            (Node::Object(node_object), Node::Object(node_object2)) => Some(other.clone()),
+            (Node::Enum(node_enum), Node::Enum(node_enum2)) => Some(other.clone()),
+            (Node::Array(node_array), Node::Array(node_array2)) => Some(other.clone()),
+            (Node::Value(node_value), Node::Value(node_value2)) => Some(other.clone()),
+            (Node::Any, _) => Some(other.clone()),
+            (_, Node::Any) => Some(self.clone()),
+            _ => None,
+        }
     }
 }
