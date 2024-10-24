@@ -297,7 +297,12 @@ impl NodeContainer {
             (Node::Value(node_value), Node::Value(node_value2)) => Some(other.clone()),
             (Node::Any, _) => Some(other.clone()),
             (_, Node::Any) => Some(self.clone()),
-            _ => None,
+            _ => {
+                warn!("none");
+                dbg!(&self, &other);
+
+                None
+            }
         }
     }
 }
