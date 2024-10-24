@@ -96,8 +96,8 @@ impl NodeContainer {
             (Value::Array(tag, values), Node::Array(node_array)) => {
                 let mut nodes = Vec::new();
 
-                for value in values {
-                    let mut new_node = node_array.template();
+                for (pos, value) in values.into_iter().enumerate() {
+                    let mut new_node = node_array.template(Some(pos));
                     new_node.apply_value(value, modified)?;
                     nodes.push(new_node);
                 }

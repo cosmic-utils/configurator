@@ -172,10 +172,25 @@ impl NodeArray {
         }
     }
 
-    pub fn template(&self) -> NodeContainer {
-        let mut template = *self.template.clone();
-        template.removable = true;
-        template
+    pub fn template(&self, n: Option<usize>) -> NodeContainer {
+        match &self.template {
+            NodeArrayTemplate::All(new_node) => {
+                let mut new_node = (**new_node).clone();
+                new_node.removable = true;
+                new_node
+            }
+            NodeArrayTemplate::FirstN(vec) => {
+                let n = match n {
+                    Some(n) => n,
+                    None => match &self.values {
+                        Some(v) => v.len(),
+                        None => 0,
+                    },
+                };
+
+                vec[n].clone()
+            }
+        }
     }
 }
 
