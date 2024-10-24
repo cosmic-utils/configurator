@@ -52,7 +52,9 @@ impl NodeContainer {
                     .iter()
                     .position(|e| e.is_matching(&value))
                     .ok_or_else(|| {
-                        anyhow!("can't find a compatible enum variant for string {value:#?}. {node_enum:#?}")
+                        anyhow!(
+                            "can't find a compatible enum variant for {value:#?}. {node_enum:#?}"
+                        )
                     })?;
 
                 node_enum.value = Some(pos);
@@ -160,6 +162,10 @@ impl NodeContainer {
                     let v = values.get(key).unwrap();
                     n.is_matching(v)
                 })
+            }
+            (Value::Array(tag, values), Node::Array(node_array)) => {
+                // todo: more complicated logic
+                true
             }
             (value, Node::Value(node_value)) => {
                 json_value_eq_figment_value(&node_value.value, value)

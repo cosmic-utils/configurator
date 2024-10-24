@@ -372,10 +372,6 @@ impl Page {
 
                         if let Some(default) = &new_node.default {
                             new_node.apply_value(default.clone(), false).unwrap();
-                        } else {
-                            new_node
-                                .apply_value(Value::Dict(Tag::Default, Dict::new()), false)
-                                .unwrap();
                         }
                         new_node.modified = true;
 
