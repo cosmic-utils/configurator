@@ -86,7 +86,6 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         Node::Value(node_value) => view_value(data_path, node, node_value),
         Node::Null => text("null").into(),
         Node::Array(node_array) => view_array(data_path, node, node_array),
-        Node::UnNamedObject(un_named_object) => text("todo").into(),
     };
 
     column()

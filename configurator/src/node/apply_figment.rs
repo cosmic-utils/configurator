@@ -137,12 +137,6 @@ impl NodeContainer {
                 node_array.values.take();
             }
             Node::Value(node_value) => {}
-            Node::UnNamedObject(un_named_object) => {
-                un_named_object
-                    .values
-                    .iter_mut()
-                    .for_each(|node| node.remove_value_rec());
-            }
         };
         self.modified = false;
     }

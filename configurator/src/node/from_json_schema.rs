@@ -108,10 +108,7 @@ pub(crate) fn schema_object_to_node(
                         })
                         .collect::<Vec<_>>();
 
-                    NodeContainer::from_metadata(
-                        Node::UnNamedObject(UnNamedObject::new(values)),
-                        metadata,
-                    )
+                    todo!()
                 }
             },
             None => todo!(),
