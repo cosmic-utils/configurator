@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+
 use std::collections::HashMap;
 
 use schemars::JsonSchema;
@@ -5,10 +7,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 struct Config {
-    // opt: Option<(Vec<String>, (Vec<String>, String))>,
-    a: f32,
-    hash_map: HashMap<String, Complex>,
+    opt: Option<(Vec<String>, (Vec<String>, String))>,
+    // a: f32,
+    // hash_map: HashMap<String, Complex>,
     // vec: Vec<Complex>,
 }
 
@@ -16,21 +19,6 @@ struct Config {
 #[serde(default)]
 struct Complex {
     str: String,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        let mut hash_map = HashMap::new();
-
-        hash_map.insert("k".into(), Complex { str: "0".into() });
-
-        Self {
-            hash_map,
-            // vec: vec![Complex { str: "0".into() }, Complex { str: "12".into() }],
-            // opt: None,
-            a: 0.,
-        }
-    }
 }
 
 const NAME: &str = "testing1";
