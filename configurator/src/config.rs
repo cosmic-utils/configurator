@@ -1,6 +1,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::app::APPID;
+
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
@@ -15,7 +17,10 @@ impl Default for Config {
         Self {
             last_used_page: Default::default(),
             cosmic_compat: false,
-            masked: vec!["io.github.wiiznokes.cosmic-ext-applet-clipboard-manager".into()],
+            masked: vec![
+                "io.github.wiiznokes.cosmic-ext-applet-clipboard-manager".into(),
+                APPID.into(),
+            ],
         }
     }
 }
