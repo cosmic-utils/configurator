@@ -104,6 +104,7 @@ impl NodeContainer {
 
                 node_array.values = Some(nodes);
             }
+            (Value::Empty(tag, value), Node::Null) => {}
             (value, node) => bail!("no compatible node for value = {value:#?}. {node:#?}"),
         };
 
