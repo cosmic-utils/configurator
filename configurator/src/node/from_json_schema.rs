@@ -24,20 +24,6 @@ impl NodeContainer {
     }
 }
 
-fn is_option(vec: &[InstanceType]) -> Option<&InstanceType> {
-    if vec.len() == 2 {
-        if vec[0] == InstanceType::Null {
-            Some(&vec[1])
-        } else if vec[1] == InstanceType::Null {
-            Some(&vec[0])
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
 /// None means that the schema validate nothing
 pub(crate) fn schema_object_to_node(
     from: &str,
@@ -48,7 +34,6 @@ pub(crate) fn schema_object_to_node(
     dbg!(&schema_object);
     let metadata = &schema_object.metadata;
 
-    // todo: begin with Any
     let mut res = NodeContainer::from_node(Node::Any);
 
     if let Some(single_or_vec) = &schema_object.instance_type {
@@ -166,8 +151,7 @@ pub(crate) fn schema_object_to_node(
                     template?
                 }
             },
-            // probably means any ?
-            None => todo!(),
+            None => vec![NodeContainer::from_node(Node::Any)],
         };
 
         let node = NodeContainer::from_metadata(Node::Array(NodeArray::new2(template)), metadata);
