@@ -105,12 +105,17 @@ pub struct NodeObject {
 }
 
 #[derive(Debug, Clone)]
+pub enum NodeArrayTemplate {
+    All(Box<NodeContainer>),
+    FirstN(Vec<NodeContainer>),
+}
+
+#[derive(Debug, Clone)]
 pub struct NodeArray {
     pub values: Option<Vec<NodeContainer>>,
-    // #[deprecated]
-    pub template: Box<NodeContainer>,
-    pub template2: Vec<NodeContainer>,
-    // capable de:
+    pub template: NodeArrayTemplate,
+    pub min: Option<u32>,
+    pub max: Option<u32>,
 }
 
 impl NodeBool {
@@ -158,19 +163,12 @@ impl NodeObject {
 }
 
 impl NodeArray {
-    pub fn new(node_type: NodeContainer) -> Self {
+    pub fn new_any() -> Self {
         Self {
-            template: Box::new(node_type),
             values: None,
-            template2: vec![],
-        }
-    }
-
-    pub fn new2(template2: Vec<NodeContainer>) -> Self {
-        Self {
-            template: Box::new(template2[0].clone()),
-            values: None,
-            template2,
+            template: NodeArrayTemplate::All(Box::new(NodeContainer::from_node(Node::Any))),
+            min: None,
+            max: None,
         }
     }
 

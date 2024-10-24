@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 #[derive(Default)]
 struct Config {
-    opt: Option<(Vec<String>, (Vec<String>, String))>,
+    opt: Option<(Vec<String>, Vec<String>)>,
     // a: f32,
     // hash_map: HashMap<String, Complex>,
     // vec: Vec<Complex>,

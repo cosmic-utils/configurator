@@ -11,5 +11,5 @@ keywords.workspace = true
 schemars = { workspace = true }
 json = { workspace = true }
 configurator_utils.workspace = true
-bon = "2"
+bon.workspace = true
 # anyhow = "1"

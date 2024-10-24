@@ -610,6 +610,7 @@ name = "configurator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bon",
  "configurator_schema",
  "configurator_utils",
  "derive_more",

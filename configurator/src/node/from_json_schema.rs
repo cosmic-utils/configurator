@@ -42,7 +42,7 @@ pub(crate) fn schema_object_to_node(
                 InstanceType::Null => Node::Null,
                 InstanceType::Boolean => Node::Bool(NodeBool::new()),
                 InstanceType::Object => Node::Object(NodeObject::new(IndexMap::new(), None)),
-                InstanceType::Array => Node::Array(NodeArray::new2(vec![])),
+                InstanceType::Array => Node::Array(NodeArray::new_any()),
                 InstanceType::Number => Node::Number(NodeNumber::new(
                     format
                         .and_then(|s| NumberValue::kind_from_str(s))
@@ -136,7 +136,7 @@ pub(crate) fn schema_object_to_node(
                 // this means items of the array all share the type described by this schema
                 SingleOrVec::Single(schema) => {
                     let node = schema_object_to_node("array single", def, &schema.to_object())?;
-                    vec![node]
+                    NodeArrayTemplate::All(Box::new(node))
                 }
                 // items are of type array.
                 SingleOrVec::Vec(vec) => {
@@ -148,13 +148,21 @@ pub(crate) fn schema_object_to_node(
                         })
                         .collect();
 
-                    template?
+                    NodeArrayTemplate::FirstN(template?)
                 }
             },
-            None => vec![NodeContainer::from_node(Node::Any)],
+            None => NodeArrayTemplate::All(Box::new(NodeContainer::from_node(Node::Any))),
         };
 
-        let node = NodeContainer::from_metadata(Node::Array(NodeArray::new2(template)), metadata);
+        let node = NodeContainer::from_metadata(
+            Node::Array(NodeArray {
+                values: None,
+                template,
+                min: array.min_items,
+                max: array.max_items,
+            }),
+            metadata,
+        );
 
         res = res.merge(&node)?;
     }
