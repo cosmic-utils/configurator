@@ -4,7 +4,7 @@ use figment::{providers, Figment, Profile};
 use schemars::schema::Schema;
 use serde::Deserialize;
 
-use crate::node::from_json_schema::{schema_object_to_node, ToSchemaObject};
+use crate::node::{from_json_schema::schema_object_to_node, from_json_schema::ToSchemaObject};
 
 fn test_path() -> PathBuf {
     PathBuf::from("../JSON-Schema-Test-Suite/tests/draft7")
@@ -92,12 +92,17 @@ fn test_all_suite() {
                     let config = Figment::new()
                         .merge(providers::Serialized::from(&test.data, Profile::Default));
 
-                    let mut tree = tree.clone();
+                    let tree = tree.clone();
 
-                    if tree.apply_figment(&config).is_err() {
-                        false
-                    } else {
-                        tree.is_valid()
+                    match tree {
+                        Some(mut tree) => {
+                            if tree.apply_figment(&config).is_err() {
+                                false
+                            } else {
+                                tree.is_valid()
+                            }
+                        }
+                        None => false,
                     }
                 }) {
                     Ok(is_valid) => {

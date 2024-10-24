@@ -187,7 +187,7 @@ impl Page {
             system_config = system_config.merge(crate::providers::from_format(path, &format))
         }
 
-        let tree = NodeContainer::from_json_schema2(&json::from_value(json_value)?);
+        let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
 
         let title = appid.split('.').last().unwrap().to_string();
 
