@@ -21,14 +21,14 @@ use serde::{Deserialize, Serialize};
 struct Config {
     sub: SubConfig,
     choice: Choice,
-    // sub_enum: EnumSubConfig,
-    // float: f32,
-    // active: bool,
-    // opt: Option<String>,
-    // vec: Vec<u32>,
-    // otros: u16,
-    // hella: String,
-    // hash: HashMap<String, String>,
+    sub_enum: EnumSubConfig,
+    float: f32,
+    active: bool,
+    opt: Option<String>,
+    vec: Vec<u32>,
+    otros: u16,
+    hella: String,
+    hash: HashMap<String, String>,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
