@@ -30,6 +30,19 @@ pub struct NodeContainer {
     pub removable: bool,
 }
 
+impl NodeContainer {
+    pub fn from_node(node: Node) -> Self {
+        Self {
+            node,
+            default: None,
+            title: None,
+            desc: None,
+            modified: false,
+            removable: false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Unwrap)]
 #[unwrap(ref_mut)]
 pub enum Node {
@@ -44,6 +57,7 @@ pub enum Node {
     /// represent a final value
     /// currently only string is supported
     Value(NodeValue),
+    Any,
 }
 
 #[derive(Debug, Clone)]
@@ -85,7 +99,7 @@ pub struct NodeEnum {
     pub nodes: Vec<NodeContainer>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct NodeObject {
     pub nodes: IndexMap<String, NodeContainer>,
     pub template: Option<Box<NodeContainer>>,
@@ -94,7 +108,10 @@ pub struct NodeObject {
 #[derive(Debug, Clone)]
 pub struct NodeArray {
     pub values: Option<Vec<NodeContainer>>,
+    // #[deprecated]
     pub template: Box<NodeContainer>,
+    pub template2: Vec<NodeContainer>,
+    // capable de:
 }
 
 impl NodeBool {
@@ -146,6 +163,15 @@ impl NodeArray {
         Self {
             template: Box::new(node_type),
             values: None,
+            template2: vec![],
+        }
+    }
+
+    pub fn new2(template2: Vec<NodeContainer>) -> Self {
+        Self {
+            template: Box::new(template2[0].clone()),
+            values: None,
+            template2,
         }
     }
 
@@ -173,6 +199,7 @@ impl NodeContainer {
                 .as_ref()
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
             Node::Value(node_value) => true,
+            Node::Any => true,
         }
     }
 
@@ -210,6 +237,7 @@ impl NodeContainer {
             Node::Enum(node_enum) => None,
             Node::Array(node_array) => None,
             Node::Value(node_value) => node_value.value.as_str().map(Cow::Borrowed),
+            Node::Any => Some(Cow::Borrowed("Any")),
         }
     }
 }

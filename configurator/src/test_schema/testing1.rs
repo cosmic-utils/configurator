@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 struct Config {
-    opt: Option<(Vec<String>, (Vec<String>, String))>,
+    // opt: Option<(Vec<String>, (Vec<String>, String))>,
     a: f32,
-    // hash_map: HashMap<String, Complex>,
+    hash_map: HashMap<String, Complex>,
     // vec: Vec<Complex>,
 }
 
@@ -20,14 +20,14 @@ struct Complex {
 
 impl Default for Config {
     fn default() -> Self {
-        // let mut hash_map = HashMap::new();
-        //
-        // hash_map.insert("k".into(), Complex { str: "0".into() });
+        let mut hash_map = HashMap::new();
+
+        hash_map.insert("k".into(), Complex { str: "0".into() });
 
         Self {
-            // hash_map,
+            hash_map,
             // vec: vec![Complex { str: "0".into() }, Complex { str: "12".into() }],
-            opt: None,
+            // opt: None,
             a: 0.,
         }
     }

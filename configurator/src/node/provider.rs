@@ -47,6 +47,7 @@ impl NodeContainer {
                 )
             }),
             Node::Value(node_value) => Some(json_value_to_figment_value(&node_value.value)),
+            Node::Any => todo!(),
         }
     }
 }

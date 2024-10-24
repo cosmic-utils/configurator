@@ -137,6 +137,7 @@ impl NodeContainer {
                 node_array.values.take();
             }
             Node::Value(node_value) => {}
+            Node::Any => todo!(),
         };
         self.modified = false;
     }
