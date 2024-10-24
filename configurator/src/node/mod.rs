@@ -12,6 +12,7 @@ use crate::utils::{figment_value_to_f64, figment_value_to_i128};
 mod apply_figment;
 pub mod data_path;
 pub mod from_json_schema;
+mod from_json_schema2;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
 mod provider;

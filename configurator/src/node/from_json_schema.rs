@@ -217,7 +217,7 @@ pub(crate) fn schema_object_to_node(
     panic!()
 }
 
-pub trait ToSchemaObject {
+pub(crate) trait ToSchemaObject {
     fn to_object(&self) -> Cow<'_, SchemaObject>;
 }
 
