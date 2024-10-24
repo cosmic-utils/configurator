@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub last_used_page: Option<String>,
     pub cosmic_compat: bool,
+    /// masked appid
+    pub masked: Vec<String>,
 }
 
 impl Default for Config {
@@ -13,6 +15,7 @@ impl Default for Config {
         Self {
             last_used_page: Default::default(),
             cosmic_compat: false,
+            masked: vec!["io.github.wiiznokes.cosmic-ext-applet-clipboard-manager".into()],
         }
     }
 }

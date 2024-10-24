@@ -142,8 +142,7 @@ impl NodeContainer {
                     .values
                     .iter_mut()
                     .for_each(|node| node.remove_value_rec());
-
-            },
+            }
         };
         self.modified = false;
     }
