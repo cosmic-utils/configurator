@@ -14,7 +14,7 @@ use super::*;
 
 impl NodeContainer {
     pub fn from_json_schema(schema: &RootSchema) -> Self {
-        dbg!(&schema);
+        // dbg!(&schema);
 
         // dbg!(&schema.definitions);
 
@@ -30,8 +30,8 @@ pub(crate) fn schema_object_to_node(
     def: &schemars::Map<String, Schema>,
     schema_object: &SchemaObject,
 ) -> Option<NodeContainer> {
-    // info!("enter function from {from}");
-    // dbg!(&schema_object);
+    info!("enter function from {from}");
+    dbg!(&schema_object);
     let metadata = &schema_object.metadata;
 
     let mut res = NodeContainer::from_node(Node::Any);
