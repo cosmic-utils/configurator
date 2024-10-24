@@ -292,7 +292,27 @@ impl NodeContainer {
             (Node::String(node_string), Node::String(node_string2)) => Some(other.clone()),
             (Node::Number(node_number), Node::Number(node_number2)) => Some(other.clone()),
             (Node::Object(node_object), Node::Object(node_object2)) => Some(other.clone()),
-            (Node::Enum(node_enum), Node::Enum(node_enum2)) => Some(other.clone()),
+            (Node::Enum(node_enum), node_other) => {
+                match node_enum
+                    .nodes
+                    .iter()
+                    .enumerate()
+                    .find_map(|(pos, n)| n.merge(other).map(|n| (pos, n)))
+                {
+                    Some((pos, new)) => {
+                        let mut node_self = self.clone();
+                        let mut new_enum = node_enum.clone();
+                        new_enum.nodes[pos] = new;
+                        node_self.node = Node::Enum(new_enum);
+
+                        Some(node_self)
+                    }
+                    None => None,
+                }
+            }
+            // (node_self, Node::Enum(node_other)) => {
+            //     todo!()
+            // }
             (Node::Array(node_array), Node::Array(node_array2)) => Some(other.clone()),
             (Node::Value(node_value), Node::Value(node_value2)) => Some(other.clone()),
             (Node::Any, _) => Some(other.clone()),
