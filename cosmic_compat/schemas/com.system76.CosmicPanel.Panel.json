@@ -1,8 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "X_CONFIGURATOR_FORMAT": "cosmic_ron",
-  "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/cosmic/com.system76.CosmicPanel/v1",
-  "X_CONFIGURATOR_SOURCE_PATHS": "/usr/share/cosmic/com.system76.CosmicPanel/v1",
+  "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/cosmic/com.system76.CosmicPanel.Panel/v1",
+  "X_CONFIGURATOR_SOURCE_PATHS": "/usr/share/cosmic/com.system76.CosmicPanel.Panel/v1",
+  "X_CONFIGURATOR_WRITE_PATH": "/home/fedasus/SSD/Documents/configurator/configurator/test_configs/com.system76.CosmicPanel.Panel",
   "additionalProperties": false,
   "definitions": {
     "AutoHide": {
@@ -10,29 +11,27 @@
       "description": "configurable autohide behavior",
       "properties": {
         "handle_size": {
+          "default": 4,
           "description": "size of the handle in pixels should be > 0",
           "format": "uint32",
           "minimum": 0.0,
           "type": "integer"
         },
         "transition_time": {
+          "default": 200,
           "description": "time in milliseconds that it should take to transition",
           "format": "uint32",
           "minimum": 0.0,
           "type": "integer"
         },
         "wait_time": {
+          "default": 1000,
           "description": "time in milliseconds without pointer focus before hiding",
           "format": "uint32",
           "minimum": 0.0,
           "type": "integer"
         }
       },
-      "required": [
-        "handle_size",
-        "transition_time",
-        "wait_time"
-      ],
       "type": "object"
     },
     "CosmicPanelBackground": {
@@ -79,166 +78,6 @@
           "type": "object"
         }
       ]
-    },
-    "CosmicPanelConfig": {
-      "additionalProperties": false,
-      "description": "Config structure for the cosmic panel",
-      "properties": {
-        "anchor": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/PanelAnchor"
-            }
-          ],
-          "description": "edge which the panel is locked to"
-        },
-        "anchor_gap": {
-          "description": "gap between the panel and the edge of the ouput",
-          "type": "boolean"
-        },
-        "autohide": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/AutoHide"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "enable autohide feature with the transitions lasting the supplied wait time and duration in millis"
-        },
-        "background": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/CosmicPanelBackground"
-            }
-          ],
-          "description": "customized background, or"
-        },
-        "border_radius": {
-          "format": "uint32",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "exclusive_zone": {
-          "description": "exclusive zone",
-          "type": "boolean"
-        },
-        "expand_to_edges": {
-          "description": "whether the panel should stretch to the edges of output",
-          "type": "boolean"
-        },
-        "keyboard_interactivity": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/KeyboardInteractivity"
-            }
-          ],
-          "description": "configured interactivity level for the panel"
-        },
-        "layer": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/Layer"
-            }
-          ],
-          "description": "configured layer which the panel is on"
-        },
-        "margin": {
-          "description": "margin between the panel and the edge of the output",
-          "format": "uint16",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "name": {
-          "description": "profile name for this config, should be unique",
-          "type": "string"
-        },
-        "opacity": {
-          "description": "opacity of the panel",
-          "format": "float",
-          "type": "number"
-        },
-        "output": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/CosmicPanelOuput"
-            }
-          ],
-          "description": "name of configured output (Intended for dock or panel), or None to place on active output (Intended for wrapping a single application)"
-        },
-        "padding": {
-          "description": "padding around the panel",
-          "format": "uint32",
-          "minimum": 0.0,
-          "type": "integer"
-        },
-        "plugins_center": {
-          "description": "list of plugins in the center of the panel",
-          "items": {
-            "type": "string"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "plugins_wings": {
-          "description": "list of plugins on the left / top and right / bottom of the panel",
-          "items": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          ],
-          "maxItems": 2,
-          "minItems": 2,
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "size": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/PanelSize"
-            }
-          ],
-          "description": "configured size for the panel"
-        },
-        "spacing": {
-          "description": "space between panel plugins",
-          "format": "uint32",
-          "minimum": 0.0,
-          "type": "integer"
-        }
-      },
-      "required": [
-        "anchor",
-        "anchor_gap",
-        "background",
-        "border_radius",
-        "exclusive_zone",
-        "expand_to_edges",
-        "keyboard_interactivity",
-        "layer",
-        "margin",
-        "name",
-        "opacity",
-        "output",
-        "padding",
-        "size",
-        "spacing"
-      ],
-      "type": "object"
     },
     "CosmicPanelOuput": {
       "description": "Configuration for the panel's ouput",
@@ -407,16 +246,161 @@
   },
   "description": "Config structure for the cosmic panel",
   "properties": {
-    "config_list": {
+    "anchor": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PanelAnchor"
+        }
+      ],
+      "default": "Top",
+      "description": "edge which the panel is locked to"
+    },
+    "anchor_gap": {
+      "default": false,
+      "description": "gap between the panel and the edge of the ouput",
+      "type": "boolean"
+    },
+    "autohide": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AutoHide"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "enable autohide feature with the transitions lasting the supplied wait time and duration in millis"
+    },
+    "background": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CosmicPanelBackground"
+        }
+      ],
+      "default": "ThemeDefault",
+      "description": "customized background, or"
+    },
+    "border_radius": {
+      "default": 8,
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "exclusive_zone": {
+      "default": true,
+      "description": "exclusive zone",
+      "type": "boolean"
+    },
+    "expand_to_edges": {
+      "default": true,
+      "description": "whether the panel should stretch to the edges of output",
+      "type": "boolean"
+    },
+    "keyboard_interactivity": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/KeyboardInteractivity"
+        }
+      ],
+      "default": "None",
+      "description": "configured interactivity level for the panel"
+    },
+    "layer": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Layer"
+        }
+      ],
+      "default": "Top",
+      "description": "configured layer which the panel is on"
+    },
+    "margin": {
+      "default": 4,
+      "description": "margin between the panel and the edge of the output",
+      "format": "uint16",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "name": {
+      "default": "",
+      "description": "profile name for this config, should be unique",
+      "type": "string"
+    },
+    "opacity": {
+      "default": 0.800000011920929,
+      "description": "opacity of the panel",
+      "format": "float",
+      "type": "number"
+    },
+    "output": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/CosmicPanelOuput"
+        }
+      ],
+      "default": "All",
+      "description": "name of configured output (Intended for dock or panel), or None to place on active output (Intended for wrapping a single application)"
+    },
+    "padding": {
+      "default": 4,
+      "description": "padding around the panel",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    },
+    "plugins_center": {
+      "default": null,
+      "description": "list of plugins in the center of the panel",
       "items": {
-        "$ref": "#/definitions/CosmicPanelConfig"
+        "type": "string"
       },
-      "type": "array"
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "plugins_wings": {
+      "default": null,
+      "description": "list of plugins on the left / top and right / bottom of the panel",
+      "items": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "size": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PanelSize"
+        }
+      ],
+      "default": "M",
+      "description": "configured size for the panel"
+    },
+    "spacing": {
+      "default": 4,
+      "description": "space between panel plugins",
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
     }
   },
-  "required": [
-    "config_list"
-  ],
-  "title": "CosmicPanelContainerConfig",
+  "title": "CosmicPanelConfig",
   "type": "object"
 }

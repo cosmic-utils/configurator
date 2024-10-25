@@ -6,13 +6,20 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+
+#[derive(Default)]
+enum ConfigEnum {
+    #[default]
+    A,
+    B,
+}
+
+
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
 #[derive(Default)]
 struct Config {
-    opt: Option<(Vec<String>, Vec<String>)>,
-    // a: f32,
-    // hash_map: HashMap<String, Complex>,
-    // vec: Vec<Complex>,
+    opt: Option<ConfigEnum>,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
