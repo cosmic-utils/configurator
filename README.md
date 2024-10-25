@@ -26,7 +26,8 @@ zconf\* are just alternative to [cosmic-config](https://github.com/pop-os/libcos
   - [x] Provide an option to install the schema from the app (and hopefully upsteam it when we are in a good shape)
 - [x] UI to create a value (this will be difficult, but it should be possible)
 - [x] Improve the UI a lot
-- [ ] ...
+- [ ] polish the code (test more complex structure)
+- [ ] release as a flatpak app
 
 ## Other
 
@@ -36,6 +37,9 @@ zconf\* are just alternative to [cosmic-config](https://github.com/pop-os/libcos
 - [ ] ...
 
 As you see, this is quite a lot of works, so if anyone is interested, please reach out
+
+![](./configurator/res/screenshots/cosmic-panel-compat.png)
+_All the cosmic panel config_ modifiable in the app.
 
 ## Credits
 

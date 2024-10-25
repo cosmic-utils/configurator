@@ -209,6 +209,7 @@ impl Page {
 
         if let Err(err) = page.reload() {
             error!("{err}");
+            panic!()
         }
 
         Ok(page)
