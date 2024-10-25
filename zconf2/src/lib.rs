@@ -35,7 +35,6 @@ impl<S> ConfigManager<S> {
 
         let settings = if !settings_file_path.exists() {
             let default_settings = S::default();
-            serialize(&settings_file_path, &default_settings)?;
             default_settings
         } else {
             match deserialize(&settings_file_path) {

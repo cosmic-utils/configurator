@@ -16,7 +16,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             last_used_page: Default::default(),
-            cosmic_compat: false,
+            cosmic_compat: true,
             masked: vec![
                 "io.github.wiiznokes.cosmic-ext-applet-clipboard-manager".into(),
                 APPID.into(),
