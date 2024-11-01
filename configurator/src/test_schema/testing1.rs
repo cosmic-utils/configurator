@@ -6,14 +6,12 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
-
 #[derive(Default)]
 enum ConfigEnum {
     #[default]
     A,
     B,
 }
-
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]

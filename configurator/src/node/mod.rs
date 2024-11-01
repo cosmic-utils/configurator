@@ -215,19 +215,7 @@ impl NodeContainer {
         }
     }
 
-    pub fn from_metadata(node: Node, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
-        Self {
-            node,
-            default: None,
-            title: None,
-            desc: None,
-            modified: false,
-            removable: false,
-        }
-        .set_metadata(metadata)
-    }
-
-    pub fn set_metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
+    pub fn metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
         Self {
             default: metadata
                 .as_ref()

@@ -32,7 +32,6 @@ pub(crate) fn schema_object_to_node(
 ) -> Option<NodeContainer> {
     // info!("enter function from {from}");
     // dbg!(&schema_object);
-    let metadata = &schema_object.metadata;
 
     let mut res = NodeContainer::from_node(Node::Any);
 
@@ -58,23 +57,23 @@ pub(crate) fn schema_object_to_node(
         }
 
         let node = match single_or_vec {
-            SingleOrVec::Single(instance_type) => NodeContainer::from_metadata(
-                instance_type_to_node(instance_type, schema_object.format.as_ref()),
-                metadata,
-            ),
+            SingleOrVec::Single(instance_type) => NodeContainer::from_node(instance_type_to_node(
+                instance_type,
+                schema_object.format.as_ref(),
+            )),
             SingleOrVec::Vec(vec) => {
                 let nodes = vec
                     .iter()
                     .map(|instance_type| {
                         // xxx: why do we not pass metadata here ?
 
-                        NodeContainer::from_metadata(
-                            instance_type_to_node(instance_type, schema_object.format.as_ref()),
-                            &None,
-                        )
+                        NodeContainer::from_node(instance_type_to_node(
+                            instance_type,
+                            schema_object.format.as_ref(),
+                        ))
                     })
                     .collect();
-                NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata)
+                NodeContainer::from_node(Node::Enum(NodeEnum::new(nodes)))
             }
         };
 
@@ -110,21 +109,17 @@ pub(crate) fn schema_object_to_node(
         // dbg!(&enum_values);
 
         let node = if enum_values.len() == 1 {
-            NodeContainer::from_metadata(
-                Node::Value(NodeValue::new(enum_values[0].clone())),
-                metadata,
-            )
+            NodeContainer::from_node(Node::Value(NodeValue::new(enum_values[0].clone())))
         } else {
             let mut nodes = Vec::new();
 
             for value in enum_values {
-                nodes.push(NodeContainer::from_metadata(
-                    Node::Value(NodeValue::new(value.clone())),
-                    metadata,
-                ));
+                nodes.push(NodeContainer::from_node(Node::Value(NodeValue::new(
+                    value.clone(),
+                ))));
             }
 
-            NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata)
+            NodeContainer::from_node(Node::Enum(NodeEnum::new(nodes)))
         };
 
         res = res.merge(&node)?;
@@ -154,15 +149,12 @@ pub(crate) fn schema_object_to_node(
             None => NodeArrayTemplate::All(Box::new(NodeContainer::from_node(Node::Any))),
         };
 
-        let node = NodeContainer::from_metadata(
-            Node::Array(NodeArray {
-                values: None,
-                template,
-                min: array.min_items,
-                max: array.max_items,
-            }),
-            metadata,
-        );
+        let node = NodeContainer::from_node(Node::Array(NodeArray {
+            values: None,
+            template,
+            min: array.min_items,
+            max: array.max_items,
+        }));
 
         res = res.merge(&node)?;
     }
@@ -179,7 +171,7 @@ pub(crate) fn schema_object_to_node(
             let node = if nodes.len() > 1 {
                 todo!()
             } else {
-                nodes.remove(0).set_metadata(metadata)
+                nodes.remove(0)
             };
             res = res.merge(&node)?;
         }
@@ -194,7 +186,7 @@ pub(crate) fn schema_object_to_node(
                 nodes.push(node);
             }
 
-            let node = NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata);
+            let node = NodeContainer::from_node(Node::Enum(NodeEnum::new(nodes)));
             res = res.merge(&node)?;
         }
 
@@ -208,7 +200,7 @@ pub(crate) fn schema_object_to_node(
                 nodes.push(node);
             }
 
-            let node = NodeContainer::from_metadata(Node::Enum(NodeEnum::new(nodes)), metadata);
+            let node = NodeContainer::from_node(Node::Enum(NodeEnum::new(nodes)));
             res = res.merge(&node)?;
         }
     }
@@ -225,6 +217,7 @@ pub(crate) fn schema_object_to_node(
         }
     }
 
+    let res = res.metadata(&schema_object.metadata);
     Some(res)
 }
 
