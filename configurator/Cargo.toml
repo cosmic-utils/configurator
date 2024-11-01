@@ -40,11 +40,10 @@ include_dir = "0.7"
 bon.workspace = true
 
 [dependencies.libcosmic]
-# git = "https://github.com/pop-os/libcosmic"
-# branch = "master"
-# branch = "iced-0.13"
-git = "https://github.com/wiiznokes/libcosmic"
-branch = "section-imprv"
+git = "https://github.com/pop-os/libcosmic"
+branch = "master"
+# git = "https://github.com/wiiznokes/libcosmic"
+# branch = "section-imprv"
 default-features = false
 # path = "../../libcosmic"
 features = [
