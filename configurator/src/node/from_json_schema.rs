@@ -292,6 +292,7 @@ impl NodeContainer {
             (Node::String(node_string), Node::String(node_string2)) => Some(other.clone()),
             (Node::Number(node_number), Node::Number(node_number2)) => Some(other.clone()),
             (Node::Object(node_object), Node::Object(node_object2)) => Some(other.clone()),
+            (Node::Enum(node_enum1), Node::Enum(node_enum2)) => todo!("product?"),
             (Node::Enum(node_enum), node_other) => {
                 match node_enum
                     .nodes
@@ -315,8 +316,27 @@ impl NodeContainer {
             // }
             (Node::Array(node_array), Node::Array(node_array2)) => Some(other.clone()),
             (_, Node::Value(node_value2)) => Some(other.clone()),
+            (Node::Value(node_value1), _) => Some(self.clone()),
             (Node::Any, _) => Some(other.clone()),
             (_, Node::Any) => Some(self.clone()),
+            (_, Node::Enum(node_enum)) => {
+                match node_enum
+                    .nodes
+                    .iter()
+                    .enumerate()
+                    .find_map(|(pos, n)| n.merge(self).map(|n| (pos, n)))
+                {
+                    Some((pos, new)) => {
+                        let mut node_other = other.clone();
+                        let mut new_enum = node_enum.clone();
+                        new_enum.nodes[pos] = new;
+                        node_other.node = Node::Enum(new_enum);
+
+                        Some(node_other)
+                    }
+                    None => None,
+                }
+            }
             _ => {
                 warn!("none");
                 dbg!(&self, &other);
