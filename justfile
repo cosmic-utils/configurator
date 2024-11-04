@@ -95,7 +95,7 @@ install_sdk:
     org.freedesktop.Platform//24.08 \
     org.freedesktop.Sdk//24.08 \
     org.freedesktop.Sdk.Extension.rust-stable//24.08 \
-    org.freedesktop.Sdk.Extension.llvm17//24.08
+    org.freedesktop.Sdk.Extension.llvm18//24.08
 
 uninstallf:
   flatpak uninstall io.github.cosmic_utils.configurator -y || true
