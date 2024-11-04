@@ -4,7 +4,7 @@ debug := '0'
 
 
 name := 'configurator'
-appid := 'io.github.cosmic-utils.' + name 
+appid := 'io.github.cosmic_utils.' + name 
 
 cargo-target-dir := env('CARGO_TARGET_DIR', 'target')
 bin-src := cargo-target-dir / if debug == '1' { 'debug' / name } else { 'release' / name }
@@ -98,7 +98,7 @@ install_sdk:
     org.freedesktop.Sdk.Extension.llvm17//24.08
 
 uninstallf:
-  flatpak uninstall io.github.cosmic-utils.configurator -y || true
+  flatpak uninstall io.github.cosmic_utils.configurator -y || true
 
 # deps: flatpak-builder git-lfs
 build_and_install: uninstallf
@@ -110,7 +110,7 @@ build_and_install: uninstallf
     --install-deps-from=flathub \
     --repo=repo \
     flatpak-out \
-    io.github.cosmic-utils.configurator.json
+    io.github.cosmic_utils.configurator.json
 
 runf:
-  flatpak run io.github.cosmic-utils.configurator
+  flatpak run io.github.cosmic_utils.configurator

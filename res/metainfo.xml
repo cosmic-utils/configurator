@@ -3,7 +3,7 @@
 <!-- https://docs.flathub.org/docs/for-app-authors/metainfo-guidelines -->
 
 <component type="desktop-application">
-  <id>io.github.cosmic-utils.configurator</id>
+  <id>io.github.cosmic_utils.configurator</id>
 
   <name>Configurator</name>
   <summary>Configure your apps with an UI</summary>
@@ -29,7 +29,7 @@
     </p>
   </description>
 
-  <launchable type="desktop-id">io.github.cosmic-utils.configurator.desktop</launchable>
+  <launchable type="desktop-id">io.github.cosmic_utils.configurator.desktop</launchable>
   <screenshots>
     <screenshot type="default">
       <caption>configurator screenshot</caption>

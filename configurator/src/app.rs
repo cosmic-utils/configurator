@@ -20,7 +20,7 @@ use crate::{
 };
 
 pub const QUALIFIER: &str = "io.github";
-pub const ORG: &str = "cosmic-utils";
+pub const ORG: &str = "cosmic_utils";
 pub const APP: &str = "configurator";
 pub const APPID: &str = constcat::concat!(QUALIFIER, ".", ORG, ".", APP);
 
