@@ -7,17 +7,17 @@ for libcosmic
 
 ## Test node generation
 
+- [x] bool
+- [x] string
+- [ ] number
+- [ ] float
 - [ ] enum simple
+- [ ] enum complex type
 - [ ] option
+- [ ] option complex type
 - [ ] tuple
 - [ ] vec
 - [ ] hashmap
-- [ ] bool
-- [ ] string
-- [ ] number
-- [ ] float
-- [ ] bool
-- [ ] enum
 - [ ] nested struct / enum / complex
 
 ## End to End

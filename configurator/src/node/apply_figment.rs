@@ -12,6 +12,7 @@ use crate::utils::{data_default_profile_figment, json_value_eq_figment_value};
 use super::{Node, NodeContainer};
 
 impl NodeContainer {
+    // todo: use figment Value instead
     pub fn apply_figment(&mut self, figment: &Figment) -> anyhow::Result<()> {
         match data_default_profile_figment(figment) {
             Some(data) => self.apply_value(Value::Dict(Tag::Default, data), true),

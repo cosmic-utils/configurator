@@ -1,4 +1,3 @@
-mod cosmic_ron;
 use anyhow::anyhow;
 use std::{fs, path::Path};
 
@@ -9,6 +8,10 @@ use figment::{
     value::Value,
     Figment, Profile, Provider,
 };
+
+mod cosmic_ron;
+#[cfg(test)]
+mod tests;
 
 pub struct BoxedProvider(Box<dyn Provider>);
 
@@ -37,7 +40,7 @@ pub fn from_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
     }
 }
 
-pub fn write(path: &Path, format: &ConfigFormat, data: &Value) -> anyhow::Result<()> {
+pub fn write<P: AsRef<Path>>(path: P, format: &ConfigFormat, data: &Value) -> anyhow::Result<()> {
     // dbg!(&data);
     match format {
         ConfigFormat::Json => {
@@ -49,7 +52,7 @@ pub fn write(path: &Path, format: &ConfigFormat, data: &Value) -> anyhow::Result
                 for (key, value) in dict {
                     let content =
                         ron::ser::to_string_pretty(value, ron::ser::PrettyConfig::new()).unwrap();
-                    write_and_create_parent(path.join(key), &content)?;
+                    write_and_create_parent(path.as_ref().join(key), &content)?;
                 }
             }
         }
