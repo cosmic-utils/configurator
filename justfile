@@ -1,5 +1,5 @@
 rootdir := ''
-prefix := '~/.local'
+prefix := x"~/.local"
 debug := '0'
 
 
@@ -92,13 +92,13 @@ sources_gen:
 install_sdk:
   flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
   flatpak install --noninteractive --user flathub \
-    org.freedesktop.Platform//23.08 \
-    org.freedesktop.Sdk//23.08 \
-    org.freedesktop.Sdk.Extension.rust-stable//23.08 \
-    org.freedesktop.Sdk.Extension.llvm17//23.08
+    org.freedesktop.Platform//24.08 \
+    org.freedesktop.Sdk//24.08 \
+    org.freedesktop.Sdk.Extension.rust-stable//24.08 \
+    org.freedesktop.Sdk.Extension.llvm17//24.08
 
 uninstallf:
-  flatpak uninstall io.github.wiiznokes.cosmic-ext-applet-clipboard-manager -y || true
+  flatpak uninstall io.github.cosmic-utils.configurator -y || true
 
 # deps: flatpak-builder git-lfs
 build_and_install: uninstallf
@@ -110,7 +110,7 @@ build_and_install: uninstallf
     --install-deps-from=flathub \
     --repo=repo \
     flatpak-out \
-    io.github.wiiznokes.cosmic-ext-applet-clipboard-manager.json
+    io.github.cosmic-utils.configurator.json
 
 runf:
-  flatpak run io.github.wiiznokes.cosmic-ext-applet-clipboard-manager
+  flatpak run io.github.cosmic-utils.configurator

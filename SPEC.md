@@ -5,7 +5,7 @@ The schema must be stored in one of this locations
 - `$XDG_DATA_HOME/configurator/`
 - `$XDG_DATA_DIRS/configurator/`
 
-The filename should be the [Application ID](https://docs.flathub.org/docs/for-app-authors/requirements/#application-id) of the application, plus the `.json` extension. E.g: `io.github.wiiznokes.configurator.json`.
+The filename should be the [Application ID](https://docs.flathub.org/docs/for-app-authors/requirements/#application-id) of the application, plus the `.json` extension. E.g: `io.github.cosmic-utils.configurator.json`.
 
 ## Additional metadata
 

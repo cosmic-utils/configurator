@@ -3,7 +3,7 @@
 <!-- https://docs.flathub.org/docs/for-app-authors/metainfo-guidelines -->
 
 <component type="desktop-application">
-  <id>io.github.wiiznokes.configurator</id>
+  <id>io.github.cosmic-utils.configurator</id>
 
   <name>Configurator</name>
   <summary>Configure your apps with an UI</summary>
