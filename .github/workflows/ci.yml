@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+    paths-ignore:
+      - "**.md"
+      - "**.txt"
+      - "**.log"
+      - "**.desktop"
+      - "metainfo.xml"
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Rust tests
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update
+      - uses: taiki-e/install-action@just
+      - uses: Swatinem/rust-cache@v2
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install pkg-config libxkbcommon-dev
+
+      - name: Run tests
+        run: cargo test --workspace --all-features -- --show-output
+
+  fmt:
+    name: Rustfmt
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update
+      - name: Run rustfmt
+        run: cargo fmt --all --check --verbose
+
+  clippy:
+    name: Clippy
+    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update
+      - uses: taiki-e/install-action@just
+      - uses: Swatinem/rust-cache@v2
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install pkg-config libxkbcommon-dev
+
+      - name: Run clippy
+        run: cargo clippy --workspace --all-features
