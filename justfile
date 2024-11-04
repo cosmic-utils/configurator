@@ -14,7 +14,7 @@ share-dst := base-dir / 'share'
 
 bin-dst := base-dir / 'bin' / name
 desktop-dst := share-dst / 'applications' / appid + '.desktop'
-icon-dst := share-dst / 'icons/hicolor/scalable/apps' / appid + '-symbolic.svg'
+icon-dst := share-dst / 'icons/hicolor/scalable/apps' / appid + '.svg'
 env-dst := rootdir / 'etc/profile.d' / name + '.sh'
 schema-dst := share-dst / 'configurator' / appid + '.json'
 
@@ -43,7 +43,7 @@ pull: fmt prettier fix test
 gen_schema:
     cargo test --package configurator config::test::gen_schema -- --ignored
 
-uninstall_schema:
+uninstall:
   rm {{bin-dst}}
   rm {{desktop-dst}}
   rm {{icon-dst}}
