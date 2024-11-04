@@ -11,14 +11,22 @@ use schemars::{schema_for, JsonSchema};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
-struct Config1 {}
+struct Config1 {
+    a: bool,
+}
+
+impl Config1 {
+    fn new() -> Self {
+        Self { a: false }
+    }
+}
 
 #[test]
 fn test_string() {
     let schema = schema_for!(Config1);
     let mut tree = NodeContainer::from_json_schema(&schema);
 
-    let config1 = Config1 {};
+    let config1 = Config1::new();
 
     let figment = Figment::new().join(providers::Serialized::from(
         config1.clone(),

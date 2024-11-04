@@ -34,6 +34,7 @@ mod test {
     use super::Config;
 
     #[test]
+    #[ignore = "schema generation. Should be an executable"]
     pub fn gen_schema() {
         let path = Path::new("../configurator/res").join(format!("{}.json", APPID));
 

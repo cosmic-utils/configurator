@@ -11,8 +11,19 @@
       ]
     },
     "cosmic_compat": {
-      "default": false,
+      "default": true,
       "type": "boolean"
+    },
+    "masked": {
+      "description": "masked appid",
+      "default": [
+        "io.github.wiiznokes.cosmic-ext-applet-clipboard-manager",
+        "io.github.wiiznokes.configurator"
+      ],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/configurator/configurator.json"

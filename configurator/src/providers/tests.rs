@@ -29,7 +29,7 @@ static TESTS: LazyLock<Vec<(Value, &'static str, &'static ConfigFormat)>> = Lazy
 });
 
 #[test]
-fn gen() {
+fn write_and_read() {
     for (initial_value, path, format) in TESTS.iter() {
         super::write(path, format, initial_value).unwrap();
 

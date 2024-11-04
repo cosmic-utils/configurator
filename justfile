@@ -20,7 +20,7 @@ run: install_schema
     cargo r --bin configurator
 
 gen_schema:
-    cargo test --package configurator config::test::gen_schema
+    cargo test --package configurator config::test::gen_schema -- --ignored
 
 install_schema: gen_schema
     install -Dm0644 configurator/res/{{appid}}.json ~/.local/share/configurator/{{appid}}.json
@@ -39,4 +39,4 @@ install: install_schema
 
 # require to git clone https://github.com/json-schema-org/JSON-Schema-Test-Suite
 test_suite:
-    cargo test test_all_suite -- --nocapture
+    cargo test test_all_suite -- --nocapture --ignored
