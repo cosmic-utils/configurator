@@ -89,14 +89,6 @@ setupf:
 sources_gen:
   python3 flatpak-builder-tools/cargo/flatpak-cargo-generator.py ./Cargo.lock -o cargo-sources.json
 
-install_sdk:
-  flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
-  flatpak install --noninteractive --user flathub \
-    org.freedesktop.Platform//24.08 \
-    org.freedesktop.Sdk//24.08 \
-    org.freedesktop.Sdk.Extension.rust-stable//24.08 \
-    org.freedesktop.Sdk.Extension.llvm18//24.08
-
 uninstallf:
   flatpak uninstall io.github.cosmic_utils.configurator -y || true
 

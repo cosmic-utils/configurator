@@ -4,17 +4,24 @@
   "runtime-version": "24.08",
   "sdk": "org.freedesktop.Sdk",
   "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-nightly"],
+  "base": "com.system76.Cosmic.BaseApp",
+  "base-version": "stable",
   "command": "configurator",
-  "finish-args": ["--share=ipc", "--socket=fallback-x11", "--socket=wayland"],
+  "finish-args": [
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--filesystem=host-os",
+    "--filesystem=/var/lib/flatpak:ro",
+    "--filesystem=~/.local/share/configurator:ro",
+    "--filesystem=~/.var/app:ro"
+  ],
   "modules": [
     {
       "name": "configurator",
       "buildsystem": "simple",
       "build-options": {
-        "env": {
-          "CARGO_HOME": "/run/build/configurator/cargo"
-        },
-        "append-path": "/usr/lib/sdk/rust-nightly/bin"
+        "append-path": "/usr/lib/sdk/rust-nightly/extra/sdk/rust-nightly/bin"
       },
       "build-commands": [
         "just build-release --offline --verbose",
