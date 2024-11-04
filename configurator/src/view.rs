@@ -5,7 +5,7 @@ use cosmic::{
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
-        button, column, container, horizontal_space, mouse_area, row,
+        button, column, container, horizontal_space, mouse_area, row, scrollable,
         segmented_button::Entity,
         settings::section,
         text, text_input,
@@ -91,7 +91,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
 
     column()
         .push(view_data_path(&page.data_path))
-        .push(content)
+        .push(scrollable(content))
         .spacing(10)
         .into()
 }
