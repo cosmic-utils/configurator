@@ -76,7 +76,7 @@ impl Default for TestVeryComplex {
             },
         });
 
-        v.1.insert("lol".into(), Rec::default());
+        v.1.insert("lol".into(), EnumComplex::default());
 
         Self {
             x,
@@ -165,5 +165,5 @@ pub struct TestHashMap {
 pub struct TestVeryComplex {
     x: HashMap<String, Complex>,
     y: EnumComplex,
-    v: (Vec<EnumComplex>, HashMap<String, Rec>),
+    v: (Vec<EnumComplex>, HashMap<String, EnumComplex>),
 }
