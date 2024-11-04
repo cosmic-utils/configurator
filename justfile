@@ -4,7 +4,7 @@ debug := '0'
 
 
 name := 'configurator'
-appid := 'io.github.wiiznokes.' + name 
+appid := 'io.github.cosmic-utils.' + name 
 
 cargo-target-dir := env('CARGO_TARGET_DIR', 'target')
 bin-src := cargo-target-dir / if debug == '1' { 'debug' / name } else { 'release' / name }
@@ -34,7 +34,7 @@ install:
   install -Dm0755 {{bin-src}} {{bin-dst}}
   install -Dm0644 res/desktop_entry.desktop {{desktop-dst}}
   install -Dm0644 res/app_icon.svg {{icon-dst}}
-  install -Dm0644 configurator/res/config_schema.json {{schema-dst}}
+  install -Dm0644 res/config_schema.json {{schema-dst}}
 
 
 # call before pull request
@@ -80,4 +80,42 @@ prettier:
 
 # todo: add to CI when ubuntu-image get appstream version 1.0
 metainfo-check:
-	appstreamcli validate --pedantic --explain --strict res/linux/metainfo.xml
+	appstreamcli validate --pedantic --explain --strict res/metainfo.xml
+
+
+# flatpak
+
+setupf:
+  rm -rf flatpak-builder-tools
+  git clone https://github.com/flatpak/flatpak-builder-tools
+  pip install aiohttp toml
+
+
+sources_gen:
+  python3 flatpak-builder-tools/cargo/flatpak-cargo-generator.py ./Cargo.lock -o cargo-sources.json
+
+install_sdk:
+  flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+  flatpak install --noninteractive --user flathub \
+    org.freedesktop.Platform//23.08 \
+    org.freedesktop.Sdk//23.08 \
+    org.freedesktop.Sdk.Extension.rust-stable//23.08 \
+    org.freedesktop.Sdk.Extension.llvm17//23.08
+
+uninstallf:
+  flatpak uninstall io.github.wiiznokes.cosmic-ext-applet-clipboard-manager -y || true
+
+# deps: flatpak-builder git-lfs
+build_and_install: uninstallf
+  flatpak-builder \
+    --force-clean \
+    --verbose \
+    --ccache \
+    --user --install \
+    --install-deps-from=flathub \
+    --repo=repo \
+    flatpak-out \
+    io.github.wiiznokes.cosmic-ext-applet-clipboard-manager.json
+
+runf:
+  flatpak run io.github.wiiznokes.cosmic-ext-applet-clipboard-manager

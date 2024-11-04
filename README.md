@@ -38,7 +38,7 @@ zconf\* are just alternative to [cosmic-config](https://github.com/pop-os/libcos
 
 As you see, this is quite a lot of works, so if anyone is interested, please reach out
 
-![](./configurator/res/screenshots/cosmic-panel-compat.png)
+![](./res/screenshots/cosmic-panel-compat.png)
 _All the cosmic panel config_ modifiable in the app.
 
 ## Credits

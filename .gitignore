@@ -5,3 +5,7 @@
 /configurator/test_configs
 /configurator/tests
 /.vscode
+/vendor
+/flatpak-builder-tools
+/.flatpak-builder
+/cargo-sources.json
