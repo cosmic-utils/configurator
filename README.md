@@ -14,8 +14,6 @@ Currently, only 2 crates are relevant
 - configurator: the APP
 - configurator_schema: the crate client can use to generate a JSON schema that respect the [spec](./SPEC.md)
 
-zconf\* are just alternative to [cosmic-config](https://github.com/pop-os/libcosmic/tree/master/cosmic-config).
-
 # MVP todo
 
 - [x] Plug the config system of COSMIC

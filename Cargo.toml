@@ -3,13 +3,11 @@ members = [
     "configurator",
     "configurator_schema",
     "configurator_utils",
-    "zconf2",
-    # "figment_schemars_bridge",
-    # "zconf",
-    # "zconf_derive",
-    # "zconf_derive_impl",
-    # "vexpe",
-    # "vtesting",
+    "zconf/zconf2",
+    # "zconf/figment_schemars_bridge",
+    # "zconf/zconf",
+    # "zconf/zconf_derive",
+    # "zconf/zconf_derive_impl",
 ]
 resolver = "2"
 
@@ -28,8 +26,8 @@ unused_imports = "allow"
 configurator_schema = { path = "configurator_schema" }
 configurator_utils = { path = "configurator_utils" }
 figment_schemars_bridge = { path = "figment_schemars_bridge" }
-zconf = { path = "zconf" }
-zconf2 = { path = "zconf2" }
+# zconf = { path = "zconf/zconf" }
+zconf2 = { path = "zconf/zconf2" }
 
 derive_more = { version = "1", features = ["unwrap"] }
 ron = "0.8"
