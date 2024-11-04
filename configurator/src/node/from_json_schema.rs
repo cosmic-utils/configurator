@@ -279,7 +279,7 @@ impl NodeContainer {
     fn merge(&self, other: &NodeContainer) -> Option<NodeContainer> {
         match (&self.node, &other.node) {
             (Node::Null, Node::Null) => Some(other.clone()),
-            (Node::Null, Node::Any) => Some(other.clone()),
+            // (Node::Null, Node::Any) => Some(other.clone()),
             (Node::Bool(node_bool), Node::Null) => Some(other.clone()),
             (Node::Bool(node_bool), Node::Bool(node_bool2)) => Some(other.clone()),
             (Node::String(node_string), Node::String(node_string2)) => Some(other.clone()),
