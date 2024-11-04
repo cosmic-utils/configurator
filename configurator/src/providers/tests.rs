@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData, path::Path, sync::LazyLock};
+use std::{collections::HashMap, fs, marker::PhantomData, path::Path, sync::LazyLock};
 
 use configurator_utils::ConfigFormat;
 use figment::{
@@ -10,9 +10,13 @@ use serial_test::serial;
 
 use crate::test_common::*;
 
+use pretty_assertions::assert_eq;
+
 /// 1. write the value
 /// 2. read the value and assert equal
 fn write_and_read<P: AsRef<Path>>(path: P, format: &ConfigFormat, initial_value: &Value) {
+    let _ = fs::remove_dir_all(path.as_ref());
+
     super::write(path.as_ref(), format, initial_value).unwrap();
 
     let value = super::read_from_format(path.as_ref(), format);

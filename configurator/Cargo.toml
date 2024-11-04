@@ -58,3 +58,4 @@ features = [
 [dev-dependencies]
 configurator_schema = { workspace = true }
 serial_test = "3"
+pretty_assertions.workspace = true
