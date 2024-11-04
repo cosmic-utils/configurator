@@ -13,10 +13,10 @@ base-dir := absolute_path(clean(rootdir / prefix))
 share-dst := base-dir / 'share'
 
 bin-dst := base-dir / 'bin' / name
-desktop-dst := share-dst / 'applications' / APPID + '.desktop'
-icon-dst := share-dst / 'icons/hicolor/scalable/apps' / APPID + '-symbolic.svg'
-env-dst := rootdir / 'etc/profile.d' / NAME + '.sh'
-schema-dst := share-dst / 'configurator' / APPID + '.json'
+desktop-dst := share-dst / 'applications' / appid + '.desktop'
+icon-dst := share-dst / 'icons/hicolor/scalable/apps' / appid + '-symbolic.svg'
+env-dst := rootdir / 'etc/profile.d' / name + '.sh'
+schema-dst := share-dst / 'configurator' / appid + '.json'
 
 default: build-release
 
@@ -48,11 +48,6 @@ uninstall_schema:
   rm {{desktop-dst}}
   rm {{icon-dst}}
   rm {{schema-dst}}
-
-
-install: install_schema
-  install -Dm0755 {{bin-src}} {{bin-dst}}
-
 
 
 # require to git clone https://github.com/json-schema-org/JSON-Schema-Test-Suite

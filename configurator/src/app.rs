@@ -20,9 +20,9 @@ use crate::{
 };
 
 pub const QUALIFIER: &str = "io.github";
-pub const ORG: &str = "wiiznokes";
+pub const ORG: &str = "cosmic-utils";
 pub const APP: &str = "configurator";
-pub const APPID: &str = "io.github.wiiznokes.configurator";
+pub const APPID: &str = constcat::concat!(QUALIFIER, ".", ORG, ".", APP);
 
 #[derive(Debug)]
 pub enum Dialog {
