@@ -3,4 +3,5 @@
 /log.txt
 /configurator/test_schemas
 /configurator/test_configs
+/configurator/tests
 /.vscode

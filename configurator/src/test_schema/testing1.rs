@@ -5,8 +5,7 @@ use std::collections::HashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 enum ConfigEnum {
     #[default]
     A,

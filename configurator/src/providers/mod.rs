@@ -31,12 +31,12 @@ impl Provider for BoxedProvider {
     }
 }
 
-pub fn from_format(path: &Path, format: &ConfigFormat) -> BoxedProvider {
+pub fn read_from_format<P: AsRef<Path>>(path: P, format: &ConfigFormat) -> BoxedProvider {
     match format {
         ConfigFormat::Json => BoxedProvider(Box::new(providers::Json::file(path))),
-        ConfigFormat::CosmicRon => {
-            BoxedProvider(Box::new(crate::providers::CosmicRonProvider::new(path)))
-        }
+        ConfigFormat::CosmicRon => BoxedProvider(Box::new(
+            crate::providers::CosmicRonProvider::new(path.as_ref()),
+        )),
     }
 }
 

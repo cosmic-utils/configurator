@@ -184,7 +184,7 @@ impl Page {
         let mut system_config = Figment::new();
 
         for path in &source_paths {
-            system_config = system_config.merge(crate::providers::from_format(path, &format))
+            system_config = system_config.merge(crate::providers::read_from_format(path, &format))
         }
 
         info!("start generating node from schema {}", appid);
@@ -221,7 +221,7 @@ impl Page {
     }
 
     pub fn reload(&mut self) -> anyhow::Result<()> {
-        self.user_config = Figment::new().merge(crate::providers::from_format(
+        self.user_config = Figment::new().merge(crate::providers::read_from_format(
             &self.source_home_path,
             &self.format,
         ));
