@@ -1,5 +1,5 @@
 rootdir := ''
-prefix := '/usr'
+prefix := '~/.local'
 debug := '0'
 
 
@@ -13,21 +13,41 @@ base-dir := absolute_path(clean(rootdir / prefix))
 share-dst := base-dir / 'share'
 
 bin-dst := base-dir / 'bin' / name
+desktop-dst := share-dst / 'applications' / APPID + '.desktop'
+icon-dst := share-dst / 'icons/hicolor/scalable/apps' / APPID + '-symbolic.svg'
+env-dst := rootdir / 'etc/profile.d' / NAME + '.sh'
+schema-dst := share-dst / 'configurator' / APPID + '.json'
 
+default: build-release
 
-
-run: install_schema
+run:
     cargo r --bin configurator
+
+build-debug *args:
+  cargo build {{args}}
+
+build-release *args:
+  cargo build --release {{args}}
+
+
+install: 
+  install -Dm0755 {{bin-src}} {{bin-dst}}
+  install -Dm0644 res/desktop_entry.desktop {{desktop-dst}}
+  install -Dm0644 res/app_icon.svg {{icon-dst}}
+  install -Dm0644 configurator/res/config_schema.json {{schema-dst}}
+
+
+# call before pull request
+pull: fmt prettier fix test
 
 gen_schema:
     cargo test --package configurator config::test::gen_schema -- --ignored
 
-install_schema: gen_schema
-    install -Dm0644 configurator/res/{{appid}}.json ~/.local/share/configurator/{{appid}}.json
-
-
 uninstall_schema:
-    rm ~/.local/share/configurator/{{appid}}.json
+  rm {{bin-dst}}
+  rm {{desktop-dst}}
+  rm {{icon-dst}}
+  rm {{schema-dst}}
 
 
 install: install_schema
@@ -35,8 +55,29 @@ install: install_schema
 
 
 
-
-
 # require to git clone https://github.com/json-schema-org/JSON-Schema-Test-Suite
 test_suite:
     cargo test test_all_suite -- --nocapture --ignored
+
+
+###################  Test
+
+test:
+	cargo test --workspace --all-features
+
+###################  Format
+
+fix:
+	cargo clippy --workspace --all-features --fix --allow-dirty --allow-staged
+
+fmt:
+	cargo fmt --all
+
+prettier:
+	# install on Debian: sudo snap install node --classic
+	# npx is the command to run npm package, node is the runtime
+	npx prettier -w .
+
+# todo: add to CI when ubuntu-image get appstream version 1.0
+metainfo-check:
+	appstreamcli validate --pedantic --explain --strict res/linux/metainfo.xml

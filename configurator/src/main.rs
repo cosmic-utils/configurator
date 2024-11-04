@@ -23,7 +23,10 @@ mod icon;
 #[cfg(test)]
 mod json_schema_test_suite;
 #[cfg(test)]
-mod test_schema;
+mod manual_testing;
+
+#[cfg(test)]
+mod test_common;
 
 fn setup_logs() {
     use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};

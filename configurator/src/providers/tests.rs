@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::LazyLock};
+use std::{collections::HashMap, marker::PhantomData, path::Path, sync::LazyLock};
 
 use configurator_utils::ConfigFormat;
 use figment::{
@@ -6,39 +6,100 @@ use figment::{
     Profile, Provider,
 };
 use serde::Serialize;
+use serial_test::serial;
 
-#[derive(Debug, Clone, Serialize)]
-struct Config1 {
-    bool: bool,
+use crate::test_common::*;
+
+/// 1. write the value
+/// 2. read the value and assert equal
+fn write_and_read<P: AsRef<Path>>(path: P, format: &ConfigFormat, initial_value: &Value) {
+    super::write(path.as_ref(), format, initial_value).unwrap();
+
+    let value = super::read_from_format(path.as_ref(), format);
+
+    let value = value.data().unwrap().remove(&Profile::Default).unwrap();
+
+    let value = Value::Dict(Tag::Default, value);
+
+    assert_eq!(initial_value, &value);
 }
 
-impl Config1 {
-    fn new() -> Self {
-        Self {
-            bool: Default::default(),
-        }
-    }
-}
-
-static TESTS: LazyLock<Vec<(Value, &'static str, &'static ConfigFormat)>> = LazyLock::new(|| {
-    vec![(
-        Value::serialize(Config1::new()).unwrap(),
+fn write_and_read_common<S: Default + Serialize>(format: &ConfigFormat) {
+    write_and_read(
         "tests/cosmic_ron/config1",
-        &ConfigFormat::CosmicRon,
-    )]
-});
+        format,
+        &Value::serialize(S::default()).unwrap(),
+    );
+}
 
 #[test]
-fn write_and_read() {
-    for (initial_value, path, format) in TESTS.iter() {
-        super::write(path, format, initial_value).unwrap();
+#[serial]
+fn test_bool_ron() {
+    write_and_read_common::<TestBool>(&ConfigFormat::CosmicRon);
+}
 
-        let value = super::read_from_format(path, format);
+#[test]
+#[serial]
+fn test_string_ron() {
+    write_and_read_common::<TestString>(&ConfigFormat::CosmicRon);
+}
 
-        let value = value.data().unwrap().remove(&Profile::Default).unwrap();
+#[test]
+#[serial]
+fn test_number_ron() {
+    write_and_read_common::<TestNumber>(&ConfigFormat::CosmicRon);
+}
 
-        let value = Value::Dict(Tag::Default, value);
+#[test]
+#[serial]
+fn test_float_ron() {
+    write_and_read_common::<TestFloat>(&ConfigFormat::CosmicRon);
+}
 
-        assert_eq!(initial_value, &value);
-    }
+#[test]
+#[serial]
+fn test_enum_simple_ron() {
+    write_and_read_common::<TestEnumSimple>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_enum_complex_ron() {
+    write_and_read_common::<TestEnumComplex>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_option_ron() {
+    write_and_read_common::<TestOption>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_option_complex_ron() {
+    write_and_read_common::<TestOptionComplex>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_tuple_ron() {
+    write_and_read_common::<TestTuple>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_vec_ron() {
+    write_and_read_common::<TestVec>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_hash_map_ron() {
+    write_and_read_common::<TestHashMap>(&ConfigFormat::CosmicRon);
+}
+
+#[test]
+#[serial]
+fn test_very_complex_ron() {
+    write_and_read_common::<TestVeryComplex>(&ConfigFormat::CosmicRon);
 }

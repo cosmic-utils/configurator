@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Configurator
+Comment=Dconf alternative
+Keywords=dconf
+
+# translators: do not translate this part
+Type=Application
+Categories=System;Utility;
+Exec=configurator
+Icon=io.github.wiiznokes.configurator
+StartupWMClass=io.github.wiiznokes.configurator
+Terminal=false
