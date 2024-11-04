@@ -233,6 +233,8 @@ impl Page {
         // dbg!(&self.tree);
         // dbg!(&self.full_config);
 
+        self.tree.remove_value_rec();
+
         self.tree.apply_figment(&self.full_config)?;
 
         self.data_path.sanitize_path(&self.tree);

@@ -8,6 +8,7 @@ use crate::node::Node;
 use super::{from_json_schema::json_value_to_figment_value, NodeContainer, NumberValue};
 
 impl NodeContainer {
+    // todo: return a result with info about the node missing a value
     pub fn to_value(&self, tag: &Tag) -> Option<Value> {
         if !self.modified {
             return None;
