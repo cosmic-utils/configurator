@@ -63,6 +63,20 @@ fn test_float_ron() {
 #[test]
 #[serial]
 fn test_enum_simple_ron() {
+    let value = TestEnumSimple::default();
+
+    let str1 = ron::ser::to_string_pretty(&value, ron::ser::PrettyConfig::new()).unwrap();
+
+    let str2 = ron::ser::to_string_pretty(
+        &Value::serialize(&value).unwrap(),
+        ron::ser::PrettyConfig::new(),
+    )
+    .unwrap();
+    dbg!(str1);
+    dbg!(str2);
+
+    panic!();
+    
     write_and_read_common::<TestEnumSimple>(&ConfigFormat::CosmicRon);
 }
 
