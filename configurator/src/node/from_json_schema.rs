@@ -19,6 +19,7 @@ impl NodeContainer {
 }
 
 /// None means that the schema validate nothing
+#[instrument(skip_all)]
 pub(crate) fn schema_object_to_node(
     from: &str,
     def: &schemars::Map<String, Schema>,
