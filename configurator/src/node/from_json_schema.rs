@@ -14,12 +14,6 @@ use super::*;
 
 impl NodeContainer {
     pub fn from_json_schema(schema: &RootSchema) -> Self {
-        // dbg!(&schema);
-
-        // dbg!(&schema.definitions);
-
-        // dbg!(&tree);
-
         schema_object_to_node("root", &schema.definitions, &schema.schema).unwrap()
     }
 }
@@ -30,8 +24,7 @@ pub(crate) fn schema_object_to_node(
     def: &schemars::Map<String, Schema>,
     schema_object: &SchemaObject,
 ) -> Option<NodeContainer> {
-    // info!("enter function from {from}");
-    // dbg!(&schema_object);
+    // debug!("enter function from {from}.\n{:#?}", schema_object);
 
     let mut res = NodeContainer::from_node(Node::Any);
 
@@ -105,9 +98,6 @@ pub(crate) fn schema_object_to_node(
     }
 
     if let Some(enum_values) = &schema_object.enum_values {
-        // dbg!(schema_object);
-        // dbg!(&enum_values);
-
         let node = if enum_values.len() == 1 {
             NodeContainer::from_node(Node::Value(NodeValue::new(enum_values[0].clone())))
         } else {
@@ -135,7 +125,6 @@ pub(crate) fn schema_object_to_node(
                 }
                 // items are of type array.
                 SingleOrVec::Vec(vec) => {
-                    // dbg!(&schema_object);
                     let template: Option<Vec<_>> = vec
                         .iter()
                         .map(|schema| {
@@ -181,8 +170,6 @@ pub(crate) fn schema_object_to_node(
             for schema in one_of {
                 let node = schema_object_to_node("one_of", def, &schema.to_object())?;
 
-                // dbg!(&node);
-
                 nodes.push(node);
             }
 
@@ -195,8 +182,6 @@ pub(crate) fn schema_object_to_node(
             for schema in any_of {
                 let node = schema_object_to_node("one_of", def, &schema.to_object())?;
 
-                // dbg!(&node);
-
                 nodes.push(node);
             }
 
@@ -206,9 +191,6 @@ pub(crate) fn schema_object_to_node(
     }
 
     if let Some(definition) = &schema_object.reference {
-        // dbg!(&schema_object);
-        // dbg!(&root_schema.definitions);
-
         if let Some(definition) = definition.strip_prefix("#/definitions/") {
             let schema = def.get(definition).unwrap();
 

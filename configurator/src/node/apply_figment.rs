@@ -23,8 +23,7 @@ impl NodeContainer {
     // todo: the modified logic in the function seems wrong (i probably fixed it)
     // todo2: analyze the entire logic
     pub fn apply_value(&mut self, value: Value, modified: bool) -> anyhow::Result<()> {
-        // info!("merge_figment_rec");
-        // dbg!(&self, &value);
+        // debug!("merge_figment_rec {:?} {:?}", &self, &value);
         self.modified = modified;
 
         match (value, &mut self.node) {
@@ -40,7 +39,7 @@ impl NodeContainer {
                     })
                     .ok_or_else(|| {
                         anyhow!(
-                            "can't find a compatible enum variant for dict {values:#?}. {node_enum:#?}"
+                            "can't find a compatible enum variant for dict \n{values:#?}.\n{node_enum:#?}"
                         )
                     })?;
 
@@ -54,7 +53,7 @@ impl NodeContainer {
                     .position(|e| e.is_matching(&value))
                     .ok_or_else(|| {
                         anyhow!(
-                            "can't find a compatible enum variant for {value:#?}. {node_enum:#?}"
+                            "can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}"
                         )
                     })?;
 
@@ -108,7 +107,7 @@ impl NodeContainer {
                 node_array.values = Some(nodes);
             }
             (Value::Empty(tag, value), Node::Null) => {}
-            (value, node) => bail!("no compatible node for value = {value:#?}. {node:#?}"),
+            (value, node) => bail!("no compatible node for value = \n{value:#?}. \n{node:#?}"),
         };
 
         Ok(())

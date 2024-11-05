@@ -189,7 +189,7 @@ impl Page {
             system_config = system_config.merge(crate::providers::read_from_format(path, &format))
         }
 
-        info!("start generating node from schema {}", appid);
+        info!("start generating node from schema");
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
 
         let title = appid.split('.').last().unwrap().to_string();
@@ -208,11 +208,8 @@ impl Page {
             format,
         };
 
-        // dbg!(&page.tree);
-
         if let Err(err) = page.reload() {
             error!("{err}");
-            // panic!()
         }
 
         Ok(page)
@@ -232,8 +229,8 @@ impl Page {
             .merge(self.system_config.clone())
             .merge(self.user_config.clone());
 
-        // dbg!(&self.tree);
-        // dbg!(&self.full_config);
+        debug!("tree = {:#?}", self.tree);
+        debug!("config = {:#?}", self.full_config);
 
         self.tree.remove_value_rec();
 
