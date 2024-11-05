@@ -208,6 +208,7 @@ impl Page {
             format,
         };
 
+        info!("start applying the values");
         if let Err(err) = page.reload() {
             error!("{err}");
         }
@@ -225,12 +226,16 @@ impl Page {
             &self.format,
         ));
 
+        debug!("user_config = {:#?}", self.user_config);
+
+        debug!("system_config = {:#?}", self.system_config);
+
         self.full_config = Figment::new()
             .merge(self.system_config.clone())
             .merge(self.user_config.clone());
 
-        debug!("tree = {:#?}", self.tree);
-        debug!("config = {:#?}", self.full_config);
+        // debug!("tree = {:#?}", self.tree);
+        debug!("full_config = {:#?}", self.full_config);
 
         self.tree.remove_value_rec();
 
