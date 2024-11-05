@@ -1,4 +1,4 @@
 
 [env]
-# RUST_LOG = "warn,fan_control=info,ui=info,data=info,hardware=info"
+RUST_LOG = "warn,[from_str{appid=com.system76.CosmicPanel.Panel}]=debug"
 RUST_BACKTRACE = "0"

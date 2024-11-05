@@ -70,7 +70,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
                 let appid = appid_from_schema_path(file.path());
 
                 if !config.masked.contains(&appid) {
-                    Some(Page::from_str(appid, content).unwrap())
+                    Some(Page::from_str(&appid, content).unwrap())
                 } else {
                     None
                 }
@@ -106,7 +106,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
 
             if !config.masked.contains(&appid) {
                 match fs::read_to_string(&schema_path) {
-                    Ok(content) => match Page::from_str(appid, &content) {
+                    Ok(content) => match Page::from_str(&appid, &content) {
                         Ok(page) => Some(page),
                         Err(e) => {
                             error!("{}", e);
@@ -133,7 +133,9 @@ fn appid_from_schema_path(schema_path: &Path) -> String {
 }
 
 impl Page {
-    fn from_str(appid: String, content: &str) -> anyhow::Result<Self> {
+    // need &str for appid: https://github.com/tokio-rs/tracing/issues/1181
+    #[instrument(skip(content))]
+    fn from_str(appid: &str, content: &str) -> anyhow::Result<Self> {
         let json_value = json::Value::from_str(content)?;
 
         let Some(json_obj) = json_value.as_object() else {
@@ -194,7 +196,7 @@ impl Page {
 
         let mut page = Self {
             title,
-            appid,
+            appid: appid.to_string(),
             system_config,
             user_config: Figment::new(),
             full_config: Figment::new(),
