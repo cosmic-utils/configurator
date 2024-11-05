@@ -3,7 +3,7 @@
   "X_CONFIGURATOR_FORMAT": "cosmic_ron",
   "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/cosmic/com.system76.CosmicPanel.Panel/v1",
   "X_CONFIGURATOR_SOURCE_PATHS": "/usr/share/cosmic/com.system76.CosmicPanel.Panel/v1",
-  "X_CONFIGURATOR_WRITE_PATH": "/home/fedasus/SSD/Documents/configurator/configurator/test_configs/com.system76.CosmicPanel.Panel",
+  "X_CONFIGURATOR_WRITE_PATH": "/home/fedasus/Documents/configurator/configurator/test_configs/com.system76.CosmicPanel.Panel",
   "additionalProperties": false,
   "definitions": {
     "AutoHide": {
@@ -392,6 +392,50 @@
       ],
       "default": "M",
       "description": "configured size for the panel"
+    },
+    "size_center": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PanelSize"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "optional size override for center"
+    },
+    "size_wings": {
+      "default": null,
+      "description": "optional size override for wings",
+      "items": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PanelSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PanelSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "type": [
+        "array",
+        "null"
+      ]
     },
     "spacing": {
       "default": 4,
