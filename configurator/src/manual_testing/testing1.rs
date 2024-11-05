@@ -16,7 +16,7 @@ enum ConfigEnum {
 #[serde(default)]
 #[derive(Default)]
 struct Config {
-    opt: Option<ConfigEnum>,
+    x: ConfigEnum,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]

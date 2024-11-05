@@ -208,7 +208,6 @@ impl Page {
             format,
         };
 
-        info!("start applying the values");
         if let Err(err) = page.reload() {
             error!("{err}");
         }
@@ -220,7 +219,10 @@ impl Page {
         self.title.clone()
     }
 
+    #[instrument(skip_all)]
     pub fn reload(&mut self) -> anyhow::Result<()> {
+        info!("reload the config");
+
         self.user_config = Figment::new().merge(crate::providers::read_from_format(
             &self.source_home_path,
             &self.format,

@@ -75,10 +75,16 @@ impl CosmicRonProvider {
 
             let content = fs::read_to_string(dir_entry.path())?;
 
+            debug!("{}", content);
+
             let value: ron::Value = ron::from_str(&content)?;
+
+            debug!("{:?}", value);
 
             ron_map.insert(ron::Value::String(filename.to_string()), value);
         }
+
+        debug!("{:?}", ron_map);
 
         let data = Figment::new()
             .merge(figment::providers::Serialized::from(

@@ -1,5 +1,6 @@
 use std::{fs, path::Path};
 
+use configurator_utils::ConfigFormat;
 use figment::{providers, Figment, Profile};
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -8,10 +9,11 @@ mod testing1;
 mod testing2;
 
 fn get_schema<C: JsonSchema>(name: &str) -> String {
-    let config_path = format!("{}/test_configs/{}.json", env!("CARGO_MANIFEST_DIR"), name);
+    let config_path = format!("{}/test_configs/{}", env!("CARGO_MANIFEST_DIR"), name);
 
     configurator_schema::gen_schema::<C>()
         .source_home_path(&config_path)
+        .format(ConfigFormat::CosmicRon)
         .call()
         .unwrap()
 }
