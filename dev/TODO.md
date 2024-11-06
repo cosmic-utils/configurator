@@ -9,3 +9,5 @@
 - ron::Value can't be serialized from str
   - https://github.com/ron-rs/ron/issues/189
   - https://github.com/ron-rs/ron/issues/122
+- créer un nouveau type struct ValueDeserializer(NodeContainer)
+et implementer Deserializer dessu.
