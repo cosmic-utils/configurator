@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup update
       - uses: taiki-e/install-action@just
       - uses: Swatinem/rust-cache@v2
@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup update
       - name: Run rustfmt
         run: cargo fmt --all --check --verbose
@@ -57,7 +57,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: rustup update
       - uses: taiki-e/install-action@just
       - uses: Swatinem/rust-cache@v2
