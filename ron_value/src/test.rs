@@ -32,16 +32,16 @@ pub struct TestEnumComplex {
 fn roundtrip() {
     let data = EnumComplex::default();
 
-    let str = ron::to_string(&data).unwrap();
+    let str_from_serde = ron::to_string(&data).unwrap();
 
     {
-        let data2: EnumComplex = ron::from_str(&str).unwrap();
+        let data2: EnumComplex = ron::from_str(&str_from_serde).unwrap();
         assert_eq!(data, data2);
     }
 
-    dbg!(&str);
+    dbg!(&str_from_serde);
 
-    let value = crate::from_str(&str).unwrap();
+    let value = crate::from_str(&str_from_serde).unwrap();
 
     dbg!(&value);
 
