@@ -449,3 +449,61 @@ fn bool() -> Parser<char, Value> {
     seq(&['t', 'r', 'u', 'e']).map(|_| Value::Bool(true))
         | seq(&['f', 'a', 'l', 's', 'e']).map(|_| Value::Bool(false))
 }
+
+fn option() -> Parser<char, Value> {
+    seq(&['N', 'o', 'n', 'e']).map(|_| Value::Option(None)) | option_some()
+}
+
+fn option_some() -> Parser<char, Value> {
+    (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * value() - ws() - sym(')'))
+        .map(|v| Value::Option(Some(Box::new(v))))
+}
+
+fn value() -> Parser<char, Value> {
+    option()
+        | bool()
+        | char()
+        | string()
+        | byte_string()
+        | list()
+        | map()
+        | float().map(|n| Value::Number(n))
+        | integer().map(|n| Value::Number(n))
+}
+
+fn list() -> Parser<char, Value> {
+    (sym('[')
+        * ((value() + (comma() * value()).repeat(0..) + comma().opt())
+            .map(|((first, rest), _)| {
+                let mut v = Vec::new();
+                v.push(first);
+                v.extend(rest);
+                v
+            })
+            .opt()
+            .map(|o| o.unwrap_or_else(Vec::new)))
+        - sym(']'))
+    .map(Value::List)
+}
+
+fn map() -> Parser<char, Value> {
+    (sym('{')
+        * ((map_entry() + (comma() * map_entry()).repeat(0..) + comma().opt())
+            .map(|((first, rest), _)| {
+                let mut v = Vec::new();
+                v.push(first);
+                v.extend(rest);
+                v
+            })
+            .opt()
+            .map(|o| o.unwrap_or_else(Vec::new)))
+        - sym('}'))
+    .map(|entries: Vec<(Value, Value)>| {
+        let map: crate::Map<Value> = entries.into_iter().collect();
+        Value::Map(map)
+    })
+}
+
+fn map_entry() -> Parser<char, (Value, Value)> {
+    value() - ws() - sym(':') - ws() + value()
+}
