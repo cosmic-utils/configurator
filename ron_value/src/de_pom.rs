@@ -1,7 +1,10 @@
 use core::num;
 use std::num::NonZero;
+use std::num::ParseFloatError;
 use std::num::TryFromIntError;
 
+use crate::F32;
+use crate::F64;
 use crate::Number;
 use crate::Value;
 use pom::Parser;
@@ -193,44 +196,138 @@ fn unsigned_decimal() -> Parser<char, u128> {
     })
 }
 
-fn byte() -> Parser<char, Number> {}
-
-fn byte_content() -> Parser<char, Number> {}
-
-fn float() -> Parser<char, Number> {}
-
-fn float_num() -> Parser<char, Number> {}
-
-fn float_int() -> Parser<char, Number> {}
-
-fn float_std() -> Parser<char, Number> {}
-
-fn float_frac() -> Parser<char, Number> {}
-
-fn float_exp() -> Parser<char, Number> {}
-
-fn float_suffix() -> Parser<char, Number> {}
-
-pub fn string() -> Parser<char, String> {
-    string_std() | string_raw()
+fn byte() -> Parser<char, u8> {
+    sym('b') * sym('\'') * byte_content() - sym('\'')
 }
 
-fn string_std() -> Parser<char, String> {
-    sym('"')
-        * no_double_quote_or_escape()
-            .repeat(0..)
-            .map(|s| s.into_iter().collect::<String>())
-        - sym('"')
+fn byte_content() -> Parser<char, u8> {
+    ascii() | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
 
-fn no_double_quote_or_escape() -> Parser<char, char> {
-    // \\ is present to fail and test in string_escape
-    none_of("\"\\") | string_escape()
+fn ascii() -> Parser<char, u8> {
+    Parser::new(|input, start| {
+        if start < input.len() {
+            let c = input[start];
+            if (c as u32) <= 0x7F && c != '\'' && c != '\\' {
+                Ok((c as u8, start + 1))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        } else {
+            Err(pom::Error::Incomplete)
+        }
+    })
 }
 
-fn string_escape() -> Parser<char, char> {
-    sym('\\') * (escape_ascii() | escape_byte() | escape_unicode())
+fn float() -> Parser<char, Number> {
+    (one_of("+-").opt()
+        + (seq(&['i', 'n', 'f']).map(|_| String::from("inf"))
+            | seq(&['N', 'a', 'N']).map(|_| String::from("Nan"))
+            | float_num())
+        + float_suffix().opt())
+    .convert(|((sign, mut num), suffix)| {
+        if let Some(sign) = sign {
+            num.insert(0, sign);
+        }
+        let number = match suffix.unwrap_or("f64") {
+            "f32" => Number::F32(F32(num.parse()?)),
+            "f64" => Number::F64(F64(num.parse()?)),
+            _ => unreachable!(),
+        };
+
+        Ok::<Number, ParseFloatError>(number)
+    })
 }
+
+fn float_num() -> Parser<char, String> {
+    ((float_int() | float_std() | float_frac()) + float_exp().opt()).map(|(int_part, exp)| {
+        if let Some(e) = exp {
+            format!("{}{}", int_part, e)
+        } else {
+            int_part
+        }
+    })
+}
+
+fn float_int() -> Parser<char, String> {
+    (digit() + (digit() | sym('_')).repeat(0..)).map(|(first, rest)| {
+        let mut s = String::new();
+        s.push(first);
+        for c in rest {
+            if c != '_' {
+                s.push(c);
+            }
+        }
+        s
+    })
+}
+
+fn float_std() -> Parser<char, String> {
+    (float_int() + sym('.') + float_int().opt()).map(|((int_part, _), frac)| {
+        let mut s = int_part;
+        s.push('.');
+        if let Some(frac) = frac {
+            s.push_str(&frac);
+        }
+        s
+    })
+}
+
+fn float_frac() -> Parser<char, String> {
+    (sym('.') * float_int()).map(|num| format!("0.{num}"))
+}
+
+fn float_exp() -> Parser<char, String> {
+    (one_of("eE")
+        + (sym('+') | sym('-')).opt()
+        + (digit() | sym('_')).repeat(0..)
+        + digit()
+        + (digit() | sym('_')).repeat(0..))
+    .map(|((((e, sign), digit1), digit2), digit3)| {
+        let mut s = String::new();
+        s.push(e);
+        if let Some(c) = sign {
+            s.push(c);
+        }
+        for c in digit1 {
+            if c != '_' {
+                s.push(c);
+            }
+        }
+        s.push(digit2);
+        for c in digit3 {
+            if c != '_' {
+                s.push(c);
+            }
+        }
+        s
+    })
+}
+
+fn float_suffix() -> Parser<char, &'static str> {
+    seq(&['f', '3', '2']).map(|_| "f32") | seq(&['f', '6', '4']).map(|_| "f64")
+}
+
+// pub fn string() -> Parser<char, String> {
+//     string_std() | string_raw()
+// }
+
+// fn string_std() -> Parser<char, String> {
+//     sym('"')
+//         * no_double_quote_or_escape()
+//             .repeat(0..)
+//             .map(|s| s.into_iter().collect::<String>())
+//         - sym('"')
+// }
+
+// fn no_double_quote_or_escape() -> Parser<char, char> {
+//     // \\ is present to fail and test in string_escape
+//     none_of("\"\\") | string_escape()
+// }
+
+// fn string_escape() -> Parser<char, char> {
+//     sym('\\') * (escape_ascii() | escape_byte() | escape_unicode())
+// }
 
 fn escape_ascii() -> Parser<char, char> {
     one_of("'\"\\nrt0").map(|c| match c {
@@ -242,81 +339,80 @@ fn escape_ascii() -> Parser<char, char> {
     })
 }
 
-fn escape_byte() -> Parser<char, char> {
-    sym('x')
-        * one_of("0123456789abcdefABCDEF")
-            .repeat(2..3) // exactly 2 hex digits
-            .collect::<String>()
-            .map(|s| u8::from_str_radix(&s, 16).unwrap() as char)
-}
-
-/// Unicode escape: \uNNNN...
-fn escape_unicode() -> Parser<char, char> {
-    sym('u')
-        * one_of("0123456789abcdefABCDEF")
-            .repeat(4..7) // 4–6 hex digits
-            .collect::<String>()
-            .map(|s| std::char::from_u32(u32::from_str_radix(&s, 16).unwrap()).unwrap())
-}
-
-/// Raw string: r" ... " or r#" ... "# etc.
-fn string_raw() -> Parser<char, String> {
-    sym('r') * string_raw_content()
-}
-
-/// Raw string content
-fn string_raw_content() -> Parser<char, String> {
-    // Match nested #'s or standard "..."
-    // Strategy: count leading #'s and match same number at end
-    Parser::new(|input, start| {
-        let mut pos = start;
-        let mut hash_count = 0;
-
-        // Count leading #
-        while pos < input.len() && input[pos] == '#' {
-            hash_count += 1;
-            pos += 1;
-        }
-
-        // Next must be '"'
-        if pos >= input.len() || input[pos] != '"' {
-            return Err(pom::Error::Unexpected {
-                found: if pos >= input.len() {
-                    None
-                } else {
-                    Some(input[pos])
-                },
-            });
-        }
-
-        pos += 1; // skip opening "
-
-        let mut content = String::new();
-
-        'outer: while pos < input.len() {
-            if input[pos] == '"' {
-                // Check for matching trailing #'s
-                let mut match_hash = true;
-                for i in 0..hash_count {
-                    if pos + 1 + i >= input.len() || input[pos + 1 + i] != '#' {
-                        match_hash = false;
-                        break;
-                    }
-                }
-
-                if match_hash {
-                    pos += 1 + hash_count; // skip closing quote + hashes
-                    break 'outer;
-                } else {
-                    content.push('"');
-                    pos += 1;
-                }
-            } else {
-                content.push(input[pos]);
-                pos += 1;
-            }
-        }
-
-        Ok((content, pos))
+fn escape_byte() -> Parser<char, u8> {
+    (sym('x') * digit_hexadecimal() + digit_hexadecimal()).map(|(high, low)| {
+        let str = [high, low].iter().collect::<String>();
+        u8::from_str_radix(&str, 16).unwrap()
     })
 }
+
+// /// Unicode escape: \uNNNN...
+// fn escape_unicode() -> Parser<char, char> {
+//     sym('u')
+//         * one_of("0123456789abcdefABCDEF")
+//             .repeat(4..7) // 4–6 hex digits
+//             .collect::<String>()
+//             .map(|s| std::char::from_u32(u32::from_str_radix(&s, 16).unwrap()).unwrap())
+// }
+
+// /// Raw string: r" ... " or r#" ... "# etc.
+// fn string_raw() -> Parser<char, String> {
+//     sym('r') * string_raw_content()
+// }
+
+// /// Raw string content
+// fn string_raw_content() -> Parser<char, String> {
+//     // Match nested #'s or standard "..."
+//     // Strategy: count leading #'s and match same number at end
+//     Parser::new(|input, start| {
+//         let mut pos = start;
+//         let mut hash_count = 0;
+
+//         // Count leading #
+//         while pos < input.len() && input[pos] == '#' {
+//             hash_count += 1;
+//             pos += 1;
+//         }
+
+//         // Next must be '"'
+//         if pos >= input.len() || input[pos] != '"' {
+//             return Err(pom::Error::Unexpected {
+//                 found: if pos >= input.len() {
+//                     None
+//                 } else {
+//                     Some(input[pos])
+//                 },
+//             });
+//         }
+
+//         pos += 1; // skip opening "
+
+//         let mut content = String::new();
+
+//         'outer: while pos < input.len() {
+//             if input[pos] == '"' {
+//                 // Check for matching trailing #'s
+//                 let mut match_hash = true;
+//                 for i in 0..hash_count {
+//                     if pos + 1 + i >= input.len() || input[pos + 1 + i] != '#' {
+//                         match_hash = false;
+//                         break;
+//                     }
+//                 }
+
+//                 if match_hash {
+//                     pos += 1 + hash_count; // skip closing quote + hashes
+//                     break 'outer;
+//                 } else {
+//                     content.push('"');
+//                     pos += 1;
+//                 }
+//             } else {
+//                 content.push(input[pos]);
+//                 pos += 1;
+//             }
+//         }
+
+//         Ok((content, pos))
+//     })
+// }
