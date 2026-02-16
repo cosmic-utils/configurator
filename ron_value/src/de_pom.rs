@@ -308,7 +308,7 @@ fn float_suffix() -> Parser<char, &'static str> {
     seq(&['f', '3', '2']).map(|_| "f32") | seq(&['f', '6', '4']).map(|_| "f64")
 }
 
-pub fn string() -> Parser<char, Value> {
+fn string() -> Parser<char, Value> {
     (string_std() | string_raw()).map(Value::String)
 }
 
@@ -405,4 +405,35 @@ fn escape_unicode() -> Parser<char, char> {
             let code = u32::from_str_radix(&s, 16).unwrap();
             std::char::from_u32(code).unwrap()
         })
+}
+
+fn byte_string() -> Parser<char, Value> {
+    (byte_string_std() | byte_string_raw()).map(Value::Bytes)
+}
+
+fn byte_string_std() -> Parser<char, Vec<u8>> {
+    sym('b')
+        * sym('"')
+        * no_double_quote_or_escape_bytes()
+            .repeat(0..)
+            .map(|v| v.into_iter().collect::<Vec<u8>>())
+        - sym('"')
+}
+
+// not really make sens since the input is a vec of char (valid utf-8)
+fn byte_string_raw() -> Parser<char, Vec<u8>> {
+    seq(&['b', 'r'])
+        * Parser::new(|input, start| {
+            // delegate to existing string_raw_content and validate ASCII
+            let (s, next) = string_raw_content().parse_at(input, start)?;
+            if s.is_ascii() {
+                Ok((s.into_bytes(), next))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        })
+}
+fn no_double_quote_or_escape_bytes() -> Parser<char, u8> {
+    none_of("\"\\").map(|c| c as u8)
+        | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
