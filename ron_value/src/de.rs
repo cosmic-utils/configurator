@@ -14,9 +14,36 @@ use nom::{
     sequence::{delimited, preceded, separated_pair},
 };
 use std::borrow::Cow;
+use std::fmt;
 
-fn deserialize(input: &str) -> Result<Value, Box<dyn Error>> {
-    todo!()
+#[derive(Debug, PartialEq, Eq)]
+pub enum DeserializeError<'a> {
+    Parse(nom::Err<nom::error::Error<&'a str>>),
+    TrailingInput(String),
+}
+
+impl fmt::Display for DeserializeError<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DeserializeError::Parse(s) => write!(f, "parse error: {}", s),
+            DeserializeError::TrailingInput(s) => write!(f, "trailing input is not empty: {}", s),
+        }
+    }
+}
+
+impl std::error::Error for DeserializeError<'_> {}
+
+pub fn from_str<'a>(input: &'a str) -> Result<Value, DeserializeError<'a>> {
+    match parse_value(input) {
+        Ok((rest, v)) => {
+            if rest.trim().is_empty() {
+                Ok(v)
+            } else {
+                Err(DeserializeError::TrailingInput(rest.to_string()))
+            }
+        }
+        Err(e) => Err(DeserializeError::Parse(e)),
+    }
 }
 
 fn ws<'a, P, O>(
@@ -142,11 +169,11 @@ fn parse_ident(input: &str) -> IResult<&str, String> {
     use nom::combinator::recognize;
     use nom::multi::many0;
     // identifier: alphanumeric and underscores, starting with alpha
-        let (rest, s): (&str, &str) = recognize((
-            nom::character::complete::alpha1,
-            take_while(|c: char| c.is_alphanumeric() || c == '_'),
-        ))
-        .parse(input)?;
+    let (rest, s): (&str, &str) = recognize((
+        nom::character::complete::alpha1,
+        take_while(|c: char| c.is_alphanumeric() || c == '_'),
+    ))
+    .parse(input)?;
     Ok((rest, s.to_string()))
 }
 
@@ -172,12 +199,15 @@ fn parse_unit_struct_or_enum(input: &str) -> IResult<&str, Value> {
 }
 
 fn parse_enum_tuple(input: &str) -> IResult<&str, Value> {
-    let (rest, (name, vec)) = (ws(parse_ident), delimited(
-        ws(char('(')),
-        separated_list0(ws(char(',')), parse_value),
-        ws(char(')')),
-    ))
-    .parse(input)?;
+    let (rest, (name, vec)) = (
+        ws(parse_ident),
+        delimited(
+            ws(char('(')),
+            separated_list0(ws(char(',')), parse_value),
+            ws(char(')')),
+        ),
+    )
+        .parse(input)?;
     Ok((rest, Value::EnumTuple(Cow::Owned(name), vec)))
 }
 

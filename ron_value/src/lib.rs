@@ -8,6 +8,10 @@ mod ser;
 pub use map::Map;
 pub use number::{F32, F64, Number};
 
+pub use de::{from_str, DeserializeError};
+
+pub use ser::{to_string, SerializeError};
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {
     Unit,
