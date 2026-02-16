@@ -5,6 +5,7 @@ use std::num::TryFromIntError;
 
 use crate::F32;
 use crate::F64;
+use crate::Map;
 use crate::Number;
 use crate::Value;
 use pom::Parser;
@@ -472,34 +473,34 @@ fn value() -> Parser<char, Value> {
 }
 
 fn list() -> Parser<char, Value> {
-    (sym('[')
-        * ((value() + (comma() * value()).repeat(0..) + comma().opt())
-            .map(|((first, rest), _)| {
-                let mut v = Vec::new();
-                v.push(first);
-                v.extend(rest);
-                v
-            })
-            .opt()
-            .map(|o| o.unwrap_or_else(Vec::new)))
-        - sym(']'))
-    .map(Value::List)
+    (sym('[') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(']')).map(
+        |v| {
+            let mut vec: Vec<Value> = Vec::new();
+
+            if let Some((first, rest)) = v {
+                vec.push(first);
+                vec.extend(rest);
+            }
+
+            Value::List(vec)
+        },
+    )
 }
 
 fn map() -> Parser<char, Value> {
-    (sym('{')
-        * ((map_entry() + (comma() * map_entry()).repeat(0..) + comma().opt())
-            .map(|((first, rest), _)| {
-                let mut v = Vec::new();
-                v.push(first);
-                v.extend(rest);
-                v
-            })
-            .opt()
-            .map(|o| o.unwrap_or_else(Vec::new)))
+    (sym('{') * (map_entry() + (comma() * map_entry()).repeat(0..) - comma().opt()).opt()
         - sym('}'))
-    .map(|entries: Vec<(Value, Value)>| {
-        let map: crate::Map<Value> = entries.into_iter().collect();
+    .map(|v| {
+        let mut map: Map<Value> = Map::new();
+
+        if let Some((first, rest)) = v {
+            map.insert(first.0, first.1);
+
+            for v in rest {
+                map.insert(v.0, v.1);
+            }
+        }
+
         Value::Map(map)
     })
 }
