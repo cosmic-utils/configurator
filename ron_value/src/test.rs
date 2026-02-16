@@ -1,4 +1,6 @@
-use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Complex {
@@ -14,28 +16,22 @@ pub enum EnumComplex {
     D { a: i32, b: Complex },
 }
 
-impl Default for EnumComplex {
-    fn default() -> Self {
-        Self::C(Complex {
-            x: "hello".into(),
-            y: 1,
-        })
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TestEnumComplex {
     x: EnumComplex,
 }
 
-#[test]
-fn roundtrip() {
-    let data = EnumComplex::default();
+fn roundtrip<T>(data: T)
+where
+    T: Serialize + DeserializeOwned + Debug + PartialEq,
+{
+    // let str_from_serde =
+    //     ron::ser::to_string_pretty(&data, ron::ser::PrettyConfig::default()).unwrap();
 
-    let str_from_serde = ron::to_string(&data).unwrap();
+    let str_from_serde = ron::ser::to_string(&data).unwrap();
 
     {
-        let data2: EnumComplex = ron::from_str(&str_from_serde).unwrap();
+        let data2: T = ron::from_str(&str_from_serde).unwrap();
         assert_eq!(data, data2);
     }
 
@@ -45,10 +41,29 @@ fn roundtrip() {
 
     dbg!(&value);
 
-    let str2 = crate::to_string(&value).unwrap();
+    let str_from_value = crate::to_string(&value).unwrap();
 
-    dbg!(&str2);
+    dbg!(&str_from_value);
 
-    let data2: EnumComplex = ron::from_str(&str2).unwrap();
+    let data2: T = ron::from_str(&str_from_value).unwrap();
     assert_eq!(data, data2);
+}
+
+#[test]
+fn enum_tuple() {
+    roundtrip(EnumComplex::C(Complex {
+        x: "hello".into(),
+        y: 1,
+    }));
+}
+
+#[test]
+fn enum_struct() {
+    roundtrip(EnumComplex::D {
+        a: 1,
+        b: Complex {
+            x: "hello".into(),
+            y: 1,
+        },
+    });
 }
