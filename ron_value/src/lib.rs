@@ -13,6 +13,7 @@ pub use map::Map;
 pub use number::{F32, F64, Number};
 
 // pub use de::{DeserializeError, from_str};
+pub use de_pom::from_str;
 
 pub use ser::{SerializeError, to_string};
 

@@ -8,36 +8,43 @@ use crate::F64;
 use crate::Map;
 use crate::Number;
 use crate::Value;
-use pom::Parser;
 use pom::parser::*;
 use unicode_ident::{is_xid_continue, is_xid_start};
 
-// #[derive(Debug, PartialEq, Eq)]
-// pub enum DeserializeError {}
+pub fn from_str(input: &str) -> Result<Value, pom::Error> {
+    let input = input.chars().collect::<Vec<_>>();
 
-// pub fn from_str<'a>(input: &'a str) -> Result<Value, DeserializeError> {}
+    let parser = ron_file();
+    let value = parser.parse(&input).unwrap();
 
-fn ws() -> Parser<char, ()> {
+    Ok(value)
+}
+
+fn ron_file<'a>() -> Parser<'a, char, Value> {
+    ws() * value() - ws() - end()
+}
+
+fn ws<'a>() -> Parser<'a, char, ()> {
     (ws_single() | comment()).repeat(0..).discard()
 }
 
-fn ws_single() -> Parser<char, ()> {
+fn ws_single<'a>() -> Parser<'a, char, ()> {
     one_of("\n\t\r \u{000B}\u{000C}\u{0085}\u{200E}\u{200F}\u{2028}\u{2029}").discard()
 }
 
-fn comment() -> Parser<char, ()> {
+fn comment<'a>() -> Parser<'a, char, ()> {
     line_comment() | block_comment()
 }
 
-fn line_comment() -> Parser<char, ()> {
+fn line_comment<'a>() -> Parser<'a, char, ()> {
     (seq(&['/', '/']) * none_of("\n").repeat(0..) - sym('\n')).discard()
 }
 
-fn block_comment() -> Parser<char, ()> {
+fn block_comment<'a>() -> Parser<'a, char, ()> {
     (seq(&['/', '*']) * nested_block_comment() - seq(&['*', '/'])).discard()
 }
 
-fn nested_block_comment() -> Parser<char, ()> {
+fn nested_block_comment<'a>() -> Parser<'a, char, ()> {
     Parser::new(|input, start| {
         let mut pos = start;
 
@@ -62,27 +69,27 @@ fn nested_block_comment() -> Parser<char, ()> {
     })
 }
 
-fn comma() -> Parser<char, ()> {
+fn comma<'a>() -> Parser<'a, char, ()> {
     (ws() * sym(',') - ws()).discard()
 }
 
-fn digit() -> Parser<char, char> {
+fn digit<'a>() -> Parser<'a, char, char> {
     one_of("0123456789")
 }
 
-fn digit_binary() -> Parser<char, char> {
+fn digit_binary<'a>() -> Parser<'a, char, char> {
     one_of("01")
 }
 
-fn digit_octal() -> Parser<char, char> {
+fn digit_octal<'a>() -> Parser<'a, char, char> {
     one_of("01234567")
 }
 
-fn digit_hexadecimal() -> Parser<char, char> {
+fn digit_hexadecimal<'a>() -> Parser<'a, char, char> {
     one_of("0123456789ABCDEFabcdef")
 }
 
-fn integer() -> Parser<char, Number> {
+fn integer<'a>() -> Parser<'a, char, Number> {
     let sign = (sym('-').map(|_| -1) | sym('+').map(|_| 1))
         .opt()
         .map(|s| s.unwrap_or(1));
@@ -123,7 +130,7 @@ fn integer() -> Parser<char, Number> {
     })
 }
 
-fn integer_suffix() -> Parser<char, &'static str> {
+fn integer_suffix<'a>() -> Parser<'a, char, &'static str> {
     seq(&['i', '8']).map(|_| "i8")
         | seq(&['i', '1', '6']).map(|_| "i16")
         | seq(&['i', '3', '2']).map(|_| "i32")
@@ -136,11 +143,11 @@ fn integer_suffix() -> Parser<char, &'static str> {
         | seq(&['u', '1', '2', '8']).map(|_| "u128")
 }
 
-fn unsigned() -> Parser<char, u128> {
+fn unsigned<'a>() -> Parser<'a, char, u128> {
     unsigned_binary() | unsigned_octal() | unsigned_hexadecimal() | unsigned_decimal()
 }
 
-fn unsigned_binary() -> Parser<char, u128> {
+fn unsigned_binary<'a>() -> Parser<'a, char, u128> {
     (seq(&['0', 'b']) * digit_binary() + (digit_binary() | sym('_')).repeat(0..)).map(|s| {
         let mut res = String::new();
         res.push(s.0);
@@ -154,7 +161,7 @@ fn unsigned_binary() -> Parser<char, u128> {
     })
 }
 
-fn unsigned_octal() -> Parser<char, u128> {
+fn unsigned_octal<'a>() -> Parser<'a, char, u128> {
     (seq(&['0', 'o']) * digit_octal() + (digit_octal() | sym('_')).repeat(0..)).map(|s| {
         let mut res = String::new();
         res.push(s.0);
@@ -167,7 +174,7 @@ fn unsigned_octal() -> Parser<char, u128> {
         u128::from_str_radix(&res, 8).unwrap()
     })
 }
-fn unsigned_hexadecimal() -> Parser<char, u128> {
+fn unsigned_hexadecimal<'a>() -> Parser<'a, char, u128> {
     (seq(&['0', 'x']) * digit_hexadecimal() + (digit_hexadecimal() | sym('_')).repeat(0..)).map(
         |s| {
             let mut res = String::new();
@@ -182,7 +189,7 @@ fn unsigned_hexadecimal() -> Parser<char, u128> {
         },
     )
 }
-fn unsigned_decimal() -> Parser<char, u128> {
+fn unsigned_decimal<'a>() -> Parser<'a, char, u128> {
     (digit() + (digit() | sym('_')).repeat(0..)).map(|s| {
         let mut res = String::new();
         res.push(s.0);
@@ -197,15 +204,15 @@ fn unsigned_decimal() -> Parser<char, u128> {
     })
 }
 
-fn byte() -> Parser<char, u8> {
+fn byte<'a>() -> Parser<'a, char, u8> {
     sym('b') * sym('\'') * byte_content() - sym('\'')
 }
 
-fn byte_content() -> Parser<char, u8> {
+fn byte_content<'a>() -> Parser<'a, char, u8> {
     ascii() | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
 
-fn ascii() -> Parser<char, u8> {
+fn ascii<'a>() -> Parser<'a, char, u8> {
     Parser::new(|input, start| {
         if start < input.len() {
             let c = input[start];
@@ -220,7 +227,7 @@ fn ascii() -> Parser<char, u8> {
     })
 }
 
-fn float() -> Parser<char, Number> {
+fn float<'a>() -> Parser<'a, char, Number> {
     (one_of("+-").opt()
         + (seq(&['i', 'n', 'f']).map(|_| String::from("inf"))
             | seq(&['N', 'a', 'N']).map(|_| String::from("Nan"))
@@ -240,7 +247,7 @@ fn float() -> Parser<char, Number> {
     })
 }
 
-fn float_num() -> Parser<char, String> {
+fn float_num<'a>() -> Parser<'a, char, String> {
     ((float_int() | float_std() | float_frac()) + float_exp().opt()).map(|(int_part, exp)| {
         if let Some(e) = exp {
             format!("{}{}", int_part, e)
@@ -250,7 +257,7 @@ fn float_num() -> Parser<char, String> {
     })
 }
 
-fn float_int() -> Parser<char, String> {
+fn float_int<'a>() -> Parser<'a, char, String> {
     (digit() + (digit() | sym('_')).repeat(0..)).map(|(first, rest)| {
         let mut s = String::new();
         s.push(first);
@@ -263,7 +270,7 @@ fn float_int() -> Parser<char, String> {
     })
 }
 
-fn float_std() -> Parser<char, String> {
+fn float_std<'a>() -> Parser<'a, char, String> {
     (float_int() + sym('.') + float_int().opt()).map(|((int_part, _), frac)| {
         let mut s = int_part;
         s.push('.');
@@ -274,11 +281,11 @@ fn float_std() -> Parser<char, String> {
     })
 }
 
-fn float_frac() -> Parser<char, String> {
+fn float_frac<'a>() -> Parser<'a, char, String> {
     (sym('.') * float_int()).map(|num| format!("0.{num}"))
 }
 
-fn float_exp() -> Parser<char, String> {
+fn float_exp<'a>() -> Parser<'a, char, String> {
     (one_of("eE")
         + (sym('+') | sym('-')).opt()
         + (digit() | sym('_')).repeat(0..)
@@ -305,15 +312,15 @@ fn float_exp() -> Parser<char, String> {
     })
 }
 
-fn float_suffix() -> Parser<char, &'static str> {
+fn float_suffix<'a>() -> Parser<'a, char, &'static str> {
     seq(&['f', '3', '2']).map(|_| "f32") | seq(&['f', '6', '4']).map(|_| "f64")
 }
 
-fn string() -> Parser<char, String> {
+fn string<'a>() -> Parser<'a, char, String> {
     string_std() | string_raw()
 }
 
-fn string_std() -> Parser<char, String> {
+fn string_std<'a>() -> Parser<'a, char, String> {
     sym('"')
         * no_double_quote_or_escape()
             .repeat(0..)
@@ -321,20 +328,20 @@ fn string_std() -> Parser<char, String> {
         - sym('"')
 }
 
-fn no_double_quote_or_escape() -> Parser<char, char> {
+fn no_double_quote_or_escape<'a>() -> Parser<'a, char, char> {
     // Match any char except double quote and backslash, or a valid escape sequence
     none_of("\"\\") | string_escape()
 }
 
-fn string_escape() -> Parser<char, char> {
+fn string_escape<'a>() -> Parser<'a, char, char> {
     sym('\\') * (escape_ascii() | escape_byte().map(|c| c as char) | escape_unicode())
 }
 
-fn string_raw() -> Parser<char, String> {
+fn string_raw<'a>() -> Parser<'a, char, String> {
     sym('r') * string_raw_content()
 }
 
-fn string_raw_content() -> Parser<char, String> {
+fn string_raw_content<'a>() -> Parser<'a, char, String> {
     Parser::new(|input, start| {
         let mut pos = start;
         let mut hash_count = 0;
@@ -382,7 +389,7 @@ fn string_raw_content() -> Parser<char, String> {
     })
 }
 
-fn escape_ascii() -> Parser<char, char> {
+fn escape_ascii<'a>() -> Parser<'a, char, char> {
     one_of("'\"\\nrt0").map(|c| match c {
         'n' => '\n',
         'r' => '\r',
@@ -392,14 +399,14 @@ fn escape_ascii() -> Parser<char, char> {
     })
 }
 
-fn escape_byte() -> Parser<char, u8> {
+fn escape_byte<'a>() -> Parser<'a, char, u8> {
     (sym('x') * digit_hexadecimal() + digit_hexadecimal()).map(|(high, low)| {
         let str = [high, low].iter().collect::<String>();
         u8::from_str_radix(&str, 16).unwrap()
     })
 }
 
-fn escape_unicode() -> Parser<char, char> {
+fn escape_unicode<'a>() -> Parser<'a, char, char> {
     sym('u')
         * digit_hexadecimal().repeat(1..=6).map(|s| {
             let s = s.into_iter().collect::<String>();
@@ -408,11 +415,11 @@ fn escape_unicode() -> Parser<char, char> {
         })
 }
 
-fn byte_string() -> Parser<char, Vec<u8>> {
+fn byte_string<'a>() -> Parser<'a, char, Vec<u8>> {
     byte_string_std() | byte_string_raw()
 }
 
-fn byte_string_std() -> Parser<char, Vec<u8>> {
+fn byte_string_std<'a>() -> Parser<'a, char, Vec<u8>> {
     sym('b')
         * sym('"')
         * no_double_quote_or_escape_bytes()
@@ -422,7 +429,7 @@ fn byte_string_std() -> Parser<char, Vec<u8>> {
 }
 
 // not really make sens since the input is a vec of char (valid utf-8)
-fn byte_string_raw() -> Parser<char, Vec<u8>> {
+fn byte_string_raw<'a>() -> Parser<'a, char, Vec<u8>> {
     seq(&['b', 'r'])
         * Parser::new(|input, start| {
             // delegate to existing string_raw_content and validate ASCII
@@ -434,29 +441,29 @@ fn byte_string_raw() -> Parser<char, Vec<u8>> {
             }
         })
 }
-fn no_double_quote_or_escape_bytes() -> Parser<char, u8> {
+fn no_double_quote_or_escape_bytes<'a>() -> Parser<'a, char, u8> {
     none_of("\"\\").map(|c| c as u8)
         | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
 
-fn char() -> Parser<char, char> {
+fn char<'a>() -> Parser<'a, char, char> {
     sym('\'') * (none_of("'\\") | (sym('\\') * (sym('\\').map(|_| '\\') | sym('\'').map(|_| '\''))))
         - sym('\'')
 }
 
-fn bool() -> Parser<char, bool> {
+fn bool<'a>() -> Parser<'a, char, bool> {
     seq(&['t', 'r', 'u', 'e']).map(|_| true) | seq(&['f', 'a', 'l', 's', 'e']).map(|_| false)
 }
 
-fn option() -> Parser<char, Option<Value>> {
+fn option<'a>() -> Parser<'a, char, Option<Value>> {
     seq(&['N', 'o', 'n', 'e']).map(|_| None) | option_some()
 }
 
-fn option_some() -> Parser<char, Option<Value>> {
+fn option_some<'a>() -> Parser<'a, char, Option<Value>> {
     (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * value() - ws() - sym(')')).map(Some)
 }
 
-fn value() -> Parser<char, Value> {
+fn value<'a>() -> Parser<'a, char, Value> {
     integer().map(Value::Number)
         | byte().map(|b| Value::Bytes(vec![b]))
         | float().map(Value::Number)
@@ -471,7 +478,7 @@ fn value() -> Parser<char, Value> {
         | struct_()
 }
 
-fn list() -> Parser<char, Vec<Value>> {
+fn list<'a>() -> Parser<'a, char, Vec<Value>> {
     (sym('[') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(']')).map(
         |v| {
             let mut vec: Vec<Value> = Vec::new();
@@ -486,7 +493,7 @@ fn list() -> Parser<char, Vec<Value>> {
     )
 }
 
-fn map() -> Parser<char, Map<Value>> {
+fn map<'a>() -> Parser<'a, char, Map<Value>> {
     (sym('{') * (map_entry() + (comma() * map_entry()).repeat(0..) - comma().opt()).opt()
         - sym('}'))
     .map(|v| {
@@ -504,11 +511,11 @@ fn map() -> Parser<char, Map<Value>> {
     })
 }
 
-fn map_entry() -> Parser<char, (Value, Value)> {
+fn map_entry<'a>() -> Parser<'a, char, (Value, Value)> {
     value() - ws() - sym(':') - ws() + value()
 }
 
-fn tuple() -> Parser<char, Vec<Value>> {
+fn tuple<'a>() -> Parser<'a, char, Vec<Value>> {
     (sym('(') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(')')).map(
         |v| {
             let mut vec: Vec<Value> = Vec::new();
@@ -523,22 +530,22 @@ fn tuple() -> Parser<char, Vec<Value>> {
     )
 }
 
-fn struct_() -> Parser<char, Value> {
+fn struct_<'a>() -> Parser<'a, char, Value> {
     unit_struct() | tuple_struct() | named_struct()
 }
 
-fn unit_struct() -> Parser<char, Value> {
+fn unit_struct<'a>() -> Parser<'a, char, Value> {
     ident().map(Value::UnitStruct) | seq(&['(', ')']).map(|_| Value::Unit)
 }
 
-fn tuple_struct() -> Parser<char, Value> {
+fn tuple_struct<'a>() -> Parser<'a, char, Value> {
     (ident().opt() - ws() + tuple()).map(|(ident, tuple)| match ident {
         Some(ident) => Value::NamedTuple(ident, tuple),
         None => Value::Tuple(tuple),
     })
 }
 
-fn named_struct() -> Parser<char, Value> {
+fn named_struct<'a>() -> Parser<'a, char, Value> {
     (ident().opt() - ws() - sym('(') - ws()
         + (named_field() + (comma() * named_field()).repeat(0..) - comma().opt()).opt()
         - sym(')'))
@@ -557,15 +564,15 @@ fn named_struct() -> Parser<char, Value> {
     })
 }
 
-fn named_field() -> Parser<char, (String, Value)> {
+fn named_field<'a>() -> Parser<'a, char, (String, Value)> {
     ident() - ws() - sym(':') - ws() + value()
 }
 
-fn ident() -> Parser<char, String> {
+fn ident<'a>() -> Parser<'a, char, String> {
     ident_std() | ident_raw()
 }
 
-fn ident_std() -> Parser<char, String> {
+fn ident_std<'a>() -> Parser<'a, char, String> {
     (ident_std_first() + ident_std_rest().repeat(0..)).map(|(first, rest)| {
         let mut s = String::new();
         s.push(first);
@@ -574,7 +581,7 @@ fn ident_std() -> Parser<char, String> {
     })
 }
 
-fn ident_std_first() -> Parser<char, char> {
+fn ident_std_first<'a>() -> Parser<'a, char, char> {
     Parser::new(|input, start| {
         if start < input.len() {
             let c: char = input[start];
@@ -589,7 +596,7 @@ fn ident_std_first() -> Parser<char, char> {
     })
 }
 
-fn ident_std_rest() -> Parser<char, char> {
+fn ident_std_rest<'a>() -> Parser<'a, char, char> {
     Parser::new(|input, start| {
         if start < input.len() {
             let c: char = input[start];
@@ -604,11 +611,11 @@ fn ident_std_rest() -> Parser<char, char> {
     })
 }
 
-fn ident_raw() -> Parser<char, String> {
+fn ident_raw<'a>() -> Parser<'a, char, String> {
     (seq(&['r', '#']) * ident_raw_rest().repeat(1..))
         .map(|chars| chars.into_iter().collect::<String>())
 }
 
-fn ident_raw_rest() -> Parser<char, char> {
+fn ident_raw_rest<'a>() -> Parser<'a, char, char> {
     ident_std_rest() | sym('.') | sym('+') | sym('-')
 }
