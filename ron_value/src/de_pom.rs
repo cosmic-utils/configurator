@@ -460,7 +460,7 @@ fn option<'a>() -> Parser<'a, char, Option<Value>> {
 }
 
 fn option_some<'a>() -> Parser<'a, char, Option<Value>> {
-    (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * value() - ws() - sym(')')).map(Some)
+    (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * call(value) - ws() - sym(')')).map(Some)
 }
 
 fn value<'a>() -> Parser<'a, char, Value> {
@@ -479,18 +479,18 @@ fn value<'a>() -> Parser<'a, char, Value> {
 }
 
 fn list<'a>() -> Parser<'a, char, Vec<Value>> {
-    (sym('[') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(']')).map(
-        |v| {
-            let mut vec: Vec<Value> = Vec::new();
+    (sym('[') * (call(value) + (comma() * call(value)).repeat(0..) - comma().opt()).opt()
+        - sym(']'))
+    .map(|v| {
+        let mut vec: Vec<Value> = Vec::new();
 
-            if let Some((first, rest)) = v {
-                vec.push(first);
-                vec.extend(rest);
-            }
+        if let Some((first, rest)) = v {
+            vec.push(first);
+            vec.extend(rest);
+        }
 
-            vec
-        },
-    )
+        vec
+    })
 }
 
 fn map<'a>() -> Parser<'a, char, Map<Value>> {
@@ -512,22 +512,22 @@ fn map<'a>() -> Parser<'a, char, Map<Value>> {
 }
 
 fn map_entry<'a>() -> Parser<'a, char, (Value, Value)> {
-    value() - ws() - sym(':') - ws() + value()
+    call(value) - ws() - sym(':') - ws() + call(value)
 }
 
 fn tuple<'a>() -> Parser<'a, char, Vec<Value>> {
-    (sym('(') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(')')).map(
-        |v| {
-            let mut vec: Vec<Value> = Vec::new();
+    (sym('(') * (call(value) + (comma() * call(value)).repeat(0..) - comma().opt()).opt()
+        - sym(')'))
+    .map(|v| {
+        let mut vec: Vec<Value> = Vec::new();
 
-            if let Some((first, rest)) = v {
-                vec.push(first);
-                vec.extend(rest);
-            }
+        if let Some((first, rest)) = v {
+            vec.push(first);
+            vec.extend(rest);
+        }
 
-            vec
-        },
-    )
+        vec
+    })
 }
 
 fn struct_<'a>() -> Parser<'a, char, Value> {
@@ -565,7 +565,7 @@ fn named_struct<'a>() -> Parser<'a, char, Value> {
 }
 
 fn named_field<'a>() -> Parser<'a, char, (String, Value)> {
-    ident() - ws() - sym(':') - ws() + value()
+    ident() - ws() - sym(':') - ws() + call(value)
 }
 
 fn ident<'a>() -> Parser<'a, char, String> {
