@@ -4,9 +4,9 @@ use std::{fs, path::Path};
 use configurator_utils::ConfigFormat;
 pub use cosmic_ron::CosmicRonProvider;
 use figment::{
+    Figment, Profile, Provider,
     providers::{self, Format},
     value::Value,
-    Figment, Profile, Provider,
 };
 
 mod cosmic_ron;

@@ -1,4 +1,4 @@
-use figment::{value::Dict, Figment, Profile, Provider};
+use figment::{Figment, Profile, Provider, value::Dict};
 
 pub fn data_default_profile_figment(figment: &Figment) -> Option<Dict> {
     // todo: support profile ?
@@ -31,7 +31,7 @@ where
             (json::Value::Object(j_map), figment::value::Value::Dict(_, f_dict)) => {
                 j_map.len() == f_dict.len()
                     && j_map.iter().all(|(k, j_val)| {
-                        f_dict.get(k).map_or(false, |f_val| {
+                        f_dict.get(k).is_some_and(|f_val| {
                             json_values_eq_figment_value(std::iter::once(j_val), f_val)
                         })
                     })
@@ -65,7 +65,7 @@ pub fn json_value_eq_figment_value(json_value: &json::Value, fig: &figment::valu
                 && j_map.iter().all(|(k, j_val)| {
                     f_dict
                         .get(k)
-                        .map_or(false, |f_val| json_value_eq_figment_value(j_val, f_val))
+                        .is_some_and(|f_val| json_value_eq_figment_value(j_val, f_val))
                 })
         }
 

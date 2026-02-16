@@ -5,7 +5,7 @@ use std::{
 
 use directories::ProjectDirs;
 use log::error;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(Debug)]
 pub struct ConfigManager<S> {

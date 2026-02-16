@@ -4,11 +4,10 @@ use std::collections::HashMap;
 
 use cosmic::iced_futures::backend::default;
 use figment::{
-    providers,
+    Figment, Profile, providers,
     value::{Tag, Value},
-    Figment, Profile,
 };
-use schemars::{schema_for, JsonSchema};
+use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 
 /// 1. Generate a node from schema

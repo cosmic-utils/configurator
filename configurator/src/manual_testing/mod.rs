@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use configurator_utils::ConfigFormat;
-use figment::{providers, Figment, Profile};
+use figment::{Figment, Profile, providers};
 use schemars::JsonSchema;
 use serde::Serialize;
 

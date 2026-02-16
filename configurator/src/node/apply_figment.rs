@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 
 use anyhow::{anyhow, bail};
 use figment::{
-    value::{Tag, Value},
     Figment,
+    value::{Tag, Value},
 };
 use indexmap::map::MutableKeys;
 

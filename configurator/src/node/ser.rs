@@ -4,8 +4,8 @@ use std::{
 };
 
 use serde::{
-    ser::{SerializeMap, SerializeStruct, SerializeTuple},
     Serialize,
+    ser::{SerializeMap, SerializeStruct, SerializeTuple},
 };
 
 use super::NodeContainer;
@@ -45,8 +45,8 @@ mod test {
     use crate::test_common::*;
 
     use super::NodeContainer;
-    use figment::{providers, value::Tag, Figment, Profile};
-    use schemars::{schema_for, JsonSchema};
+    use figment::{Figment, Profile, providers, value::Tag};
+    use schemars::{JsonSchema, schema_for};
     use serde::{Deserialize, Serialize};
 
     fn test_schema<S: JsonSchema + Default + Serialize>() {

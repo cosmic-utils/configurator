@@ -1,5 +1,5 @@
 use cosmic::{
-    cosmic_config::{self, cosmic_config_derive::CosmicConfigEntry, CosmicConfigEntry},
+    cosmic_config::{self, CosmicConfigEntry, cosmic_config_derive::CosmicConfigEntry},
     iced::Subscription,
 };
 use schemars::JsonSchema;
