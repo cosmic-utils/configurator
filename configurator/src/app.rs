@@ -182,7 +182,8 @@ impl cosmic::Application for App {
                 name,
                 data_path,
                 page_id,
-            } => widget::dialog("Create")
+            } => widget::dialog()
+                .title("Create")
                 .control(text_input("name", name).on_input(AppMsg::DialogInput))
                 .primary_action(button::text("create").on_press(AppMsg::PageMsg(
                     *page_id,
@@ -198,7 +199,8 @@ impl cosmic::Application for App {
                 name,
                 data_path,
                 page_id,
-            } => widget::dialog("Rename")
+            } => widget::dialog()
+                .title("Rename")
                 .control(text_input("name", name).on_input(AppMsg::DialogInput))
                 .primary_action(button::text("rename").on_press(AppMsg::PageMsg(
                     *page_id,

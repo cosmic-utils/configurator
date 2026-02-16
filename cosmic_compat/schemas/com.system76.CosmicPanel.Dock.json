@@ -3,7 +3,7 @@
   "X_CONFIGURATOR_FORMAT": "cosmic_ron",
   "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/cosmic/com.system76.CosmicPanel.Dock/v1",
   "X_CONFIGURATOR_SOURCE_PATHS": "/usr/share/cosmic/com.system76.CosmicPanel.Dock/v1",
-  "X_CONFIGURATOR_WRITE_PATH": "/home/fedasus/Documents/configurator/configurator/test_configs/com.system76.CosmicPanel.Dock",
+  "X_CONFIGURATOR_WRITE_PATH": "/home/fedasus/SSD/Documents/configurator/configurator/test_configs/com.system76.CosmicPanel.Dock",
   "additionalProperties": false,
   "definitions": {
     "AutoHide": {

@@ -59,3 +59,4 @@ features = [
 configurator_schema = { workspace = true }
 serial_test = "3"
 pretty_assertions.workspace = true
+dir-assert = "0.2"
