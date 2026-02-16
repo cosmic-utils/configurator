@@ -141,13 +141,11 @@ fn number_to_string(n: &Number) -> String {
         Number::I16(v) => v.to_string(),
         Number::I32(v) => v.to_string(),
         Number::I64(v) => v.to_string(),
-        #[cfg(feature = "integer128")]
         Number::I128(v) => v.to_string(),
         Number::U8(v) => v.to_string(),
         Number::U16(v) => v.to_string(),
         Number::U32(v) => v.to_string(),
         Number::U64(v) => v.to_string(),
-        #[cfg(feature = "integer128")]
         Number::U128(v) => v.to_string(),
         Number::F32(v) => format!("{}", v.get()),
         Number::F64(v) => format!("{}", v.get()),

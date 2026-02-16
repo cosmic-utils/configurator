@@ -38,13 +38,11 @@ pub enum Number {
     I16(i16),
     I32(i32),
     I64(i64),
-    #[cfg(feature = "integer128")]
     I128(i128),
     U8(u8),
     U16(u16),
     U32(u32),
     U64(u64),
-    #[cfg(feature = "integer128")]
     U128(u128),
     F32(F32),
     F64(F64),
@@ -68,47 +66,7 @@ mod private {
         }
     }
 
-    #[cfg(not(feature = "integer128"))]
-    /// ```compile_fail
-    /// # use ron_value::Number;
-    /// fn match_number(x: Number) {
-    ///     match x {
-    ///         Number::I8(v) => println!("i8: {}", v),
-    ///         Number::I16(v) => println!("i16: {}", v),
-    ///         Number::I32(v) => println!("i32: {}", v),
-    ///         Number::I64(v) => println!("i64: {}", v),
-    ///         Number::U8(v) => println!("u8: {}", v),
-    ///         Number::U16(v) => println!("u16: {}", v),
-    ///         Number::U32(v) => println!("u32: {}", v),
-    ///         Number::U64(v) => println!("u64: {}", v),
-    ///         Number::F32(v) => println!("f32: {}", v.0),
-    ///         Number::F64(v) => println!("f64: {}", v.0),
-    ///     }
-    /// }
-    /// ```
-    fn _assert_non_exhaustive_check_fails_not_integer128() {}
-
-    #[cfg(feature = "integer128")]
-    /// ```compile_fail
-    /// # use ron_value::Number;
-    /// fn match_number(x: Number) {
-    ///     match x {
-    ///         Number::I8(v) => println!("i8: {}", v),
-    ///         Number::I16(v) => println!("i16: {}", v),
-    ///         Number::I32(v) => println!("i32: {}", v),
-    ///         Number::I64(v) => println!("i64: {}", v),
-    ///         Number::I128(v) => println!("i128: {}", v),
-    ///         Number::U8(v) => println!("u8: {}", v),
-    ///         Number::U16(v) => println!("u16: {}", v),
-    ///         Number::U32(v) => println!("u32: {}", v),
-    ///         Number::U64(v) => println!("u64: {}", v),
-    ///         Number::U128(v) => println!("u128: {}", v),
-    ///         Number::F32(v) => println!("f32: {}", v.0),
-    ///         Number::F64(v) => println!("f64: {}", v.0),
-    ///     }
-    /// }
-    /// ```
-    fn _assert_non_exhaustive_check_fails_integer128() {}
+  
 }
 
 
@@ -250,13 +208,11 @@ impl Number {
             Self::I16(v) => f64::from(v),
             Self::I32(v) => f64::from(v),
             Self::I64(v) => v as f64,
-            #[cfg(feature = "integer128")]
             Self::I128(v) => v as f64,
             Self::U8(v) => f64::from(v),
             Self::U16(v) => f64::from(v),
             Self::U32(v) => f64::from(v),
             Self::U64(v) => v as f64,
-            #[cfg(feature = "integer128")]
             Self::U128(v) => v as f64,
             Self::F32(v) => f64::from(v.get()),
             Self::F64(v) => v.get(),
@@ -287,13 +243,11 @@ number_from_impl! { Number::I8(i8) }
 number_from_impl! { Number::I16(i16) }
 number_from_impl! { Number::I32(i32) }
 number_from_impl! { Number::I64(i64) }
-#[cfg(feature = "integer128")]
 number_from_impl! { Number::I128(i128) }
 number_from_impl! { Number::U8(u8) }
 number_from_impl! { Number::U16(u16) }
 number_from_impl! { Number::U32(u32) }
 number_from_impl! { Number::U64(u64) }
-#[cfg(feature = "integer128")]
 number_from_impl! { Number::U128(u128) }
 number_from_impl! { Number::F32(F32(f32)) }
 number_from_impl! { Number::F64(F64(f64)) }

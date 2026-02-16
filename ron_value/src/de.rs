@@ -3,13 +3,18 @@ use std::error::Error;
 use crate::Map;
 use crate::Value;
 use nom::Parser;
+use nom::bytes::complete::take_until;
+use nom::bytes::complete::take_while1;
+use nom::character::complete::line_ending;
+use nom::multi::many0;
+use nom::sequence::tuple;
 use nom::{
     IResult,
     branch::alt,
     bytes::complete::take_while,
     bytes::complete::{escaped_transform, is_not, tag},
     character::complete::{char, digit1, multispace0},
-    combinator::{map, value, opt},
+    combinator::{map, opt, value},
     multi::separated_list0,
     sequence::{delimited, preceded, separated_pair, terminated},
 };
@@ -46,30 +51,76 @@ pub fn from_str<'a>(input: &'a str) -> Result<Value, DeserializeError<'a>> {
     }
 }
 
-fn ws<'a, P, O>(
-    inner: P,
-) -> impl Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>> + 'a
-where
-    O: 'a,
-    P: Parser<&'a str, Output = O, Error = nom::error::Error<&'a str>> + 'a,
-{
-    delimited(multispace0, inner, multispace0)
+fn ws(input: &str) -> IResult<&str, ()> {
+    value((), many0(alt((ws_single, comment)))).parse(input)
 }
 
-fn parse_unit(input: &str) -> IResult<&str, Value> {
-    value(Value::Unit, ws(tag("()"))).parse(input)
-}
-
-fn parse_bool(input: &str) -> IResult<&str, Value> {
-    alt((
-        value(Value::Bool(true), ws(tag("true"))),
-        value(Value::Bool(false), ws(tag("false"))),
-    ))
+fn ws_single(input: &str) -> IResult<&str, ()> {
+    value(
+        (),
+        take_while1(|c| {
+            matches!(
+                c,
+                '\n' | '\t'
+                    | '\r'
+                    | ' '
+                    | '\u{000B}'
+                    | '\u{000C}'
+                    | '\u{0085}'
+                    | '\u{200E}'
+                    | '\u{200F}'
+                    | '\u{2028}'
+                    | '\u{2029}'
+            )
+        }),
+    )
     .parse(input)
 }
 
+fn comment(input: &str) -> IResult<&str, ()> {
+    alt((line_comment, block_comment)).parse(input)
+}
+
+fn line_comment(input: &str) -> IResult<&str, ()> {
+    value(
+        (),
+        terminated(preceded(tag("//"), take_until("\n")), line_ending),
+    )
+    .parse(input)
+}
+
+fn block_comment(input: &str) -> IResult<&str, ()> {
+    value((), delimited(tag("/*"), nested_block_comment, tag("*/"))).parse(input)
+}
+
+fn nested_block_comment(input: &str) -> IResult<&str, ()> {
+    let mut i = input;
+
+    loop {
+        // consume anything until we see /* or */
+        let (i2, _) = take_until::<_, _, nom::error::Error<_>>("/*")(i).or_else(|_| Ok(("", i)))?;
+        i = i2;
+
+        if let Ok((after_open, _)) = tag::<_, _, nom::error::Error<_>>("/*")(i) {
+            // recurse into nested comment
+            let (after_nested, _) = nested_block_comment(after_open)?;
+            let (after_close, _) = tag("*/")(after_nested)?;
+            i = after_close;
+            continue;
+        }
+
+        break;
+    }
+
+    Ok((i, ()))
+}
+
+fn comma(input: &str) -> IResult<&str, ()> {
+    value((), delimited(ws, tag(","), ws)).parse(input)
+}
+
 fn parse_number(input: &str) -> IResult<&str, Value> {
-    map(ws(digit1), |s: &str| Value::from(s.parse::<i64>().unwrap())).parse(input)
+    map(digit1, |s: &str| Value::from(s.parse::<i64>().unwrap())).parse(input)
 }
 
 fn parse_string(input: &str) -> IResult<&str, Value> {
@@ -84,6 +135,14 @@ fn parse_string(input: &str) -> IResult<&str, Value> {
     );
 
     map(delimited(char('"'), inner, char('"')), Value::String).parse(input)
+}
+
+fn parse_bool(input: &str) -> IResult<&str, Value> {
+    alt((
+        value(Value::Bool(true), tag("true")),
+        value(Value::Bool(false), tag("false")),
+    ))
+    .parse(input)
 }
 
 fn parse_char(input: &str) -> IResult<&str, Value> {
@@ -106,31 +165,39 @@ fn parse_char(input: &str) -> IResult<&str, Value> {
     .parse(input)
 }
 
-fn parse_bytes(input: &str) -> IResult<&str, Value> {
-    let inner = escaped_transform(
-        is_not("\\\""),
-        '\\',
-        alt((
-            value("\\", tag("\\")),
-            value("\"", tag("\"")),
-            value("\n", tag("n")),
-            value("\r", tag("r")),
-            value("\t", tag("t")),
-        )),
-    );
-
-    map(
-        preceded(ws(tag("b")), delimited(char('"'), inner, char('"'))),
-        |s: String| Value::Bytes(s.into_bytes()),
-    )
-    .parse(input)
+fn parse_option(input: &str) -> IResult<&str, Value> {
+    alt((
+        map(tag("None"), |_| Value::Option(None)),
+        parse_option_some,
+    )).parse(input)
 }
+
+fn parse_option_some(input: &str) -> IResult<&str, Value> {
+    map(
+        tuple((
+            tag("Some"),
+            ws,
+            tag("("),
+            ws,
+            value,
+            ws,
+            tag(")"),
+        )),
+        |(_, _, _, _, v, _, _)| Value::Option(Some(Box::new(v))),
+    ).parse(input)
+}
+
+
+
 
 fn parse_list(input: &str) -> IResult<&str, Value> {
     map(
         delimited(
             ws(char('[')),
-            terminated(separated_list0(ws(char(',')), parse_value), opt(ws(char(',')))),
+            terminated(
+                separated_list0(ws(char(',')), parse_value),
+                opt(ws(char(','))),
+            ),
             ws(char(']')),
         ),
         Value::List,
@@ -165,26 +232,16 @@ fn parse_tuple(input: &str) -> IResult<&str, Value> {
     let normal = map(
         delimited(
             ws(char('(')),
-            terminated(separated_list0(ws(char(',')), parse_value), opt(ws(char(',')))),
+            terminated(
+                separated_list0(ws(char(',')), parse_value),
+                opt(ws(char(','))),
+            ),
             ws(char(')')),
         ),
         Value::Tuple,
     );
 
     alt((struct_like, normal)).parse(input)
-}
-fn parse_option(input: &str) -> IResult<&str, Value> {
-    alt((
-        value(Value::Option(None), ws(tag("None"))),
-        map(
-            preceded(
-                ws(tag("Some")),
-                delimited(char('('), parse_value, char(')')),
-            ),
-            |v| Value::Option(Some(Box::new(v))),
-        ),
-    ))
-    .parse(input)
 }
 
 fn parse_ident(input: &str) -> IResult<&str, String> {
@@ -260,16 +317,17 @@ fn parse_struct_or_enum_named(input: &str) -> IResult<&str, Value> {
         .map(|(k, v)| (std::borrow::Cow::Owned(k), v))
         .collect();
 
-    Ok((rest, Value::Struct(Some(std::borrow::Cow::Owned(name)), map)))
+    Ok((
+        rest,
+        Value::Struct(Some(std::borrow::Cow::Owned(name)), map),
+    ))
 }
 
 fn parse_value(input: &str) -> IResult<&str, Value> {
     alt((
-        parse_unit,
         parse_bool,
         parse_option,
         parse_number,
-        parse_bytes,
         parse_char,
         parse_string,
         parse_list,
