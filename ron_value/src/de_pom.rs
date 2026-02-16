@@ -10,6 +10,7 @@ use crate::Number;
 use crate::Value;
 use pom::Parser;
 use pom::parser::*;
+use unicode_ident::{is_xid_continue, is_xid_start};
 
 // #[derive(Debug, PartialEq, Eq)]
 // pub enum DeserializeError {}
@@ -522,4 +523,56 @@ fn tuple() -> Parser<char, Value> {
             Value::Tuple(vec)
         },
     )
+}
+
+fn ident() -> Parser<char, String> {
+    ident_std() | ident_raw()
+}
+
+fn ident_std() -> Parser<char, String> {
+    (ident_std_first() + ident_std_rest().repeat(0..)).map(|(first, rest)| {
+        let mut s = String::new();
+        s.push(first);
+        s.extend(rest);
+        s
+    })
+}
+
+fn ident_std_first() -> Parser<char, char> {
+    Parser::new(|input, start| {
+        if start < input.len() {
+            let c: char = input[start];
+            if is_xid_start(c) || c == '_' {
+                Ok((c, start + 1))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        } else {
+            Err(pom::Error::Incomplete)
+        }
+    })
+}
+
+fn ident_std_rest() -> Parser<char, char> {
+    Parser::new(|input, start| {
+        if start < input.len() {
+            let c: char = input[start];
+            if is_xid_continue(c) {
+                Ok((c, start + 1))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        } else {
+            Err(pom::Error::Incomplete)
+        }
+    })
+}
+
+fn ident_raw() -> Parser<char, String> {
+    (seq(&['r', '#']) * ident_raw_rest().repeat(1..))
+        .map(|chars| chars.into_iter().collect::<String>())
+}
+
+fn ident_raw_rest() -> Parser<char, char> {
+    ident_std_rest() | sym('.') | sym('+') | sym('-')
 }

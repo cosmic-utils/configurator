@@ -4038,6 +4038,7 @@ dependencies = [
  "pom",
  "ron",
  "serde",
+ "unicode-ident",
 ]
 
 [[package]]
