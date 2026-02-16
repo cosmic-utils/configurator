@@ -126,5 +126,3 @@ fn serialize(path: &Path, value: &Value, schema: &NodeContainer) -> anyhow::Resu
 
     Ok(())
 }
-
-

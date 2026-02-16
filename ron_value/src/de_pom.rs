@@ -43,10 +43,8 @@ fn nested_block_comment() -> Parser<char, ()> {
 
         while pos < input.len() {
             // stop if we see end delimiter
-            if pos + 1 < input.len() {
-                if input[pos] == '*' && input[pos + 1] == '/' {
-                    break;
-                }
+            if pos + 1 < input.len() && input[pos] == '*' && input[pos + 1] == '/' {
+                break;
             }
 
             // nested block
@@ -117,7 +115,7 @@ fn integer() -> Parser<char, Number> {
             "u16" => Number::U16(digits.try_into()?),
             "u32" => Number::U32(digits.try_into()?),
             "u64" => Number::U64(digits.try_into()?),
-            "u128" => Number::U128(digits.try_into()?),
+            "u128" => Number::U128(digits),
             _ => unreachable!(),
         };
 
@@ -194,7 +192,8 @@ fn unsigned_decimal() -> Parser<char, u128> {
                 res.push(c);
             }
         }
-        u128::from_str_radix(&res, 10).unwrap()
+
+        res.parse::<u128>().unwrap()
     })
 }
 
@@ -310,8 +309,8 @@ fn float_suffix() -> Parser<char, &'static str> {
     seq(&['f', '3', '2']).map(|_| "f32") | seq(&['f', '6', '4']).map(|_| "f64")
 }
 
-fn string() -> Parser<char, Value> {
-    (string_std() | string_raw()).map(Value::String)
+fn string() -> Parser<char, String> {
+    string_std() | string_raw()
 }
 
 fn string_std() -> Parser<char, String> {
@@ -409,8 +408,8 @@ fn escape_unicode() -> Parser<char, char> {
         })
 }
 
-fn byte_string() -> Parser<char, Value> {
-    (byte_string_std() | byte_string_raw()).map(Value::Bytes)
+fn byte_string() -> Parser<char, Vec<u8>> {
+    byte_string_std() | byte_string_raw()
 }
 
 fn byte_string_std() -> Parser<char, Vec<u8>> {
@@ -440,40 +439,39 @@ fn no_double_quote_or_escape_bytes() -> Parser<char, u8> {
         | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
 
-fn char() -> Parser<char, Value> {
-    (sym('\'')
-        * (none_of("'\\") | (sym('\\') * (sym('\\').map(|_| '\\') | sym('\'').map(|_| '\''))))
-        - sym('\''))
-    .map(Value::Char)
+fn char() -> Parser<char, char> {
+    sym('\'') * (none_of("'\\") | (sym('\\') * (sym('\\').map(|_| '\\') | sym('\'').map(|_| '\''))))
+        - sym('\'')
 }
 
-fn bool() -> Parser<char, Value> {
-    seq(&['t', 'r', 'u', 'e']).map(|_| Value::Bool(true))
-        | seq(&['f', 'a', 'l', 's', 'e']).map(|_| Value::Bool(false))
+fn bool() -> Parser<char, bool> {
+    seq(&['t', 'r', 'u', 'e']).map(|_| true) | seq(&['f', 'a', 'l', 's', 'e']).map(|_| false)
 }
 
-fn option() -> Parser<char, Value> {
-    seq(&['N', 'o', 'n', 'e']).map(|_| Value::Option(None)) | option_some()
+fn option() -> Parser<char, Option<Value>> {
+    seq(&['N', 'o', 'n', 'e']).map(|_| None) | option_some()
 }
 
-fn option_some() -> Parser<char, Value> {
-    (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * value() - ws() - sym(')'))
-        .map(|v| Value::Option(Some(Box::new(v))))
+fn option_some() -> Parser<char, Option<Value>> {
+    (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * value() - ws() - sym(')')).map(Some)
 }
 
 fn value() -> Parser<char, Value> {
-    option()
-        | bool()
-        | char()
-        | string()
-        | byte_string()
-        | list()
-        | map()
-        | float().map(|n| Value::Number(n))
-        | integer().map(|n| Value::Number(n))
+    integer().map(Value::Number)
+        | byte().map(|b| Value::Bytes(vec![b]))
+        | float().map(Value::Number)
+        | string().map(Value::String)
+        | byte_string().map(Value::Bytes)
+        | char().map(Value::Char)
+        | bool().map(Value::Bool)
+        | option().map(|v| Value::Option(v.map(Box::new)))
+        | list().map(Value::List)
+        | map().map(Value::Map)
+        | tuple().map(Value::Tuple)
+        | struct_()
 }
 
-fn list() -> Parser<char, Value> {
+fn list() -> Parser<char, Vec<Value>> {
     (sym('[') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(']')).map(
         |v| {
             let mut vec: Vec<Value> = Vec::new();
@@ -483,12 +481,12 @@ fn list() -> Parser<char, Value> {
                 vec.extend(rest);
             }
 
-            Value::List(vec)
+            vec
         },
     )
 }
 
-fn map() -> Parser<char, Value> {
+fn map() -> Parser<char, Map<Value>> {
     (sym('{') * (map_entry() + (comma() * map_entry()).repeat(0..) - comma().opt()).opt()
         - sym('}'))
     .map(|v| {
@@ -502,7 +500,7 @@ fn map() -> Parser<char, Value> {
             }
         }
 
-        Value::Map(map)
+        map
     })
 }
 
@@ -510,7 +508,7 @@ fn map_entry() -> Parser<char, (Value, Value)> {
     value() - ws() - sym(':') - ws() + value()
 }
 
-fn tuple() -> Parser<char, Value> {
+fn tuple() -> Parser<char, Vec<Value>> {
     (sym('(') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(')')).map(
         |v| {
             let mut vec: Vec<Value> = Vec::new();
@@ -520,9 +518,47 @@ fn tuple() -> Parser<char, Value> {
                 vec.extend(rest);
             }
 
-            Value::Tuple(vec)
+            vec
         },
     )
+}
+
+fn struct_() -> Parser<char, Value> {
+    unit_struct() | tuple_struct() | named_struct()
+}
+
+fn unit_struct() -> Parser<char, Value> {
+    ident().map(Value::UnitStruct) | seq(&['(', ')']).map(|_| Value::Unit)
+}
+
+fn tuple_struct() -> Parser<char, Value> {
+    (ident().opt() - ws() + tuple()).map(|(ident, tuple)| match ident {
+        Some(ident) => Value::NamedTuple(ident, tuple),
+        None => Value::Tuple(tuple),
+    })
+}
+
+fn named_struct() -> Parser<char, Value> {
+    (ident().opt() - ws() - sym('(') - ws()
+        + (named_field() + (comma() * named_field()).repeat(0..) - comma().opt()).opt()
+        - sym(')'))
+    .map(|(ident, v)| {
+        let mut map = Map::new();
+
+        if let Some((first, rest)) = v {
+            map.insert(first.0, first.1);
+
+            for v in rest {
+                map.insert(v.0, v.1);
+            }
+        }
+
+        Value::Struct(ident, map)
+    })
+}
+
+fn named_field() -> Parser<char, (String, Value)> {
+    ident() - ws() - sym(':') - ws() + value()
 }
 
 fn ident() -> Parser<char, String> {

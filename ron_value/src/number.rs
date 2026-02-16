@@ -3,7 +3,6 @@ use core::{
     hash::{Hash, Hasher},
 };
 
-
 /// A wrapper for any numeric primitive type in Rust.
 ///
 /// Some varints of the `Number` enum are enabled by features:
@@ -65,11 +64,7 @@ mod private {
             match *self.never {}
         }
     }
-
-  
 }
-
-
 
 macro_rules! float_ty {
     ($ty:ident($float:ty)) => {

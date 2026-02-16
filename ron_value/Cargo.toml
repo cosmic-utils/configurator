@@ -16,7 +16,7 @@ indexmap = ["std", "dep:indexmap"]
 [dependencies]
 indexmap = { version = "2", default-features = false, optional = true }
 nom = "8"
-pom = "3.4.0"
+pom = "3"
 unicode-ident = "1"
 
 [dev-dependencies]

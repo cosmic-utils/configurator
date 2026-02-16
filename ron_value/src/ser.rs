@@ -34,7 +34,7 @@ pub fn to_string(value: &Value) -> Result<String, SerializeError> {
             Some(v) => Ok(format!("Some({})", to_string(v)?)),
         },
         Value::List(vec) => {
-            let elems: Result<Vec<_>, _> = vec.iter().map(|v| to_string(v)).collect();
+            let elems: Result<Vec<_>, _> = vec.iter().map(to_string).collect();
             Ok(format!("[{}]", elems?.join(", ")))
         }
         Value::Map(map) => {
@@ -45,23 +45,10 @@ pub fn to_string(value: &Value) -> Result<String, SerializeError> {
             Ok(format!("{{{}}}", elems?.join(", ")))
         }
         Value::Tuple(vec) => {
-            let elems: Result<Vec<_>, _> = vec.iter().map(|v| to_string(v)).collect();
+            let elems: Result<Vec<_>, _> = vec.iter().map(to_string).collect();
             Ok(format!("({})", elems?.join(", ")))
         }
-        Value::UnitStructOrEnum(name) => Ok(name.to_string()),
-        Value::UnitEnum(name) => Ok(name.to_string()),
-        Value::UnitStruct(name) => Ok(format!("{}()", name)),
-        Value::StructOrEnum(opt_name, map) => {
-            let elems: Result<Vec<_>, _> = map
-                .iter()
-                .map(|(k, v)| Ok(format!("{}: {}", k, to_string(v)?)))
-                .collect();
-            if let Some(name) = opt_name {
-                Ok(format!("{} {{ {} }}", name, elems?.join(", ")))
-            } else {
-                Ok(format!("{{ {} }}", elems?.join(", ")))
-            }
-        }
+        Value::UnitStruct(name) => Ok(name.to_string()),
         Value::Struct(opt_name, map) => {
             let elems: Result<Vec<_>, _> = map
                 .iter()
@@ -73,14 +60,7 @@ pub fn to_string(value: &Value) -> Result<String, SerializeError> {
                 Ok(format!("{{ {} }}", elems?.join(", ")))
             }
         }
-        Value::Enum(name, map) => {
-            let elems: Result<Vec<_>, _> = map
-                .iter()
-                .map(|(k, v)| Ok(format!("{}: {}", k, to_string(v)?)))
-                .collect();
-            Ok(format!("{} {{ {} }}", name, elems?.join(", ")))
-        }
-        Value::EnumTuple(name, vec) => {
+        Value::NamedTuple(name, vec) => {
             let elems: Result<Vec<_>, _> = vec
                 .iter()
                 .map(|v| match v {
