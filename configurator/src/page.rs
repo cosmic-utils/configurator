@@ -49,9 +49,9 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
     fn default_paths() -> impl Iterator<Item = PathBuf> {
         let mut data_dirs: Vec<PathBuf> = vec![];
         #[cfg(target_os = "linux")]
-        let base_dirs = xdg::BaseDirectories::new().unwrap();
+        let base_dirs = xdg::BaseDirectories::new();
         #[cfg(target_os = "linux")]
-        data_dirs.push(base_dirs.get_data_home());
+        data_dirs.push(base_dirs.get_data_home().unwrap());
         #[cfg(target_os = "linux")]
         data_dirs.append(&mut base_dirs.get_data_dirs());
 
