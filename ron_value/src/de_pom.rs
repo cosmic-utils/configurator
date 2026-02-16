@@ -437,3 +437,15 @@ fn no_double_quote_or_escape_bytes() -> Parser<char, u8> {
     none_of("\"\\").map(|c| c as u8)
         | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
+
+fn char() -> Parser<char, Value> {
+    (sym('\'')
+        * (none_of("'\\") | (sym('\\') * (sym('\\').map(|_| '\\') | sym('\'').map(|_| '\''))))
+        - sym('\''))
+    .map(Value::Char)
+}
+
+fn bool() -> Parser<char, Value> {
+    seq(&['t', 'r', 'u', 'e']).map(|_| Value::Bool(true))
+        | seq(&['f', 'a', 'l', 's', 'e']).map(|_| Value::Bool(false))
+}
