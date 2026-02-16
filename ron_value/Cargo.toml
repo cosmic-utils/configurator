@@ -1,0 +1,21 @@
+[package]
+name = "ron_value"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+
+[features]
+default = ["std"]
+std = []
+integer128 = []
+indexmap = ["std", "dep:indexmap"]
+
+
+[dependencies]
+indexmap = { version = "2.0", default-features = false, optional = true }
+
+[lints]
+workspace = true

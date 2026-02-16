@@ -2,7 +2,7 @@
 members = [
     "configurator",
     "configurator_schema",
-    "configurator_utils",
+    "configurator_utils", "ron_value",
     "zconf/zconf2",
     # "zconf/figment_schemars_bridge",
     # "zconf/zconf",

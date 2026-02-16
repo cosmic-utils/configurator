@@ -4,9 +4,17 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
-use figment::{Figment, Metadata, Profile, Provider, value::Dict};
+use figment::{
+    Figment, Metadata, Profile, Provider,
+    value::{Dict, Value},
+};
 use ron::Map;
 use serde::de::Error;
+
+use crate::{
+    node::{Node, NodeContainer},
+    providers::write_and_create_parent,
+};
 
 pub struct CosmicRonProvider {
     path: PathBuf,
@@ -96,3 +104,27 @@ impl CosmicRonProvider {
         Ok(data)
     }
 }
+
+fn serialize(path: &Path, value: &Value, schema: &NodeContainer) -> anyhow::Result<()> {
+    if let Some(dict) = value.as_dict() {
+        for (key, value) in dict {
+            match &schema.node {
+                Node::Null => todo!(),
+                Node::Bool(node_bool) => todo!(),
+                Node::String(node_string) => todo!(),
+                Node::Number(node_number) => todo!(),
+                Node::Object(node_object) => todo!(),
+                Node::Enum(node_enum) => todo!(),
+                Node::Array(node_array) => todo!(),
+                Node::Value(node_value) => todo!(),
+                Node::Any => todo!(),
+            }
+
+            // write_and_create_parent(path.join(key), &content)?;
+        }
+    }
+
+    Ok(())
+}
+
+
