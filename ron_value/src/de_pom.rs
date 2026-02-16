@@ -508,3 +508,18 @@ fn map() -> Parser<char, Value> {
 fn map_entry() -> Parser<char, (Value, Value)> {
     value() - ws() - sym(':') - ws() + value()
 }
+
+fn tuple() -> Parser<char, Value> {
+    (sym('(') * (value() + (comma() * value()).repeat(0..) - comma().opt()).opt() - sym(')')).map(
+        |v| {
+            let mut vec: Vec<Value> = Vec::new();
+
+            if let Some((first, rest)) = v {
+                vec.push(first);
+                vec.extend(rest);
+            }
+
+            Value::Tuple(vec)
+        },
+    )
+}
