@@ -139,15 +139,39 @@ fn parse_list(input: &str) -> IResult<&str, Value> {
 }
 
 fn parse_tuple(input: &str) -> IResult<&str, Value> {
-    map(
+    // First attempt: parse an anonymous struct-like list inside parentheses: `(k: v, ...)`
+    let struct_like = map(
+        delimited(
+            ws(char('(')),
+            terminated(
+                separated_list0(
+                    ws(char(',')),
+                    separated_pair(ws(parse_ident), ws(char(':')), ws(parse_value)),
+                ),
+                opt(ws(char(','))),
+            ),
+            ws(char(')')),
+        ),
+        |entries: Vec<(String, Value)>| {
+            let map: crate::Map<std::borrow::Cow<'static, str>> = entries
+                .into_iter()
+                .map(|(k, v)| (std::borrow::Cow::Owned(k), v))
+                .collect();
+
+            Value::Tuple(vec![Value::Struct(None, map)])
+        },
+    );
+
+    let normal = map(
         delimited(
             ws(char('(')),
             terminated(separated_list0(ws(char(',')), parse_value), opt(ws(char(',')))),
             ws(char(')')),
         ),
         Value::Tuple,
-    )
-    .parse(input)
+    );
+
+    alt((struct_like, normal)).parse(input)
 }
 fn parse_option(input: &str) -> IResult<&str, Value> {
     alt((
@@ -214,6 +238,31 @@ fn parse_enum_tuple(input: &str) -> IResult<&str, Value> {
     Ok((rest, Value::EnumTuple(Cow::Owned(name), vec)))
 }
 
+fn parse_struct_or_enum_named(input: &str) -> IResult<&str, Value> {
+    let (rest, (name, entries)) = (
+        ws(parse_ident),
+        delimited(
+            ws(char('{')),
+            terminated(
+                separated_list0(
+                    ws(char(',')),
+                    separated_pair(ws(parse_ident), ws(char(':')), ws(parse_value)),
+                ),
+                opt(ws(char(','))),
+            ),
+            ws(char('}')),
+        ),
+    )
+        .parse(input)?;
+
+    let map: crate::Map<std::borrow::Cow<'static, str>> = entries
+        .into_iter()
+        .map(|(k, v)| (std::borrow::Cow::Owned(k), v))
+        .collect();
+
+    Ok((rest, Value::Struct(Some(std::borrow::Cow::Owned(name)), map)))
+}
+
 fn parse_value(input: &str) -> IResult<&str, Value> {
     alt((
         parse_unit,
@@ -226,8 +275,9 @@ fn parse_value(input: &str) -> IResult<&str, Value> {
         parse_list,
         parse_tuple,
         parse_map,
-        parse_unit_struct_or_enum,
+        parse_struct_or_enum_named,
         parse_enum_tuple,
+        parse_unit_struct_or_enum,
     ))
     .parse(input)
 }

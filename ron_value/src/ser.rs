@@ -81,7 +81,31 @@ pub fn to_string(value: &Value) -> Result<String, SerializeError> {
             Ok(format!("{} {{ {} }}", name, elems?.join(", ")))
         }
         Value::EnumTuple(name, vec) => {
-            let elems: Result<Vec<_>, _> = vec.iter().map(|v| to_string(v)).collect();
+            let elems: Result<Vec<_>, _> = vec
+                .iter()
+                .map(|v| match v {
+                    Value::Struct(None, map) => {
+                        let inner: Result<Vec<_>, _> = map
+                            .iter()
+                            .map(|(k, v)| Ok(format!("{}: {}", k, to_string(v)?)))
+                            .collect();
+                        Ok(format!("({})", inner?.join(",")))
+                    }
+                    Value::Tuple(inner_vec) if inner_vec.len() == 1 => {
+                        if let Value::Struct(None, map) = &inner_vec[0] {
+                            let inner: Result<Vec<_>, _> = map
+                                .iter()
+                                .map(|(k, v)| Ok(format!("{}: {}", k, to_string(v)?)))
+                                .collect();
+                            Ok(format!("({})", inner?.join(",")))
+                        } else {
+                            Ok(to_string(v)?)
+                        }
+                    }
+                    other => Ok(to_string(other)?),
+                })
+                .collect();
+
             Ok(format!("{}({})", name, elems?.join(", ")))
         }
     }
