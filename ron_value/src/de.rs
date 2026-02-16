@@ -11,7 +11,7 @@ use nom::{
     character::complete::{char, digit1, multispace0},
     combinator::{map, value},
     multi::separated_list0,
-    sequence::{delimited, preceded, separated_pair, tuple},
+    sequence::{delimited, preceded, separated_pair},
 };
 use std::borrow::Cow;
 
@@ -142,11 +142,11 @@ fn parse_ident(input: &str) -> IResult<&str, String> {
     use nom::combinator::recognize;
     use nom::multi::many0;
     // identifier: alphanumeric and underscores, starting with alpha
-    let (rest, s): (&str, &str) = recognize(tuple((
-        nom::character::complete::alpha1,
-        take_while(|c: char| c.is_alphanumeric() || c == '_'),
-    )))
-    .parse(input)?;
+        let (rest, s): (&str, &str) = recognize((
+            nom::character::complete::alpha1,
+            take_while(|c: char| c.is_alphanumeric() || c == '_'),
+        ))
+        .parse(input)?;
     Ok((rest, s.to_string()))
 }
 
@@ -172,14 +172,12 @@ fn parse_unit_struct_or_enum(input: &str) -> IResult<&str, Value> {
 }
 
 fn parse_enum_tuple(input: &str) -> IResult<&str, Value> {
-    let (rest, (name, vec)) = tuple((
-        ws(parse_ident),
-        delimited(
-            ws(char('(')),
-            separated_list0(ws(char(',')), parse_value),
-            ws(char(')')),
-        ),
-    ))(input)?;
+    let (rest, (name, vec)) = (ws(parse_ident), delimited(
+        ws(char('(')),
+        separated_list0(ws(char(',')), parse_value),
+        ws(char(')')),
+    ))
+    .parse(input)?;
     Ok((rest, Value::EnumTuple(Cow::Owned(name), vec)))
 }
 
