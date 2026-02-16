@@ -308,8 +308,8 @@ fn float_suffix() -> Parser<char, &'static str> {
     seq(&['f', '3', '2']).map(|_| "f32") | seq(&['f', '6', '4']).map(|_| "f64")
 }
 
-pub fn string() -> Parser<char, String> {
-    string_std() | string_raw()
+pub fn string() -> Parser<char, Value> {
+    (string_std() | string_raw()).map(Value::String)
 }
 
 fn string_std() -> Parser<char, String> {
@@ -323,6 +323,10 @@ fn string_std() -> Parser<char, String> {
 fn no_double_quote_or_escape() -> Parser<char, char> {
     // Match any char except double quote and backslash, or a valid escape sequence
     none_of("\"\\") | string_escape()
+}
+
+fn string_escape() -> Parser<char, char> {
+    sym('\\') * (escape_ascii() | escape_byte().map(|c| c as char) | escape_unicode())
 }
 
 fn string_raw() -> Parser<char, String> {
@@ -342,7 +346,7 @@ fn string_raw_content() -> Parser<char, String> {
 
         // Next must be '"'
         if pos >= input.len() || input[pos] != '"' {
-            return Err(pom::Error::Mismatch);
+            return Err(pom::Error::Incomplete);
         }
 
         pos += 1; // skip opening "
@@ -375,10 +379,6 @@ fn string_raw_content() -> Parser<char, String> {
 
         Ok((content, pos))
     })
-}
-
-fn string_escape() -> Parser<char, char> {
-    sym('\\') * (escape_ascii() | escape_byte().map(|c| c as char) | escape_unicode())
 }
 
 fn escape_ascii() -> Parser<char, char> {
