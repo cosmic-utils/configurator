@@ -9,9 +9,9 @@ use nom::{
     bytes::complete::take_while,
     bytes::complete::{escaped_transform, is_not, tag},
     character::complete::{char, digit1, multispace0},
-    combinator::{map, value},
+    combinator::{map, value, opt},
     multi::separated_list0,
-    sequence::{delimited, preceded, separated_pair},
+    sequence::{delimited, preceded, separated_pair, terminated},
 };
 use std::borrow::Cow;
 use std::fmt;
@@ -130,7 +130,7 @@ fn parse_list(input: &str) -> IResult<&str, Value> {
     map(
         delimited(
             ws(char('[')),
-            separated_list0(ws(char(',')), parse_value),
+            terminated(separated_list0(ws(char(',')), parse_value), opt(ws(char(',')))),
             ws(char(']')),
         ),
         Value::List,
@@ -142,7 +142,7 @@ fn parse_tuple(input: &str) -> IResult<&str, Value> {
     map(
         delimited(
             ws(char('(')),
-            separated_list0(ws(char(',')), parse_value),
+            terminated(separated_list0(ws(char(',')), parse_value), opt(ws(char(',')))),
             ws(char(')')),
         ),
         Value::Tuple,
@@ -180,9 +180,12 @@ fn parse_ident(input: &str) -> IResult<&str, String> {
 fn parse_map(input: &str) -> IResult<&str, Value> {
     let (rest, entries) = delimited(
         ws(char('{')),
-        separated_list0(
-            ws(char(',')),
-            separated_pair(ws(parse_string), ws(char(':')), ws(parse_value)),
+        terminated(
+            separated_list0(
+                ws(char(',')),
+                separated_pair(ws(parse_string), ws(char(':')), ws(parse_value)),
+            ),
+            opt(ws(char(','))),
         ),
         ws(char('}')),
     )

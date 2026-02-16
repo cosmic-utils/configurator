@@ -5,12 +5,15 @@ mod map;
 mod number;
 mod ser;
 
+#[cfg(test)]
+mod test;
+
 pub use map::Map;
 pub use number::{F32, F64, Number};
 
-pub use de::{from_str, DeserializeError};
+pub use de::{DeserializeError, from_str};
 
-pub use ser::{to_string, SerializeError};
+pub use ser::{SerializeError, to_string};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {

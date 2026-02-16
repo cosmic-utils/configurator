@@ -4027,6 +4027,7 @@ dependencies = [
  "indexmap 2.13.0",
  "nom",
  "ron",
+ "serde",
 ]
 
 [[package]]

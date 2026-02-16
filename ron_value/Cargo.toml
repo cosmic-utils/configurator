@@ -19,6 +19,7 @@ indexmap = { version = "2", default-features = false, optional = true }
 nom = "8"
 
 [dev-dependencies]
+serde = { version = "1", features = ["derive"] }
 ron = "0.12"
 
 [lints]
