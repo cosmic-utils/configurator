@@ -1,4 +1,5 @@
 use cosmic::{
+    Element,
     app::{Core, Task},
     executor,
     iced_widget::text_input,
@@ -7,15 +8,14 @@ use cosmic::{
         segmented_button::{Entity, SingleSelectModel},
         text,
     },
-    Element,
 };
 use zconf2::ConfigManager;
 
 use crate::{
     config::Config,
     message::{AppMsg, ChangeMsg, PageMsg},
-    node::{data_path::DataPathType, NumberValue},
-    page::{self, create_pages, Page},
+    node::{NumberValue, data_path::DataPathType},
+    page::{self, Page, create_pages},
     view::view_app,
 };
 
@@ -119,7 +119,7 @@ impl cosmic::Application for App {
         Task::none()
     }
 
-    fn view(&self) -> Element<Self::Message> {
+    fn view(&self) -> Element<'_, Self::Message> {
         view_app(self)
     }
 
@@ -139,10 +139,10 @@ impl cosmic::Application for App {
                 }
             }
             AppMsg::ReloadActivePage => {
-                if let Some(page) = self.nav_model.active_data_mut::<Page>() {
-                    if let Err(err) = page.reload() {
-                        error!("{err}");
-                    }
+                if let Some(page) = self.nav_model.active_data_mut::<Page>()
+                    && let Err(err) = page.reload()
+                {
+                    error!("{err}");
                 }
             }
             AppMsg::ReloadLocalConfig => {
@@ -176,7 +176,7 @@ impl cosmic::Application for App {
         Task::none()
     }
 
-    fn dialog(&self) -> Option<Element<Self::Message>> {
+    fn dialog(&self) -> Option<Element<'_, Self::Message>> {
         self.dialog.as_ref().map(|dialog| match dialog {
             Dialog::AddNewNodeToObject {
                 name,
@@ -217,9 +217,11 @@ impl cosmic::Application for App {
         })
     }
 
-    fn header_end(&self) -> Vec<Element<Self::Message>> {
-        vec![button::text("reload")
-            .on_press(AppMsg::ReloadActivePage)
-            .into()]
+    fn header_end(&self) -> Vec<Element<'_, Self::Message>> {
+        vec![
+            button::text("reload")
+                .on_press(AppMsg::ReloadActivePage)
+                .into(),
+        ]
     }
 }

@@ -1,11 +1,11 @@
 use figment::{
-    value::{Dict, Empty, Num, Tag, Value},
     Metadata, Profile, Provider,
+    value::{Dict, Empty, Num, Tag, Value},
 };
 
 use crate::node::Node;
 
-use super::{from_json_schema::json_value_to_figment_value, NodeContainer, NumberValue};
+use super::{NodeContainer, NumberValue, from_json_schema::json_value_to_figment_value};
 
 impl NodeContainer {
     // todo: return a result with info about the node missing a value

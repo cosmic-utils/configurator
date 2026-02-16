@@ -191,13 +191,13 @@ pub(crate) fn schema_object_to_node(
         }
     }
 
-    if let Some(definition) = &schema_object.reference {
-        if let Some(definition) = definition.strip_prefix("#/definitions/") {
-            let schema = def.get(definition).unwrap();
+    if let Some(definition) = &schema_object.reference
+        && let Some(definition) = definition.strip_prefix("#/definitions/")
+    {
+        let schema = def.get(definition).unwrap();
 
-            let node = schema_object_to_node("definition", def, &schema.to_object())?;
-            res = res.merge(&node)?;
-        }
+        let node = schema_object_to_node("definition", def, &schema.to_object())?;
+        res = res.merge(&node)?;
     }
 
     let res = res.metadata(&schema_object.metadata);

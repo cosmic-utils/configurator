@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail};
-use figment::{value::Dict, Figment, Metadata, Profile, Provider};
+use figment::{Figment, Metadata, Profile, Provider, value::Dict};
 use ron::Map;
 use serde::de::Error;
 

@@ -10,19 +10,18 @@ use anyhow::{anyhow, bail};
 use cosmic::widget::segmented_button::Entity;
 use directories::BaseDirs;
 use figment::{
+    Figment, Profile, Provider,
     providers::{self, Format},
     value::{Dict, Tag, Value},
-    Figment, Profile, Provider,
 };
 
 use include_dir::include_dir;
-use xdg::BaseDirectories;
 
 use crate::{
     app::{self, Dialog},
     config::Config,
     message::{ChangeMsg, PageMsg},
-    node::{data_path::DataPath, Node, NodeContainer, NumberValue},
+    node::{Node, NodeContainer, NumberValue, data_path::DataPath},
 };
 
 use configurator_utils::ConfigFormat;
@@ -46,10 +45,14 @@ pub struct Page {
 }
 
 pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
+    #[allow(clippy::vec_init_then_push)]
     fn default_paths() -> impl Iterator<Item = PathBuf> {
-        let base_dirs = BaseDirectories::new().unwrap();
         let mut data_dirs: Vec<PathBuf> = vec![];
+        #[cfg(target_os = "linux")]
+        let base_dirs = xdg::BaseDirectories::new().unwrap();
+        #[cfg(target_os = "linux")]
         data_dirs.push(base_dirs.get_data_home());
+        #[cfg(target_os = "linux")]
         data_dirs.append(&mut base_dirs.get_data_dirs());
 
         #[cfg(debug_assertions)]
@@ -128,8 +131,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
 fn appid_from_schema_path(schema_path: &Path) -> String {
     let schema_name = schema_path.file_name().unwrap().to_string_lossy();
 
-    let appid = schema_name.strip_suffix(".json").unwrap().to_string();
-    appid
+    schema_name.strip_suffix(".json").unwrap().to_string()
 }
 
 impl Page {
@@ -192,7 +194,7 @@ impl Page {
         info!("start generating node from schema");
         let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
 
-        let title = appid.split('.').last().unwrap().to_string();
+        let title = appid.split('.').next_back().unwrap().to_string();
 
         let mut page = Self {
             title,

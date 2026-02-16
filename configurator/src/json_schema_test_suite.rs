@@ -1,10 +1,10 @@
 use std::{collections::BTreeMap, fs, panic::catch_unwind, path::PathBuf};
 
-use figment::{providers, Figment, Profile};
+use figment::{Figment, Profile, providers};
 use schemars::schema::Schema;
 use serde::Deserialize;
 
-use crate::node::{from_json_schema::schema_object_to_node, from_json_schema::ToSchemaObject};
+use crate::node::{from_json_schema::ToSchemaObject, from_json_schema::schema_object_to_node};
 
 fn test_path() -> PathBuf {
     PathBuf::from("../JSON-Schema-Test-Suite/tests/draft7")

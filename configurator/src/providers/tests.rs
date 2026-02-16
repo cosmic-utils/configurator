@@ -4,8 +4,8 @@ use configurator_utils::ConfigFormat;
 use cosmic::cosmic_config::CosmicConfigEntry;
 use dir_assert::assert_paths;
 use figment::{
-    value::{Tag, Value},
     Profile, Provider,
+    value::{Tag, Value},
 };
 use serde::Serialize;
 use serial_test::serial;
@@ -29,7 +29,6 @@ where
             cosmic::cosmic_config::Config::with_custom_path("expected", 1, "tests".into()).unwrap();
         default_config.write_entry(&config_handler).unwrap();
     }
-
 
     let initial_value = &Value::serialize(default_config).unwrap();
 

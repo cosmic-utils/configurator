@@ -13,7 +13,7 @@ resolver = "2"
 
 [workspace.package]
 authors = ["wiiznokes <wiiznokes2@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "GPL-3.0"
 keywords = []
 
@@ -29,12 +29,12 @@ figment_schemars_bridge = { path = "figment_schemars_bridge" }
 # zconf = { path = "zconf/zconf" }
 zconf2 = { path = "zconf/zconf2" }
 
-derive_more = { version = "1", features = ["unwrap"] }
-ron = "0.8"
-xdg = "2"
-directories = "5"
-figment = { version = "0.10", features = ["json"] }
-schemars = { version = "0.8", features = ["preserve_order"] }
+derive_more = { version = "2" }
+ron = "0.12"
+xdg = "3"
+directories = "6"
+figment = "0.10"
+schemars = "0.8"
 serde = { version = "1" }
 json = { version = "1", package = "serde_json" }
 anyhow = "1"
@@ -45,3 +45,24 @@ log = "0.4"
 indexmap = "2"
 bon = "3"
 pretty_assertions = "1"
+i18n-embed = { version = "0.16", features = [
+    "fluent-system",
+    "desktop-requester",
+] }
+rust-embed = { version = "8", features = ["debug-embed"] }
+i18n-embed-fl = "0.10"
+tracing = "0.1"
+tracing-subscriber = "0.3" 
+tracing-journald = "0.3"
+light_enum = "0.2"
+include_dir = "0.7"
+constcat = "0.6"
+dir-assert = "0.2"
+serial_test = "3"
+
+
+[workspace.dependencies.libcosmic]
+git = "https://github.com/pop-os/libcosmic"
+rev = "ae1f15f37ee6d1fde579c6a6557e44b1a208f95e"
+default-features = false
+# branch = "master"

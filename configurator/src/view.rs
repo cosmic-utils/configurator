@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
 use cosmic::{
-    iced::{alignment, Alignment, Color, Length},
+    Element,
+    iced::{Alignment, Color, Length, alignment},
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
@@ -9,9 +10,8 @@ use cosmic::{
         segmented_button::Entity,
         settings::section,
         text, text_input,
-        tooltip::{tooltip, Position},
+        tooltip::{Position, tooltip},
     },
-    Element,
 };
 
 use crate::{
@@ -19,9 +19,9 @@ use crate::{
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
-        data_path::{DataPath, DataPathType},
         Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
         NodeValue,
+        data_path::{DataPath, DataPathType},
     },
     page::Page,
 };
