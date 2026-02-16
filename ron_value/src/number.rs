@@ -70,7 +70,7 @@ mod private {
 
     #[cfg(not(feature = "integer128"))]
     /// ```compile_fail
-    /// # use ron::Number;
+    /// # use ron_value::Number;
     /// fn match_number(x: Number) {
     ///     match x {
     ///         Number::I8(v) => println!("i8: {}", v),
@@ -90,7 +90,7 @@ mod private {
 
     #[cfg(feature = "integer128")]
     /// ```compile_fail
-    /// # use ron::Number;
+    /// # use ron_value::Number;
     /// fn match_number(x: Number) {
     ///     match x {
     ///         Number::I8(v) => println!("i8: {}", v),
@@ -199,7 +199,7 @@ macro_rules! float_ty {
                 )]
         ///
         /// ```
-        #[doc = concat!("use ron::value::", stringify!($ty), ";")]
+        #[doc = concat!("use ron_value::", stringify!($ty), ";")]
         #[doc = concat!(
                     "assert!(", stringify!($ty), "::new(", stringify!($float), "::NAN) > ",
                     stringify!($ty), "::new(", stringify!($float), "::INFINITY));",
@@ -236,7 +236,7 @@ impl Number {
     /// # Example
     ///
     /// ```
-    /// # use ron::value::Number;
+    /// # use ron_value::Number;
     /// let i = Number::new(5);
     /// let f = Number::new(2.0);
     /// assert_eq!(i.into_f64(), 5.0);

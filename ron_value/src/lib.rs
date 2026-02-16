@@ -1,10 +1,12 @@
-mod map;
-mod number;
-
 use std::borrow::Cow;
 
+mod de;
+mod map;
+mod number;
+mod ser;
+
 pub use map::Map;
-pub use number::Number;
+pub use number::{F32, F64, Number};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {
