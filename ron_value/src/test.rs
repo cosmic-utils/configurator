@@ -96,3 +96,25 @@ fn integer_neg() {
 
     assert_eq!(v, Value::Number(Number::I128(-1)));
 }
+
+
+#[test]
+fn list1() {
+    let v = crate::from_str("[\n\"a\"]").unwrap();
+
+    assert_eq!(v, Value::List(vec![
+        Value::from("a"),
+    ]));
+}
+
+
+#[test]
+fn list() {
+    let v = crate::from_str("[\n\t\"com.system76.CosmicAppList\",\n\t\"com.system76.CosmicPanelAppButton\",\n\t\"com.system76.CosmicAppletMinimize\",\n]").unwrap();
+
+    assert_eq!(v, Value::List(vec![
+        Value::from("com.system76.CosmicAppList"),
+        Value::from("com.system76.CosmicPanelAppButton"),
+        Value::from("com.system76.CosmicAppletMinimize"),
+    ]));
+}

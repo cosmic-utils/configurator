@@ -479,7 +479,7 @@ fn value<'a>() -> Parser<'a, char, Value> {
 }
 
 fn list<'a>() -> Parser<'a, char, Vec<Value>> {
-    (sym('[') * (call(value) + (comma() * call(value)).repeat(0..) - comma().opt()).opt()
+    (sym('[') * ws() * (call(value) + (comma() * call(value)).repeat(0..) - comma().opt()).opt()
         - sym(']'))
     .map(|v| {
         let mut vec: Vec<Value> = Vec::new();
