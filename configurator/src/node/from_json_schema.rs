@@ -4,11 +4,12 @@ use std::{
     collections::BTreeMap,
 };
 
-use figment::value::{Empty, Num, Tag};
 use json::value::Index;
 use schemars::schema::{
     InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation,
 };
+
+use crate::generic_value::{F64, Number};
 
 use super::*;
 
@@ -224,36 +225,36 @@ impl ToSchemaObject for Schema {
     }
 }
 
-pub(crate) fn json_value_to_figment_value(json_value: &json::Value) -> Value {
+pub(crate) fn json_value_to_value(json_value: &json::Value) -> Value {
     match json_value {
-        json::Value::Null => Value::Empty(Tag::Default, Empty::None),
-        json::Value::Bool(value) => Value::Bool(Tag::Default, *value),
+        json::Value::Null => Value::Option(None),
+        json::Value::Bool(value) => Value::Bool(*value),
         json::Value::Number(number) => {
-            let num = if let Some(n) = number.as_u64() {
-                Num::U64(n)
-            } else if let Some(n) = number.as_i64() {
-                Num::I64(n)
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
             } else if let Some(n) = number.as_f64() {
-                Num::F64(n)
+                Number::F64(F64(n))
             } else {
                 panic!("not a valid number")
             };
 
-            Value::Num(Tag::Default, num)
+            Value::Number(num)
         }
-        json::Value::String(str) => Value::String(Tag::Default, str.clone()),
+        json::Value::String(str) => Value::String(str.clone()),
         json::Value::Array(vec) => {
-            let array = vec.iter().map(json_value_to_figment_value).collect();
+            let array = vec.iter().map(json_value_to_value).collect();
 
-            Value::Array(Tag::Default, array)
+            Value::List(array)
         }
         json::Value::Object(fields) => {
-            let dict = fields
+            let map = fields
                 .iter()
-                .map(|(name, value)| (name.clone(), json_value_to_figment_value(value)))
+                .map(|(name, value)| (name.clone(), json_value_to_value(value)))
                 .collect();
 
-            Value::Dict(Tag::Default, dict)
+            Value::Struct(None, map)
         }
     }
 }

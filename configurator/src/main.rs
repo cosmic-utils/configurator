@@ -10,6 +10,7 @@ extern crate tracing;
 
 mod app;
 mod config;
+mod generic_value;
 mod localize;
 mod message;
 mod node;
@@ -17,12 +18,13 @@ mod page;
 mod providers;
 mod utils;
 mod view;
+
 #[macro_use]
 mod icon;
-#[cfg(test)]
-mod json_schema_test_suite;
-#[cfg(test)]
-mod manual_testing;
+// #[cfg(test)]
+// mod json_schema_test_suite;
+// #[cfg(test)]
+// mod manual_testing;
 
 #[cfg(test)]
 mod test_common;

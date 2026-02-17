@@ -1,0 +1,26 @@
+[package]
+name = "ron_value"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+
+[features]
+default = ["std", "indexmap"]
+std = []
+indexmap = ["std", "dep:indexmap"]
+
+
+[dependencies]
+indexmap = { version = "2", default-features = false, optional = true }
+pom = "3"
+unicode-ident = "1"
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+ron = "0.12"
+
+[lints]
+workspace = true

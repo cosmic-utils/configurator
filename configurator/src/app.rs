@@ -177,7 +177,7 @@ impl cosmic::Application for App {
     }
 
     fn dialog(&self) -> Option<Element<'_, Self::Message>> {
-        self.dialog.as_ref().map(|dialog| match dialog {
+        self.dialog.as_ref().map(|dialog: &Dialog| match dialog {
             Dialog::AddNewNodeToObject {
                 name,
                 data_path,

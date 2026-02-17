@@ -16,11 +16,12 @@ use cosmic::{
 
 use crate::{
     app::App,
+    generic_value::Value,
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
         Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
-        NodeValue,
+        NodeValue, NumberValue,
         data_path::{DataPath, DataPathType},
     },
     page::Page,
@@ -373,15 +374,15 @@ fn view_enum<'a>(
         .push_maybe(node.default.as_ref().map(|default| {
             section()
                 .title("Default")
-                .add_maybe(default.clone().into_string().map(|default| {
+                .add(
                     container(
                         row()
                             .push(text("Default value"))
                             .push(horizontal_space())
-                            .push(text(default)),
+                            .push(text(value_to_str(default))),
                     )
-                    .padding(10)
-                }))
+                    .padding(10),
+                )
                 .add(
                     row()
                         .push(horizontal_space())
@@ -430,7 +431,7 @@ fn view_bool<'a>(
         .push_maybe(
             node.default
                 .as_ref()
-                .and_then(|v| v.to_bool())
+                .and_then(|v| v.as_bool())
                 .map(|default| {
                     section()
                         .title("Default")
@@ -438,7 +439,7 @@ fn view_bool<'a>(
                             row()
                                 .push(text("Default value"))
                                 .push(horizontal_space())
-                                .push(toggler(default)),
+                                .push(toggler(*default)),
                         )
                         .add(row().push(horizontal_space()).push(
                             // xxx: the on_press need to be lazy
@@ -555,8 +556,7 @@ fn view_number<'a>(
         .push_maybe(
             node.default
                 .as_ref()
-                .and_then(|v| v.to_num())
-                .and_then(|v| node_number.try_from_figment_num(v).ok())
+                .and_then(|v| v.as_number())
                 .map(|default| {
                     section()
                         .title("Default")
@@ -564,7 +564,7 @@ fn view_number<'a>(
                             row()
                                 .push(text("Default value"))
                                 .push(horizontal_space())
-                                .push(text(default.to_string())),
+                                .push(text(NumberValue::from_number(default).to_string())),
                         )
                         .add(row().push(horizontal_space()).push(
                             // xxx: the on_press need to be lazy
@@ -597,4 +597,26 @@ fn view_value<'a>(
         )
         .spacing(SPACING)
         .into()
+}
+
+fn value_to_str(value: &Value) -> Cow<'_, str> {
+    match value {
+        Value::Empty => Cow::Borrowed("Empty"),
+        Value::Unit => Cow::Borrowed("Unit"),
+        Value::Bool(v) => match v {
+            true => Cow::Borrowed("true"),
+            false => Cow::Borrowed("false"),
+        },
+        Value::Char(_) => todo!(),
+        Value::Number(number) => todo!(),
+        Value::String(s) => Cow::Borrowed(s.as_str()),
+        Value::Bytes(items) => todo!(),
+        Value::Option(value) => todo!(),
+        Value::List(values) => todo!(),
+        Value::Map(map) => todo!(),
+        Value::Tuple(values) => todo!(),
+        Value::UnitStruct(_) => todo!(),
+        Value::Struct(_, map) => todo!(),
+        Value::NamedTuple(_, values) => todo!(),
+    }
 }

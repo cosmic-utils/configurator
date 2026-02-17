@@ -9,19 +9,16 @@ use std::{
 use anyhow::{anyhow, bail};
 use cosmic::widget::segmented_button::Entity;
 use directories::BaseDirs;
-use figment::{
-    Figment, Profile, Provider,
-    providers::{self, Format},
-    value::{Dict, Tag, Value},
-};
 
 use include_dir::include_dir;
 
 use crate::{
     app::{self, Dialog},
     config::Config,
+    generic_value::Value,
     message::{ChangeMsg, PageMsg},
     node::{Node, NodeContainer, NumberValue, data_path::DataPath},
+    providers,
 };
 
 use configurator_utils::ConfigFormat;
@@ -36,9 +33,9 @@ pub struct Page {
     pub write_path: PathBuf,
     pub format: ConfigFormat,
 
-    pub system_config: Figment,
-    pub user_config: Figment,
-    pub full_config: Figment,
+    pub system_config: Value,
+    pub user_config: Value,
+    pub full_config: Value,
 
     pub tree: NodeContainer,
     pub data_path: DataPath,
@@ -49,9 +46,9 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
     fn default_paths() -> impl Iterator<Item = PathBuf> {
         let mut data_dirs: Vec<PathBuf> = vec![];
         #[cfg(target_os = "linux")]
-        let base_dirs = xdg::BaseDirectories::new().unwrap();
+        let base_dirs = xdg::BaseDirectories::new();
         #[cfg(target_os = "linux")]
-        data_dirs.push(base_dirs.get_data_home());
+        data_dirs.push(base_dirs.get_data_home().unwrap());
         #[cfg(target_os = "linux")]
         data_dirs.append(&mut base_dirs.get_data_dirs());
 
@@ -185,10 +182,10 @@ impl Page {
 
         let format = ConfigFormat::try_from(format)?;
 
-        let mut system_config = Figment::new();
+        let mut system_config = Value::Empty;
 
         for path in &source_paths {
-            system_config = system_config.merge(crate::providers::read_from_format(path, &format))
+            system_config = system_config.merge(&providers::read_from_format(path, &format))
         }
 
         info!("start generating node from schema");
@@ -200,8 +197,8 @@ impl Page {
             title,
             appid: appid.to_string(),
             system_config,
-            user_config: Figment::new(),
-            full_config: Figment::new(),
+            user_config: Value::Empty,
+            full_config: Value::Empty,
             tree,
             data_path: DataPath::new(),
             source_paths,
@@ -225,7 +222,7 @@ impl Page {
     pub fn reload(&mut self) -> anyhow::Result<()> {
         info!("reload the config");
 
-        self.user_config = Figment::new().merge(crate::providers::read_from_format(
+        self.user_config = Value::Empty.merge(&providers::read_from_format(
             &self.source_home_path,
             &self.format,
         ));
@@ -234,16 +231,16 @@ impl Page {
 
         debug!("system_config = {:#?}", self.system_config);
 
-        self.full_config = Figment::new()
-            .merge(self.system_config.clone())
-            .merge(self.user_config.clone());
+        self.full_config = Value::Empty
+            .merge(&self.system_config)
+            .merge(&self.user_config);
 
         // debug!("tree = {:#?}", self.tree);
         debug!("full_config = {:#?}", self.full_config);
 
         self.tree.remove_value_rec();
 
-        self.tree.apply_figment(&self.full_config)?;
+        self.tree.apply_value(&self.full_config)?;
 
         self.data_path.sanitize_path(&self.tree);
 
@@ -251,9 +248,9 @@ impl Page {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        match self.tree.to_value(&Tag::Default) {
+        match self.tree.to_value() {
             Some(value) => {
-                crate::providers::write(&self.write_path, &self.format, &value)?;
+                providers::write(&self.write_path, &self.format, value)?;
             }
             None => bail!("no value to write"),
         }
@@ -286,7 +283,7 @@ impl Page {
                 match change_msg {
                     ChangeMsg::ApplyDefault => {
                         node.remove_value_rec();
-                        node.apply_value(node.default.clone().unwrap(), false)
+                        node.apply_value2(&node.default.clone().unwrap(), false)
                             .unwrap();
 
                         self.tree
@@ -359,13 +356,8 @@ impl Page {
 
                         let mut new_node = node_object.template().unwrap();
 
-                        if let Some(default) = &new_node.default {
-                            new_node.apply_value(default.clone(), false).unwrap();
-                        } else {
-                            new_node
-                                .apply_value(Value::Dict(Tag::Default, Dict::new()), false)
-                                .unwrap();
-                        }
+                        let default = new_node.default.clone().unwrap();
+                        new_node.apply_value2(&default, false).unwrap();
 
                         node_object.nodes.insert(name, new_node);
 
@@ -383,7 +375,7 @@ impl Page {
                         let mut new_node = node_array.template(None);
 
                         if let Some(default) = &new_node.default {
-                            new_node.apply_value(default.clone(), false).unwrap();
+                            new_node.apply_value2(&default.clone(), false).unwrap();
                         }
                         new_node.modified = true;
 

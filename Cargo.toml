@@ -3,6 +3,7 @@ members = [
     "configurator",
     "configurator_schema",
     "configurator_utils",
+    "ron_value",
     "zconf/zconf2",
     # "zconf/figment_schemars_bridge",
     # "zconf/zconf",
@@ -26,6 +27,7 @@ unused_imports = "allow"
 configurator_schema = { path = "configurator_schema" }
 configurator_utils = { path = "configurator_utils" }
 figment_schemars_bridge = { path = "figment_schemars_bridge" }
+ron_value = { path = "ron_value" }
 # zconf = { path = "zconf/zconf" }
 zconf2 = { path = "zconf/zconf2" }
 
@@ -52,7 +54,7 @@ i18n-embed = { version = "0.16", features = [
 rust-embed = { version = "8", features = ["debug-embed"] }
 i18n-embed-fl = "0.10"
 tracing = "0.1"
-tracing-subscriber = "0.3" 
+tracing-subscriber = "0.3"
 tracing-journald = "0.3"
 light_enum = "0.2"
 include_dir = "0.7"
