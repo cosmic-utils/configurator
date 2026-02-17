@@ -17,11 +17,11 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
     let config1 = S::default();
 
-    let figment = Figment::new().join(providers::Serialized::from(&config1, Profile::Default));
+    let value = config1.serialize(serializer)
 
-    tree.apply_value(&figment).unwrap();
+    tree.apply_value(&value).unwrap();
 
-    let value_from_node = tree.to_value(&Tag::Default);
+    let value_from_node = tree.to_value();
 
     let value_from_node = if is_default_complete {
         value_from_node.expect("no value found but is_default_complete is true")

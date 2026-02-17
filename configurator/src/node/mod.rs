@@ -13,7 +13,7 @@ pub mod data_path;
 pub mod from_json_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
-mod ser;
+// mod ser;
 // #[cfg(test)]
 // mod tests;
 mod to_value;
