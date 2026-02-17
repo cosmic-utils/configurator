@@ -802,6 +802,7 @@ dependencies = [
  "light_enum",
  "pretty_assertions",
  "ron",
+ "ron_value",
  "rust-embed",
  "schemars",
  "serde",

@@ -21,12 +21,12 @@ tracing-subscriber = { workspace = true, features = [
 ] }
 tracing-journald.workspace = true
 anyhow.workspace = true
-figment = {workspace = true, features = ["json"]}
+figment = { workspace = true, features = ["json"] }
 schemars = { workspace = true, features = ["preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 json = { workspace = true }
 zconf2 = { workspace = true }
-derive_more = {  workspace = true, features = ["unwrap"] }
+derive_more = { workspace = true, features = ["unwrap"] }
 ron.workspace = true
 xdg.workspace = true
 directories.workspace = true
@@ -36,6 +36,7 @@ light_enum.workspace = true
 include_dir.workspace = true
 bon.workspace = true
 constcat.workspace = true
+ron_value.workspace = true
 
 [dependencies.libcosmic]
 workspace = true

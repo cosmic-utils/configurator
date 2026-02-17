@@ -6,7 +6,7 @@ use std::{
 use anyhow::{anyhow, bail};
 use figment::{
     Figment, Metadata, Profile, Provider,
-    value::{Dict, Value},
+    value::{Dict, Empty, Num, Tag, Value},
 };
 use ron::Map;
 use serde::de::Error;
@@ -125,4 +125,72 @@ fn serialize(path: &Path, value: &Value, schema: &NodeContainer) -> anyhow::Resu
     }
 
     Ok(())
+}
+
+fn to_figment_value(value: ron_value::Value) -> Value {
+    match value {
+        ron_value::Value::Unit => Value::Empty(Tag::Default, Empty::Unit),
+        ron_value::Value::Bool(bool) => Value::Bool(Tag::Default, bool),
+        ron_value::Value::Char(c) => Value::String(Tag::Default, c.to_string()),
+        ron_value::Value::Number(number) => Value::Num(
+            Tag::Default,
+            match number {
+                ron_value::Number::I8(v) => Num::I8(v),
+                ron_value::Number::I16(v) => Num::I16(v),
+                ron_value::Number::I32(v) => Num::I32(v),
+                ron_value::Number::I64(v) => Num::I64(v),
+                ron_value::Number::I128(v) => Num::I128(v),
+                ron_value::Number::U8(v) => Num::U8(v),
+                ron_value::Number::U16(v) => Num::U16(v),
+                ron_value::Number::U32(v) => Num::U32(v),
+                ron_value::Number::U64(v) => Num::U64(v),
+                ron_value::Number::U128(v) => Num::U128(v),
+                ron_value::Number::F32(v) => Num::F32(v.0),
+                ron_value::Number::F64(v) => Num::F64(v.0),
+            },
+        ),
+        ron_value::Value::String(s) => Value::String(Tag::Default, s),
+        ron_value::Value::Bytes(items) => todo!("no bytes implemented"),
+        ron_value::Value::Option(value) => match value {
+            Some(value) => to_figment_value(*value),
+            None => Value::Empty(Tag::Default, Empty::None),
+        },
+        ron_value::Value::List(values) => Value::Array(
+            Tag::Default,
+            values.into_iter().map(to_figment_value).collect(),
+        ),
+        ron_value::Value::Map(map) => {
+            let mut map2 = Dict::new();
+
+            for (key, value) in map {
+                match key {
+                    ron_value::Value::String(key) => {
+                        map2.insert(key, to_figment_value(value));
+                    }
+                    _ => panic!("map with keys other that string are not supported"),
+                }
+            }
+
+            Value::Dict(Tag::Default, map2)
+        }
+        ron_value::Value::Tuple(values) => Value::Array(
+            Tag::Default,
+            values.into_iter().map(to_figment_value).collect(),
+        ),
+        // todo: rewrite the figment crate :/
+        ron_value::Value::UnitStruct(name) => Value::String(Tag::Default, name),
+        ron_value::Value::Struct(_name, map) => {
+            let mut map2 = Dict::new();
+
+            for (key, value) in map {
+                map2.insert(key, to_figment_value(value));
+            }
+
+            Value::Dict(Tag::Default, map2)
+        }
+        ron_value::Value::NamedTuple(_name, values) => Value::Array(
+            Tag::Default,
+            values.into_iter().map(to_figment_value).collect(),
+        ),
+    }
 }

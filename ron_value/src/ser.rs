@@ -129,7 +129,5 @@ fn number_to_string(n: &Number) -> String {
         Number::U128(v) => v.to_string(),
         Number::F32(v) => format!("{}", v.get()),
         Number::F64(v) => format!("{}", v.get()),
-        #[cfg(not(doc))]
-        Number::__NonExhaustive(_) => "0".to_string(),
     }
 }
