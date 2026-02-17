@@ -7,6 +7,7 @@ use map::Map;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {
+    Empty,
     Unit,
     Bool(bool),
     Char(char),
@@ -20,4 +21,10 @@ pub enum Value {
     UnitStruct(String),
     Struct(Option<String>, Map<String, Value>),
     NamedTuple(String, Vec<Value>),
+}
+
+impl Value {
+    pub fn merge(&self, other: &Self) -> Self {
+        todo!()
+    }
 }

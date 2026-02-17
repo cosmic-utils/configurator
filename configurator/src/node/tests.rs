@@ -22,7 +22,7 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
     let figment = Figment::new().join(providers::Serialized::from(&config1, Profile::Default));
 
-    tree.apply_figment(&figment).unwrap();
+    tree.apply_value(&figment).unwrap();
 
     let value_from_node = tree.to_value(&Tag::Default);
 

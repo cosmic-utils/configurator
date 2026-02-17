@@ -224,7 +224,7 @@ impl ToSchemaObject for Schema {
     }
 }
 
-pub(crate) fn json_value_to_figment_value(json_value: &json::Value) -> Value {
+pub(crate) fn json_value_to_value(json_value: &json::Value) -> Value {
     match json_value {
         json::Value::Null => Value::Empty(Tag::Default, Empty::None),
         json::Value::Bool(value) => Value::Bool(Tag::Default, *value),
@@ -243,14 +243,14 @@ pub(crate) fn json_value_to_figment_value(json_value: &json::Value) -> Value {
         }
         json::Value::String(str) => Value::String(Tag::Default, str.clone()),
         json::Value::Array(vec) => {
-            let array = vec.iter().map(json_value_to_figment_value).collect();
+            let array = vec.iter().map(json_value_to_value).collect();
 
             Value::Array(Tag::Default, array)
         }
         json::Value::Object(fields) => {
             let dict = fields
                 .iter()
-                .map(|(name, value)| (name.clone(), json_value_to_figment_value(value)))
+                .map(|(name, value)| (name.clone(), json_value_to_value(value)))
                 .collect();
 
             Value::Dict(Tag::Default, dict)

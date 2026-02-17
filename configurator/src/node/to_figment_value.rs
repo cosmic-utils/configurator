@@ -1,15 +1,12 @@
-use figment::{
-    Metadata, Profile, Provider,
-    value::{Dict, Empty, Num, Tag, Value},
-};
 
-use crate::node::Node;
 
-use super::{NodeContainer, NumberValue, from_json_schema::json_value_to_figment_value};
+use crate::{generic_value::Value, node::Node};
+
+use super::{NodeContainer, NumberValue, from_json_schema::json_value_to_value};
 
 impl NodeContainer {
     // todo: return a result with info about the node missing a value
-    pub fn to_value(&self, tag: &Tag) -> Option<Value> {
+    pub fn to_value(&self) -> Option<Value> {
         if !self.modified {
             return None;
         }
@@ -47,7 +44,7 @@ impl NodeContainer {
                     values.iter().map(|n| n.to_value(tag).unwrap()).collect(),
                 )
             }),
-            Node::Value(node_value) => Some(json_value_to_figment_value(&node_value.value)),
+            Node::Value(node_value) => Some(json_value_to_value(&node_value.value)),
             Node::Any => todo!(),
         }
     }

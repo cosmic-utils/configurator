@@ -21,7 +21,7 @@ tracing-subscriber = { workspace = true, features = [
 ] }
 tracing-journald.workspace = true
 anyhow.workspace = true
-figment = { workspace = true, features = ["json"] }
+# figment = { workspace = true, features = ["json"] }
 schemars = { workspace = true, features = ["preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 json = { workspace = true }

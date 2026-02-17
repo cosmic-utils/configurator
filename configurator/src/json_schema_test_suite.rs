@@ -97,7 +97,7 @@ fn test_all_suite() {
 
                     match tree {
                         Some(mut tree) => {
-                            if tree.apply_figment(&config).is_err() {
+                            if tree.apply_value(&config).is_err() {
                                 false
                             } else {
                                 tree.is_valid()

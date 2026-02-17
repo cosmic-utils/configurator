@@ -58,7 +58,7 @@ mod test {
 
         let figment = Figment::new().join(providers::Serialized::from(&config1, Profile::Default));
 
-        tree.apply_figment(&figment).unwrap();
+        tree.apply_value(&figment).unwrap();
 
         let str1 = ron::ser::to_string_pretty(&config1, ron::ser::PrettyConfig::new()).unwrap();
 
