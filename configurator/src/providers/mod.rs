@@ -15,11 +15,11 @@ pub fn read_from_format(path: &Path, format: &ConfigFormat) -> Value {
 
     match format {
         ConfigFormat::Json => todo!(),
-        ConfigFormat::CosmicRon => cosmic_ron::read(path),
+        ConfigFormat::CosmicRon => cosmic_ron::read(path).unwrap(),
     }
 }
 
-pub fn write(path: &Path, format: &ConfigFormat, data: &Value) -> anyhow::Result<()> {
+pub fn write(path: &Path, format: &ConfigFormat, data: Value) -> anyhow::Result<()> {
     // dbg!(&data);
     match format {
         ConfigFormat::Json => {

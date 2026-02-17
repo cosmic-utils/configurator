@@ -51,4 +51,12 @@ impl Value {
             None
         }
     }
+
+    pub fn as_struct(&self) -> Option<&Map<String, Value>> {
+        if let Value::Struct(_, v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
 }
