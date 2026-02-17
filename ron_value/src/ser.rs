@@ -18,6 +18,7 @@ impl fmt::Display for SerializeError {
 
 impl std::error::Error for SerializeError {}
 
+// todo: optimize for allocation ?
 pub fn to_string(value: &Value) -> Result<String, SerializeError> {
     match value {
         Value::Unit => Ok("()".to_string()),

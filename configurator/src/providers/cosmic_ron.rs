@@ -160,17 +160,12 @@ pub fn write(path: &Path, value: Value) -> anyhow::Result<()> {
     };
 
     for (key, value) in map.0 {
-
         let value = value_to_ron_value(value);
 
+        let content = ron_value::to_string(&value).unwrap();
 
-        let content = ron_value::to_string(&value);
-
-
-
-        write_and_create_parent(path.join(key), &content)?;
+        write_and_create_parent(&path.join(key), content.as_bytes())?;
     }
-
 
     Ok(())
 }
