@@ -8,7 +8,7 @@ keywords.workspace = true
 
 
 [features]
-default = ["std"]
+default = ["std", "indexmap"]
 std = []
 indexmap = ["std", "dep:indexmap"]
 

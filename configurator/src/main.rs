@@ -10,6 +10,7 @@ extern crate tracing;
 
 mod app;
 mod config;
+mod generic_value;
 mod localize;
 mod message;
 mod node;
@@ -17,6 +18,7 @@ mod page;
 mod providers;
 mod utils;
 mod view;
+
 #[macro_use]
 mod icon;
 #[cfg(test)]
