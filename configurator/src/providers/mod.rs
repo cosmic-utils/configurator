@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use std::{fs, path::Path};
 
 use configurator_utils::ConfigFormat;
-pub use cosmic_ron::CosmicRonProvider;
 
 use crate::generic_value::Value;
 
@@ -11,33 +10,32 @@ mod cosmic_ron;
 // mod tests;
 
 #[instrument(skip_all)]
-pub fn read_from_format<P: AsRef<Path>>(path: P, format: &ConfigFormat) -> Value {
-    debug!("{:?}:{}", path.as_ref(), format);
+pub fn read_from_format(path: &Path, format: &ConfigFormat) -> Value {
+    debug!("{:?}:{}", path, format);
 
-    todo!()
+    match format {
+        ConfigFormat::Json => todo!(),
+        ConfigFormat::CosmicRon => cosmic_ron::read(path),
+    }
 }
 
-pub fn write<P: AsRef<Path>>(path: P, format: &ConfigFormat, data: &Value) -> anyhow::Result<()> {
+pub fn write(path: &Path, format: &ConfigFormat, data: &Value) -> anyhow::Result<()> {
     // dbg!(&data);
     match format {
         ConfigFormat::Json => {
-            let content = json::to_string_pretty(&data)?;
-            write_and_create_parent(path, &content)?;
-        }
-        ConfigFormat::CosmicRon => {
+            // let content = json::to_string_pretty(&data)?;
+            // write_and_create_parent(path, content.as_bytes())?;
             todo!()
         }
+        ConfigFormat::CosmicRon => cosmic_ron::write(path, data)?,
     }
 
     Ok(())
 }
 
-fn write_and_create_parent<P: AsRef<Path>, C: AsRef<[u8]>>(
-    path: P,
-    contents: C,
-) -> anyhow::Result<()> {
-    if !path.as_ref().exists() {
-        let parent = path.as_ref().parent().ok_or(anyhow!("no parent"))?;
+fn write_and_create_parent(path: &Path, contents: &[u8]) -> anyhow::Result<()> {
+    if !path.exists() {
+        let parent = path.parent().ok_or(anyhow!("no parent"))?;
         fs::create_dir_all(parent)?;
     }
 

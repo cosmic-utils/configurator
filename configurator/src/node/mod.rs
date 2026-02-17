@@ -6,7 +6,7 @@ use indexmap::IndexMap;
 use light_enum::LightEnum;
 use schemars::schema::SchemaObject;
 
-use crate::{generic_value::Value, utils::{figment_value_to_f64, figment_value_to_i128}};
+use crate::generic_value::Value;
 
 mod apply_value;
 pub mod data_path;

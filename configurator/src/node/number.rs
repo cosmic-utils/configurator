@@ -101,7 +101,7 @@ impl NodeNumber {
         }
     }
 
-    pub fn try_from_number(&self, number: Number) -> anyhow::Result<NumberValue> {
+    pub fn try_from_number(&self, number: &Number) -> anyhow::Result<NumberValue> {
         let s = match number {
             Number::U8(v) => v.to_string(),
             Number::U16(v) => v.to_string(),

@@ -4,10 +4,7 @@ use anyhow::{anyhow, bail};
 
 use indexmap::map::MutableKeys;
 
-use crate::{
-    generic_value::Value,
-    utils::{data_default_profile_figment, json_value_eq_figment_value},
-};
+use crate::{generic_value::Value, utils::json_value_eq_value};
 
 use super::{Node, NodeContainer};
 
@@ -24,14 +21,14 @@ impl NodeContainer {
         self.modified = modified;
 
         match (value, &mut self.node) {
-            (Value::String(tag, value), Node::String(node_string)) => {
-                node_string.value = Some(value);
+            (Value::String(value), Node::String(node_string)) => {
+                node_string.value = Some(value.clone());
             }
-            (Value::Dict(tag, values), Node::Enum(node_enum)) => {
+            (Value::Struct(name, values), Node::Enum(node_enum)) => {
                 let pos = values
                     .iter()
                     .find_map(|(key, value)| {
-                        let key = Value::String(tag, key.clone());
+                        let key = Value::String(key.clone());
                         node_enum.nodes.iter().position(|e| e.is_matching(&key))
                     })
                     .ok_or_else(|| {
@@ -41,7 +38,7 @@ impl NodeContainer {
                     })?;
 
                 node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value2(Value::Dict(tag, values), modified)?;
+                node_enum.nodes[pos].apply_value2(&value, modified)?;
             }
             (value, Node::Enum(node_enum)) => {
                 let pos = node_enum
@@ -57,11 +54,11 @@ impl NodeContainer {
                 node_enum.value = Some(pos);
                 node_enum.nodes[pos].apply_value2(value, modified)?;
             }
-            (Value::String(tag, value), Node::Value(node_value)) => {
+            (Value::String(value), Node::Value(node_value)) => {
                 // pass
             }
-            (Value::Bool(tag, value), Node::Bool(node_bool)) => node_bool.value = Some(value),
-            (Value::Num(tag, value), Node::Number(node_number)) => {
+            (Value::Bool(value), Node::Bool(node_bool)) => node_bool.value = Some(value.clone()),
+            (Value::Number(value), Node::Number(node_number)) => {
                 // dbg!(&value);
                 // dbg!(&node_number);
 
@@ -70,7 +67,7 @@ impl NodeContainer {
                 node_number.value_string = value.to_string();
                 node_number.value = Some(value);
             }
-            (Value::Dict(tag, mut values), Node::Object(node_object)) => {
+            (Value::Struct(tag, mut values), Node::Object(node_object)) => {
                 // hashmap are overided by existence of a value
                 node_object.nodes.retain(|_, node| !node.removable);
 
@@ -79,7 +76,7 @@ impl NodeContainer {
                     if let Some(value) = values.remove(key) {
                         n.apply_value2(value, modified)?;
                     } else if let Some(default) = &n.default {
-                        n.apply_value2(default.clone(), false)?;
+                        n.apply_value2(&default, false)?;
                     }
                 }
 
@@ -92,7 +89,7 @@ impl NodeContainer {
                     }
                 }
             }
-            (Value::Array(tag, values), Node::Array(node_array)) => {
+            (Value::List(values), Node::Array(node_array)) => {
                 let mut nodes = Vec::new();
 
                 for (pos, value) in values.into_iter().enumerate() {
@@ -103,7 +100,7 @@ impl NodeContainer {
 
                 node_array.values = Some(nodes);
             }
-            (Value::Empty(tag, value), Node::Null) => {}
+            (Value::Option(None), Node::Null) => {}
             (value, node) => bail!("no compatible node for value = \n{value:#?}. \n{node:#?}"),
         };
 
@@ -147,25 +144,25 @@ impl NodeContainer {
         // maybe only what is possible to put in an enum key
         // is it correct tho, maybe we should do a full equivalence on String
         match (value, &self.node) {
-            (Value::String(tag, _), Node::String(node_string)) => true,
-            (Value::String(tag, value), Node::Object(node_object)) => {
+            (Value::String(_), Node::String(node_string)) => true,
+            (Value::String(value), Node::Object(node_object)) => {
                 node_object.nodes.contains_key(value)
             }
-            (Value::Bool(tag, _), Node::Bool(node_bool)) => true,
-            (Value::Num(tag, num), Node::Number(node_number)) => true,
-            (Value::Empty(tag, empty), Node::Null) => true,
-            (Value::Dict(tag, values), Node::Object(node_object)) => {
+            (Value::Bool(_), Node::Bool(_)) => true,
+            (Value::Number(_), Node::Number(_)) => true,
+            (Value::Option(None), Node::Null) => true,
+            (Value::List(values), Node::Object(node_object)) => {
                 node_object.nodes.iter().all(|(key, n)| {
                     let v = values.get(key).unwrap();
                     n.is_matching(v)
                 })
             }
-            (Value::Array(tag, values), Node::Array(node_array)) => {
+            (Value::List(values), Node::Array(node_array)) => {
                 // todo: more complicated logic
                 true
             }
             (value, Node::Value(node_value)) => {
-                json_value_eq_figment_value(&node_value.value, value)
+                json_value_eq_value(&node_value.value, value)
             }
             _ => false,
         }

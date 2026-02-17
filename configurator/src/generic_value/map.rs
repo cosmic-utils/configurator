@@ -7,6 +7,12 @@ use std::{
 #[derive(Clone, Debug)]
 pub struct Map<K, V>(pub IndexMap<K, V>);
 
+impl<K, V> Map<K, V> {
+    pub fn new() -> Self {
+        Self(IndexMap::new())
+    }
+}
+
 /// Note: equality is only given if both values and order of values match
 impl<K: Ord, V: Ord> PartialEq for Map<K, V> {
     fn eq(&self, other: &Map<K, V>) -> bool {
