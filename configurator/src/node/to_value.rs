@@ -14,7 +14,7 @@ impl NodeContainer {
 
         match &self.node {
             Node::Null => Some(Value::Option(None)),
-            Node::Bool(node_bool) => node_bool.value.map(|value| Value::Bool(value)),
+            Node::Bool(node_bool) => node_bool.value.map(Value::Bool),
             Node::String(node_string) => node_string
                 .value
                 .as_ref()
@@ -22,13 +22,13 @@ impl NodeContainer {
             Node::Number(node_number) => node_number
                 .value
                 .as_ref()
-                .map(|value| Value::Number(value.clone().into_number())),
+                .map(|value| Value::Number(value.to_number())),
             Node::Object(node_object) => {
                 let mut map = Map::new();
 
                 for (key, node) in &node_object.nodes {
                     if let Some(value) = node.to_value() {
-                        map.insert(key.clone(), value);
+                        map.0.insert(key.clone(), value);
                     }
                 }
 

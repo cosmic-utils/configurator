@@ -21,6 +21,7 @@ mod to_value;
 #[derive(Debug, Clone)]
 pub struct NodeContainer {
     pub node: Node,
+    // todo: use Arc here ?
     pub default: Option<Value>,
     pub title: Option<String>,
     pub desc: Option<String>,

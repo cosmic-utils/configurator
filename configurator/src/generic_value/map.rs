@@ -11,6 +11,28 @@ impl<K, V> Map<K, V> {
     pub fn new() -> Self {
         Self(IndexMap::new())
     }
+
+    pub fn with_capacity(n: usize) -> Self {
+        Self(IndexMap::with_capacity(n))
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn iter(&self) -> indexmap::map::Iter<'_, K, V> {
+        self.0.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> indexmap::map::IterMut<'_, K, V> {
+        self.0.iter_mut()
+    }
+}
+
+impl<K: Hash + Eq, V> FromIterator<(K, V)> for Map<K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        Map(IndexMap::from_iter(iter))
+    }
 }
 
 /// Note: equality is only given if both values and order of values match

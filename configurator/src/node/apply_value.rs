@@ -4,14 +4,14 @@ use anyhow::{anyhow, bail};
 
 use indexmap::map::MutableKeys;
 
-use crate::{generic_value::Value, utils::json_value_eq_value};
+use crate::{generic_value::Value, node::NumberValue, utils::json_value_eq_value};
 
 use super::{Node, NodeContainer};
 
 impl NodeContainer {
     // todo: use figment Value instead
     pub fn apply_value(&mut self, value: &Value) -> anyhow::Result<()> {
-        self.apply_value2(value, value == Value::Empty)
+        self.apply_value2(value, value == &Value::Empty)
     }
 
     // todo: the modified logic in the function seems wrong (i probably fixed it)
@@ -25,7 +25,7 @@ impl NodeContainer {
                 node_string.value = Some(value.clone());
             }
             (Value::Struct(name, values), Node::Enum(node_enum)) => {
-                let pos = values
+                let pos = values.0
                     .iter()
                     .find_map(|(key, value)| {
                         let key = Value::String(key.clone());
@@ -38,13 +38,13 @@ impl NodeContainer {
                     })?;
 
                 node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value2(&value, modified)?;
+                node_enum.nodes[pos].apply_value2(value, modified)?;
             }
             (value, Node::Enum(node_enum)) => {
                 let pos = node_enum
                     .nodes
                     .iter()
-                    .position(|e| e.is_matching(&value))
+                    .position(|e| e.is_matching(value))
                     .ok_or_else(|| {
                         anyhow!(
                             "can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}"
@@ -57,42 +57,42 @@ impl NodeContainer {
             (Value::String(value), Node::Value(node_value)) => {
                 // pass
             }
-            (Value::Bool(value), Node::Bool(node_bool)) => node_bool.value = Some(value.clone()),
-            (Value::Number(value), Node::Number(node_number)) => {
+            (Value::Bool(value), Node::Bool(node_bool)) => node_bool.value = Some(*value),
+            (Value::Number(number), Node::Number(node_number)) => {
                 // dbg!(&value);
                 // dbg!(&node_number);
 
-                let value = node_number.try_from_number(value)?;
+                let value = NumberValue::from_number(number);
 
                 node_number.value_string = value.to_string();
                 node_number.value = Some(value);
             }
-            (Value::Struct(tag, mut values), Node::Object(node_object)) => {
+            (Value::Struct(tag, values), Node::Object(node_object)) => {
                 // hashmap are overided by existence of a value
                 node_object.nodes.retain(|_, node| !node.removable);
 
                 // for known object field ?
                 for (key, n) in &mut node_object.nodes {
-                    if let Some(value) = values.remove(key) {
+                    if let Some(value) = values.0.get(key) {
                         n.apply_value2(value, modified)?;
                     } else if let Some(default) = &n.default {
-                        n.apply_value2(&default, false)?;
+                        n.apply_value2(&default.clone(), false)?;
                     }
                 }
 
                 // for hashmap ?
                 if let Some(template) = node_object.template() {
-                    for (key, value) in values {
+                    for (key, value) in &values.0 {
                         let mut node_type = template.clone();
                         node_type.apply_value2(value, modified)?;
-                        node_object.nodes.insert(key, node_type);
+                        node_object.nodes.insert(key.to_owned(), node_type);
                     }
                 }
             }
             (Value::List(values), Node::Array(node_array)) => {
                 let mut nodes = Vec::new();
 
-                for (pos, value) in values.into_iter().enumerate() {
+                for (pos, value) in values.iter().enumerate() {
                     let mut new_node = node_array.template(Some(pos));
                     new_node.apply_value2(value, modified)?;
                     nodes.push(new_node);
@@ -152,8 +152,9 @@ impl NodeContainer {
             (Value::Number(_), Node::Number(_)) => true,
             (Value::Option(None), Node::Null) => true,
             (Value::List(values), Node::Object(node_object)) => {
-                node_object.nodes.iter().all(|(key, n)| {
-                    let v = values.get(key).unwrap();
+                // todo: use zip here (and probably use the tuple variant)
+                node_object.nodes.iter().enumerate().all(|(pos, (key, n))| {
+                    let v = values.get(pos).unwrap();
                     n.is_matching(v)
                 })
             }
@@ -161,9 +162,7 @@ impl NodeContainer {
                 // todo: more complicated logic
                 true
             }
-            (value, Node::Value(node_value)) => {
-                json_value_eq_value(&node_value.value, value)
-            }
+            (value, Node::Value(node_value)) => json_value_eq_value(&node_value.value, value),
             _ => false,
         }
     }

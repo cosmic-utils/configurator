@@ -93,23 +93,23 @@ pub fn read(path: &Path) -> Value {
 }
 
 pub fn write(path: &Path, data: &Value) -> anyhow::Result<()> {
-    for dir_entry in fs::read_dir(&self.path)? {
-        let dir_entry = dir_entry?;
+    // for dir_entry in fs::read_dir(&self.path)? {
+    //     let dir_entry = dir_entry?;
 
-        let filename = dir_entry.file_name();
+    //     let filename = dir_entry.file_name();
 
-        let filename = filename.to_str().ok_or(anyhow!("no filename"))?;
+    //     let filename = filename.to_str().ok_or(anyhow!("no filename"))?;
 
-        let content = fs::read_to_string(dir_entry.path())?;
+    //     let content = fs::read_to_string(dir_entry.path())?;
 
-        debug!("{}", content);
+    //     debug!("{}", content);
 
-        let value: ron::Value = ron::from_str(&content)?;
+    //     let value: ron::Value = ron::from_str(&content)?;
 
-        debug!("{:?}", value);
+    //     debug!("{:?}", value);
 
-        ron_map.insert(ron::Value::String(filename.to_string()), value);
-    }
+    //     ron_map.insert(ron::Value::String(filename.to_string()), value);
+    // }
 
     todo!()
 }

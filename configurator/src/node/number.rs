@@ -72,8 +72,8 @@ impl NumberValue {
         Some(v)
     }
 
-    pub fn into_number(self) -> Number {
-        match self {
+    pub fn to_number(&self) -> Number {
+        match *self {
             NumberValue::U8(v) => Number::U8(v),
             NumberValue::U16(v) => Number::U16(v),
             NumberValue::U32(v) => Number::U32(v),
@@ -90,6 +90,25 @@ impl NumberValue {
             NumberValue::F64(v) => Number::F64(F64(v)),
         }
     }
+
+    pub fn from_number(number: &Number) -> NumberValue {
+        match *number {
+            Number::U8(v) => NumberValue::U8(v),
+            Number::U16(v) => NumberValue::U16(v),
+            Number::U32(v) => NumberValue::U32(v),
+            Number::U64(v) => NumberValue::U64(v),
+            Number::U128(v) => NumberValue::U128(v),
+            Number::USize(v) => NumberValue::USize(v),
+            Number::I8(v) => NumberValue::I8(v),
+            Number::I16(v) => NumberValue::I16(v),
+            Number::I32(v) => NumberValue::I32(v),
+            Number::I64(v) => NumberValue::I64(v),
+            Number::I128(v) => NumberValue::I128(v),
+            Number::ISize(v) => NumberValue::ISize(v),
+            Number::F32(v) => NumberValue::F32(v.0),
+            Number::F64(v) => NumberValue::F64(v.0),
+        }
+    }
 }
 
 impl NodeNumber {
@@ -99,27 +118,6 @@ impl NodeNumber {
             value_string: String::new(),
             kind,
         }
-    }
-
-    pub fn try_from_number(&self, number: &Number) -> anyhow::Result<NumberValue> {
-        let s = match number {
-            Number::U8(v) => v.to_string(),
-            Number::U16(v) => v.to_string(),
-            Number::U32(v) => v.to_string(),
-            Number::U64(v) => v.to_string(),
-            Number::U128(v) => v.to_string(),
-            Number::USize(v) => v.to_string(),
-            Number::I8(v) => v.to_string(),
-            Number::I16(v) => v.to_string(),
-            Number::I32(v) => v.to_string(),
-            Number::I64(v) => v.to_string(),
-            Number::I128(v) => v.to_string(),
-            Number::ISize(v) => v.to_string(),
-            Number::F32(v) => v.to_string(),
-            Number::F64(v) => v.to_string(),
-        };
-
-        self.try_parse_from_str(&s)
     }
 
     pub fn try_parse_from_str(&self, str: &str) -> anyhow::Result<NumberValue> {

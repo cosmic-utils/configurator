@@ -27,4 +27,28 @@ impl Value {
     pub fn merge(&self, other: &Self) -> Self {
         todo!()
     }
+
+    pub fn as_bool(&self) -> Option<&bool> {
+        if let Value::Bool(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_str(&self) -> Option<&str> {
+        if let Value::String(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_number(&self) -> Option<&Number> {
+        if let Value::Number(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
 }

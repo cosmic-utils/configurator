@@ -283,7 +283,8 @@ impl Page {
                 match change_msg {
                     ChangeMsg::ApplyDefault => {
                         node.remove_value_rec();
-                        node.apply_value2(&node.default.unwrap(), false).unwrap();
+                        node.apply_value2(&node.default.clone().unwrap(), false)
+                            .unwrap();
 
                         self.tree
                             .set_modified(data_path[..data_path.len() - 1].iter());
@@ -355,7 +356,7 @@ impl Page {
 
                         let mut new_node = node_object.template().unwrap();
 
-                        let default = new_node.default.as_ref().unwrap();
+                        let default = new_node.default.clone().unwrap();
                         new_node.apply_value2(&default, false).unwrap();
 
                         node_object.nodes.insert(name, new_node);
@@ -374,7 +375,7 @@ impl Page {
                         let mut new_node = node_array.template(None);
 
                         if let Some(default) = &new_node.default {
-                            new_node.apply_value2(&default, false).unwrap();
+                            new_node.apply_value2(&default.clone(), false).unwrap();
                         }
                         new_node.modified = true;
 

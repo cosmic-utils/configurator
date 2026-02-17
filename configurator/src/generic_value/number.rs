@@ -21,6 +21,60 @@ pub enum Number {
     F64(F64),
 }
 
+impl Number {
+    pub fn as_u128(&self) -> Option<u128> {
+        match *self {
+            Number::U8(v) => Some(v.into()),
+            Number::U16(v) => Some(v.into()),
+            Number::U32(v) => Some(v.into()),
+            Number::U64(v) => Some(v.into()),
+            Number::U128(v) => Some(v),
+            Number::USize(v) => v.try_into().ok(),
+            Number::I8(v) => v.try_into().ok(),
+            Number::I16(v) => v.try_into().ok(),
+            Number::I32(v) => v.try_into().ok(),
+            Number::I64(v) => v.try_into().ok(),
+            Number::I128(v) => v.try_into().ok(),
+            Number::ISize(v) => v.try_into().ok(),
+            Number::F32(_) => None,
+            Number::F64(_) => None,
+        }
+    }
+
+    pub fn as_i128(&self) -> Option<i128> {
+        match *self {
+            Number::U8(v) => Some(v.into()),
+            Number::U16(v) => Some(v.into()),
+            Number::U32(v) => Some(v.into()),
+            Number::U64(v) => Some(v.into()),
+            Number::U128(v) => v.try_into().ok(),
+            Number::USize(v) => v.try_into().ok(),
+            Number::I8(v) => Some(v.into()),
+            Number::I16(v) => Some(v.into()),
+            Number::I32(v) => Some(v.into()),
+            Number::I64(v) => Some(v.into()),
+            Number::I128(v) => Some(v),
+            Number::ISize(v) => v.try_into().ok(),
+            Number::F32(_) => None,
+            Number::F64(_) => None,
+        }
+    }
+
+    pub fn as_f64(&self) -> Option<f64> {
+        match *self {
+            Number::U8(v) => Some(v.into()),
+            Number::U16(v) => Some(v.into()),
+            Number::U32(v) => Some(v.into()),
+            Number::I8(v) => Some(v.into()),
+            Number::I16(v) => Some(v.into()),
+            Number::I32(v) => Some(v.into()),
+            Number::F32(v) => Some(v.0.into()),
+            Number::F64(v) => Some(v.0),
+            _ => None,
+        }
+    }
+}
+
 macro_rules! float_ty {
     ($ty:ident($float:ty)) => {
         #[doc = concat!(

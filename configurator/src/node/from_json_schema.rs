@@ -230,10 +230,10 @@ pub(crate) fn json_value_to_value(json_value: &json::Value) -> Value {
         json::Value::Null => Value::Option(None),
         json::Value::Bool(value) => Value::Bool(*value),
         json::Value::Number(number) => {
-            let num = if let Some(n) = number.as_u64() {
-                Number::U64(n)
-            } else if let Some(n) = number.as_i64() {
-                Number::I64(n)
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
             } else if let Some(n) = number.as_f64() {
                 Number::F64(F64(n))
             } else {
