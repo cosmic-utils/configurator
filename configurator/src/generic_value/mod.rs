@@ -1,6 +1,8 @@
 mod map;
 mod number;
 
+mod merge;
+
 pub use number::{F32, F64, Number};
 
 pub use map::Map;
@@ -23,11 +25,19 @@ pub enum Value {
     NamedTuple(String, Vec<Value>),
 }
 
-impl Value {
-    pub fn merge(&self, other: &Self) -> Self {
-        todo!()
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(value.to_owned())
     }
+}
 
+impl From<i32> for Value {
+    fn from(value: i32) -> Self {
+        Value::Number(Number::I32(value))
+    }
+}
+
+impl Value {
     pub fn as_bool(&self) -> Option<&bool> {
         if let Value::Bool(v) = self {
             Some(v)
