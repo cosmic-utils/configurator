@@ -531,11 +531,11 @@ fn tuple<'a>() -> Parser<'a, char, Vec<Value>> {
 }
 
 fn struct_<'a>() -> Parser<'a, char, Value> {
-    unit_struct() | tuple_struct() | named_struct()
+    tuple_struct() | named_struct() | unit_struct() 
 }
 
 fn unit_struct<'a>() -> Parser<'a, char, Value> {
-    ident().map(Value::UnitStruct) | seq(&['(', ')']).map(|_| Value::Unit)
+    seq(&['(', ')']).map(|_| Value::Unit) | ident().map(Value::UnitStruct)
 }
 
 fn tuple_struct<'a>() -> Parser<'a, char, Value> {
