@@ -1,6 +1,10 @@
+use std::assert_matches;
+
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+
+use crate::{F32, F64, Number, Value};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Complex {
@@ -63,4 +67,32 @@ fn enum_struct() {
             y: 1,
         },
     });
+}
+
+#[test]
+fn float_std() {
+    let v = crate::from_str("1.0").unwrap();
+
+    assert_eq!(v, Value::Number(Number::F64(F64(1.0))));
+}
+
+#[test]
+fn float_frac() {
+    let v = crate::from_str(".1").unwrap();
+
+    assert_eq!(v, Value::Number(Number::F64(F64(0.1))));
+}
+
+#[test]
+fn integer() {
+    let v = crate::from_str("1").unwrap();
+
+    assert_eq!(v, Value::Number(Number::U128(1)));
+}
+
+#[test]
+fn integer_neg() {
+    let v = crate::from_str("-1").unwrap();
+
+    assert_eq!(v, Value::Number(Number::I128(-1)));
 }

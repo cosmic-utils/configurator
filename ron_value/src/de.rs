@@ -15,7 +15,7 @@ pub fn from_str(input: &str) -> Result<Value, pom::Error> {
     let input = input.chars().collect::<Vec<_>>();
 
     let parser = ron_file();
-    let value = parser.parse(&input).unwrap();
+    let value = parser.parse(&input)?;
 
     Ok(value)
 }
@@ -94,8 +94,8 @@ fn integer<'a>() -> Parser<'a, char, Number> {
         .opt()
         .map(|s| s.unwrap_or(1));
 
-    (sign + unsigned_decimal() + integer_suffix().opt()).convert(|((sign, digits), suffix)| {
-        let default = if sign == 1 { "u64" } else { "i64" };
+    (sign + unsigned_decimal() - !sym('.') + integer_suffix().opt()).convert(|((sign, digits), suffix)| {
+        let default = if sign == 1 { "u128" } else { "i128" };
 
         let number = match suffix.unwrap_or(default) {
             "i8" => {
@@ -248,7 +248,7 @@ fn float<'a>() -> Parser<'a, char, Number> {
 }
 
 fn float_num<'a>() -> Parser<'a, char, String> {
-    ((float_int() | float_std() | float_frac()) + float_exp().opt()).map(|(int_part, exp)| {
+    ((float_std() | float_frac() | float_int()) + float_exp().opt()).map(|(int_part, exp)| {
         if let Some(e) = exp {
             format!("{}{}", int_part, e)
         } else {
@@ -465,8 +465,8 @@ fn option_some<'a>() -> Parser<'a, char, Option<Value>> {
 
 fn value<'a>() -> Parser<'a, char, Value> {
     integer().map(Value::Number)
-        | byte().map(|b| Value::Bytes(vec![b]))
         | float().map(Value::Number)
+        | byte().map(|b| Value::Bytes(vec![b]))
         | string().map(Value::String)
         | byte_string().map(Value::Bytes)
         | char().map(Value::Char)
