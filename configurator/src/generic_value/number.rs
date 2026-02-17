@@ -5,16 +5,18 @@ use core::{
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
 pub enum Number {
-    I8(i8),
-    I16(i16),
-    I32(i32),
-    I64(i64),
-    I128(i128),
     U8(u8),
     U16(u16),
     U32(u32),
     U64(u64),
     U128(u128),
+    USize(usize),
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    I128(i128),
+    ISize(isize),
     F32(F32),
     F64(F64),
 }
@@ -152,16 +154,18 @@ impl Number {
     pub fn into_f64(self) -> f64 {
         #[allow(clippy::cast_precision_loss)]
         match self {
-            Self::I8(v) => f64::from(v),
-            Self::I16(v) => f64::from(v),
-            Self::I32(v) => f64::from(v),
-            Self::I64(v) => v as f64,
-            Self::I128(v) => v as f64,
             Self::U8(v) => f64::from(v),
             Self::U16(v) => f64::from(v),
             Self::U32(v) => f64::from(v),
             Self::U64(v) => v as f64,
             Self::U128(v) => v as f64,
+            Self::USize(v) => v as f64,
+            Self::I8(v) => f64::from(v),
+            Self::I16(v) => f64::from(v),
+            Self::I32(v) => f64::from(v),
+            Self::I64(v) => v as f64,
+            Self::I128(v) => v as f64,
+            Self::ISize(v) => v as f64,
             Self::F32(v) => f64::from(v.get()),
             Self::F64(v) => v.get(),
         }

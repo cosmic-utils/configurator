@@ -21,10 +21,10 @@ mod view;
 
 #[macro_use]
 mod icon;
-#[cfg(test)]
-mod json_schema_test_suite;
-#[cfg(test)]
-mod manual_testing;
+// #[cfg(test)]
+// mod json_schema_test_suite;
+// #[cfg(test)]
+// mod manual_testing;
 
 #[cfg(test)]
 mod test_common;

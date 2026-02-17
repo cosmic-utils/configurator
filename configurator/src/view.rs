@@ -556,7 +556,7 @@ fn view_number<'a>(
             node.default
                 .as_ref()
                 .and_then(|v| v.to_num())
-                .and_then(|v| node_number.try_from_figment_num(v).ok())
+                .and_then(|v| node_number.try_from_number(v).ok())
                 .map(|default| {
                     section()
                         .title("Default")

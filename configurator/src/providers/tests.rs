@@ -3,10 +3,7 @@ use std::{collections::HashMap, fs, marker::PhantomData, path::Path, sync::LazyL
 use configurator_utils::ConfigFormat;
 use cosmic::cosmic_config::CosmicConfigEntry;
 use dir_assert::assert_paths;
-use figment::{
-    Profile, Provider,
-    value::{Tag, Value},
-};
+
 use serde::Serialize;
 use serial_test::serial;
 

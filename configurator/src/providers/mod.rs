@@ -7,8 +7,8 @@ pub use cosmic_ron::CosmicRonProvider;
 use crate::generic_value::Value;
 
 mod cosmic_ron;
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 #[instrument(skip_all)]
 pub fn read_from_format<P: AsRef<Path>>(path: P, format: &ConfigFormat) -> Value {

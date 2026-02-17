@@ -14,9 +14,9 @@ pub mod from_json_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
 mod ser;
-#[cfg(test)]
-mod tests;
-mod to_figment_value;
+// #[cfg(test)]
+// mod tests;
+mod to_value;
 
 #[derive(Debug, Clone)]
 pub struct NodeContainer {

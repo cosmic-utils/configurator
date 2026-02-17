@@ -3,10 +3,7 @@ use crate::{node::NodeContainer, test_common::*};
 use std::collections::HashMap;
 
 use cosmic::iced_futures::backend::default;
-use figment::{
-    Figment, Profile, providers,
-    value::{Tag, Value},
-};
+
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 

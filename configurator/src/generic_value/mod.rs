@@ -1,9 +1,9 @@
 mod map;
 mod number;
 
-use number::Number;
+pub use number::{F32, F64, Number};
 
-use map::Map;
+pub use map::Map;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {
