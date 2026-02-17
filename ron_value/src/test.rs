@@ -25,9 +25,6 @@ fn roundtrip<T>(data: T)
 where
     T: Serialize + DeserializeOwned + Debug + PartialEq,
 {
-    // let str_from_serde =
-    //     ron::ser::to_string_pretty(&data, ron::ser::PrettyConfig::default()).unwrap();
-
     let str_from_serde = ron::ser::to_string(&data).unwrap();
 
     {
@@ -52,7 +49,7 @@ where
 #[test]
 fn enum_tuple() {
     roundtrip(EnumComplex::C(Complex {
-        x: "hello".into(),
+        x: "hello\n".into(),
         y: 1,
     }));
 }

@@ -1,414 +1,621 @@
-use std::error::Error;
+use core::num;
+use std::num::NonZero;
+use std::num::ParseFloatError;
+use std::num::TryFromIntError;
 
+use crate::F32;
+use crate::F64;
 use crate::Map;
+use crate::Number;
 use crate::Value;
-use nom::Parser;
-use nom::bytes::complete::take_until;
-use nom::bytes::complete::take_while1;
-use nom::character::complete::line_ending;
-use nom::multi::many0;
-use nom::sequence::tuple;
-use nom::{
-    IResult,
-    branch::alt,
-    bytes::complete::take_while,
-    bytes::complete::{escaped_transform, is_not, tag},
-    character::complete::{char, digit1, multispace0},
-    combinator::{map, opt, value},
-    multi::separated_list0,
-    sequence::{delimited, preceded, separated_pair, terminated},
-};
-use std::borrow::Cow;
-use std::fmt;
+use pom::parser::*;
+use unicode_ident::{is_xid_continue, is_xid_start};
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum DeserializeError<'a> {
-    Parse(nom::Err<nom::error::Error<&'a str>>),
-    TrailingInput(String),
+pub fn from_str(input: &str) -> Result<Value, pom::Error> {
+    let input = input.chars().collect::<Vec<_>>();
+
+    let parser = ron_file();
+    let value = parser.parse(&input).unwrap();
+
+    Ok(value)
 }
 
-impl fmt::Display for DeserializeError<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeserializeError::Parse(s) => write!(f, "parse error: {}", s),
-            DeserializeError::TrailingInput(s) => write!(f, "trailing input is not empty: {}", s),
+fn ron_file<'a>() -> Parser<'a, char, Value> {
+    ws() * value() - ws() - end()
+}
+
+fn ws<'a>() -> Parser<'a, char, ()> {
+    (ws_single() | comment()).repeat(0..).discard()
+}
+
+fn ws_single<'a>() -> Parser<'a, char, ()> {
+    one_of("\n\t\r \u{000B}\u{000C}\u{0085}\u{200E}\u{200F}\u{2028}\u{2029}").discard()
+}
+
+fn comment<'a>() -> Parser<'a, char, ()> {
+    line_comment() | block_comment()
+}
+
+fn line_comment<'a>() -> Parser<'a, char, ()> {
+    (seq(&['/', '/']) * none_of("\n").repeat(0..) - sym('\n')).discard()
+}
+
+fn block_comment<'a>() -> Parser<'a, char, ()> {
+    (seq(&['/', '*']) * nested_block_comment() - seq(&['*', '/'])).discard()
+}
+
+fn nested_block_comment<'a>() -> Parser<'a, char, ()> {
+    Parser::new(|input, start| {
+        let mut pos = start;
+
+        while pos < input.len() {
+            // stop if we see end delimiter
+            if pos + 1 < input.len() && input[pos] == '*' && input[pos + 1] == '/' {
+                break;
+            }
+
+            // nested block
+            if pos + 1 < input.len() && input[pos] == '/' && input[pos + 1] == '*' {
+                let (_, next) = block_comment().parse_at(input, pos)?;
+                pos = next;
+                continue;
+            }
+
+            // consume one char
+            pos += 1;
         }
-    }
+
+        Ok(((), pos))
+    })
 }
 
-impl std::error::Error for DeserializeError<'_> {}
+fn comma<'a>() -> Parser<'a, char, ()> {
+    (ws() * sym(',') - ws()).discard()
+}
 
-pub fn from_str<'a>(input: &'a str) -> Result<Value, DeserializeError<'a>> {
-    match parse_value(input) {
-        Ok((rest, v)) => {
-            if rest.trim().is_empty() {
-                Ok(v)
-            } else {
-                Err(DeserializeError::TrailingInput(rest.to_string()))
+fn digit<'a>() -> Parser<'a, char, char> {
+    one_of("0123456789")
+}
+
+fn digit_binary<'a>() -> Parser<'a, char, char> {
+    one_of("01")
+}
+
+fn digit_octal<'a>() -> Parser<'a, char, char> {
+    one_of("01234567")
+}
+
+fn digit_hexadecimal<'a>() -> Parser<'a, char, char> {
+    one_of("0123456789ABCDEFabcdef")
+}
+
+fn integer<'a>() -> Parser<'a, char, Number> {
+    let sign = (sym('-').map(|_| -1) | sym('+').map(|_| 1))
+        .opt()
+        .map(|s| s.unwrap_or(1));
+
+    (sign + unsigned_decimal() + integer_suffix().opt()).convert(|((sign, digits), suffix)| {
+        let default = if sign == 1 { "u64" } else { "i64" };
+
+        let number = match suffix.unwrap_or(default) {
+            "i8" => {
+                let n: i8 = digits.try_into()?;
+                Number::I8(n * sign)
+            }
+            "i16" => {
+                let n: i16 = digits.try_into()?;
+                Number::I16(n * sign as i16)
+            }
+            "i32" => {
+                let n: i32 = digits.try_into()?;
+                Number::I32(n * sign as i32)
+            }
+            "i64" => {
+                let n: i64 = digits.try_into()?;
+                Number::I64(n * sign as i64)
+            }
+            "i128" => {
+                let n: i128 = digits.try_into()?;
+                Number::I128(n * sign as i128)
+            }
+            "u8" => Number::U8(digits.try_into()?),
+            "u16" => Number::U16(digits.try_into()?),
+            "u32" => Number::U32(digits.try_into()?),
+            "u64" => Number::U64(digits.try_into()?),
+            "u128" => Number::U128(digits),
+            _ => unreachable!(),
+        };
+
+        Ok::<Number, TryFromIntError>(number)
+    })
+}
+
+fn integer_suffix<'a>() -> Parser<'a, char, &'static str> {
+    seq(&['i', '8']).map(|_| "i8")
+        | seq(&['i', '1', '6']).map(|_| "i16")
+        | seq(&['i', '3', '2']).map(|_| "i32")
+        | seq(&['i', '6', '4']).map(|_| "i64")
+        | seq(&['i', '1', '2', '8']).map(|_| "i128")
+        | seq(&['u', '8']).map(|_| "u8")
+        | seq(&['u', '1', '6']).map(|_| "u16")
+        | seq(&['u', '3', '2']).map(|_| "u32")
+        | seq(&['u', '6', '4']).map(|_| "u64")
+        | seq(&['u', '1', '2', '8']).map(|_| "u128")
+}
+
+fn unsigned<'a>() -> Parser<'a, char, u128> {
+    unsigned_binary() | unsigned_octal() | unsigned_hexadecimal() | unsigned_decimal()
+}
+
+fn unsigned_binary<'a>() -> Parser<'a, char, u128> {
+    (seq(&['0', 'b']) * digit_binary() + (digit_binary() | sym('_')).repeat(0..)).map(|s| {
+        let mut res = String::new();
+        res.push(s.0);
+
+        for c in s.1 {
+            if c != '_' {
+                res.push(c);
             }
         }
-        Err(e) => Err(DeserializeError::Parse(e)),
-    }
+        u128::from_str_radix(&res, 2).unwrap()
+    })
 }
 
-fn ws(input: &str) -> IResult<&str, ()> {
-    value((), many0(alt((ws_single, comment)))).parse(input)
-}
+fn unsigned_octal<'a>() -> Parser<'a, char, u128> {
+    (seq(&['0', 'o']) * digit_octal() + (digit_octal() | sym('_')).repeat(0..)).map(|s| {
+        let mut res = String::new();
+        res.push(s.0);
 
-fn ws_single(input: &str) -> IResult<&str, ()> {
-    value(
-        (),
-        take_while1(|c| {
-            matches!(
-                c,
-                '\n' | '\t'
-                    | '\r'
-                    | ' '
-                    | '\u{000B}'
-                    | '\u{000C}'
-                    | '\u{0085}'
-                    | '\u{200E}'
-                    | '\u{200F}'
-                    | '\u{2028}'
-                    | '\u{2029}'
-            )
-        }),
+        for c in s.1 {
+            if c != '_' {
+                res.push(c);
+            }
+        }
+        u128::from_str_radix(&res, 8).unwrap()
+    })
+}
+fn unsigned_hexadecimal<'a>() -> Parser<'a, char, u128> {
+    (seq(&['0', 'x']) * digit_hexadecimal() + (digit_hexadecimal() | sym('_')).repeat(0..)).map(
+        |s| {
+            let mut res = String::new();
+            res.push(s.0);
+
+            for c in s.1 {
+                if c != '_' {
+                    res.push(c);
+                }
+            }
+            u128::from_str_radix(&res, 16).unwrap()
+        },
     )
-    .parse(input)
 }
+fn unsigned_decimal<'a>() -> Parser<'a, char, u128> {
+    (digit() + (digit() | sym('_')).repeat(0..)).map(|s| {
+        let mut res = String::new();
+        res.push(s.0);
 
-fn comment(input: &str) -> IResult<&str, ()> {
-    alt((line_comment, block_comment)).parse(input)
-}
-
-fn line_comment(input: &str) -> IResult<&str, ()> {
-    value(
-        (),
-        terminated(preceded(tag("//"), take_until("\n")), line_ending),
-    )
-    .parse(input)
-}
-
-fn block_comment(input: &str) -> IResult<&str, ()> {
-    value((), delimited(tag("/*"), nested_block_comment, tag("*/"))).parse(input)
-}
-
-fn nested_block_comment(input: &str) -> IResult<&str, ()> {
-    let mut i = input;
-
-    loop {
-        // consume anything until we see /* or */
-        let (i2, _) = take_until::<_, _, nom::error::Error<_>>("/*")(i).or_else(|_| Ok(("", i)))?;
-        i = i2;
-
-        if let Ok((after_open, _)) = tag::<_, _, nom::error::Error<_>>("/*")(i) {
-            // recurse into nested comment
-            let (after_nested, _) = nested_block_comment(after_open)?;
-            let (after_close, _) = tag("*/")(after_nested)?;
-            i = after_close;
-            continue;
+        for c in s.1 {
+            if c != '_' {
+                res.push(c);
+            }
         }
 
-        break;
-    }
-
-    Ok((i, ()))
-}
-
-fn comma(input: &str) -> IResult<&str, ()> {
-    value((), delimited(ws, tag(","), ws)).parse(input)
-}
-
-fn parse_number(input: &str) -> IResult<&str, Value> {
-    map(digit1, |s: &str| Value::from(s.parse::<i64>().unwrap())).parse(input)
-}
-
-fn parse_string(input: &str) -> IResult<&str, Value> {
-    let inner = escaped_transform(
-        is_not("\\\""),
-        '\\',
-        alt((
-            value("\\", tag("\\")),
-            value("\"", tag("\"")),
-            value("\n", tag("n")),
-        )),
-    );
-
-    map(delimited(char('"'), inner, char('"')), Value::String).parse(input)
-}
-
-fn parse_bool(input: &str) -> IResult<&str, Value> {
-    alt((
-        value(Value::Bool(true), tag("true")),
-        value(Value::Bool(false), tag("false")),
-    ))
-    .parse(input)
-}
-
-fn parse_char(input: &str) -> IResult<&str, Value> {
-    let inner = escaped_transform(
-        is_not("\\'"),
-        '\\',
-        alt((
-            value("\\", tag("\\")),
-            value("'", tag("'")),
-            value("\n", tag("n")),
-            value("\r", tag("r")),
-            value("\t", tag("t")),
-        )),
-    );
-
-    map(delimited(char('\''), inner, char('\'')), |s: String| {
-        let c = s.chars().next().unwrap();
-        Value::Char(c)
+        res.parse::<u128>().unwrap()
     })
-    .parse(input)
 }
 
-fn parse_option(input: &str) -> IResult<&str, Value> {
-    alt((
-        map(tag("None"), |_| Value::Option(None)),
-        parse_option_some,
-    )).parse(input)
+fn byte<'a>() -> Parser<'a, char, u8> {
+    sym('b') * sym('\'') * byte_content() - sym('\'')
 }
 
-fn parse_option_some(input: &str) -> IResult<&str, Value> {
-    map(
-        tuple((
-            tag("Some"),
-            ws,
-            tag("("),
-            ws,
-            value,
-            ws,
-            tag(")"),
-        )),
-        |(_, _, _, _, v, _, _)| Value::Option(Some(Box::new(v))),
-    ).parse(input)
+fn byte_content<'a>() -> Parser<'a, char, u8> {
+    ascii() | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
 }
 
-
-
-
-fn parse_list(input: &str) -> IResult<&str, Value> {
-    map(
-        delimited(
-            ws(char('[')),
-            terminated(
-                separated_list0(ws(char(',')), parse_value),
-                opt(ws(char(','))),
-            ),
-            ws(char(']')),
-        ),
-        Value::List,
-    )
-    .parse(input)
+fn ascii<'a>() -> Parser<'a, char, u8> {
+    Parser::new(|input, start| {
+        if start < input.len() {
+            let c = input[start];
+            if (c as u32) <= 0x7F && c != '\'' && c != '\\' {
+                Ok((c as u8, start + 1))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        } else {
+            Err(pom::Error::Incomplete)
+        }
+    })
 }
 
-fn parse_tuple(input: &str) -> IResult<&str, Value> {
-    // First attempt: parse an anonymous struct-like list inside parentheses: `(k: v, ...)`
-    let struct_like = map(
-        delimited(
-            ws(char('(')),
-            terminated(
-                separated_list0(
-                    ws(char(',')),
-                    separated_pair(ws(parse_ident), ws(char(':')), ws(parse_value)),
-                ),
-                opt(ws(char(','))),
-            ),
-            ws(char(')')),
-        ),
-        |entries: Vec<(String, Value)>| {
-            let map: crate::Map<std::borrow::Cow<'static, str>> = entries
-                .into_iter()
-                .map(|(k, v)| (std::borrow::Cow::Owned(k), v))
-                .collect();
+fn float<'a>() -> Parser<'a, char, Number> {
+    (one_of("+-").opt()
+        + (seq(&['i', 'n', 'f']).map(|_| String::from("inf"))
+            | seq(&['N', 'a', 'N']).map(|_| String::from("Nan"))
+            | float_num())
+        + float_suffix().opt())
+    .convert(|((sign, mut num), suffix)| {
+        if let Some(sign) = sign {
+            num.insert(0, sign);
+        }
+        let number = match suffix.unwrap_or("f64") {
+            "f32" => Number::F32(F32(num.parse()?)),
+            "f64" => Number::F64(F64(num.parse()?)),
+            _ => unreachable!(),
+        };
 
-            Value::Tuple(vec![Value::Struct(None, map)])
-        },
-    );
-
-    let normal = map(
-        delimited(
-            ws(char('(')),
-            terminated(
-                separated_list0(ws(char(',')), parse_value),
-                opt(ws(char(','))),
-            ),
-            ws(char(')')),
-        ),
-        Value::Tuple,
-    );
-
-    alt((struct_like, normal)).parse(input)
+        Ok::<Number, ParseFloatError>(number)
+    })
 }
 
-fn parse_ident(input: &str) -> IResult<&str, String> {
-    use nom::character::complete::alphanumeric1;
-    use nom::character::complete::char as ch;
-    use nom::combinator::recognize;
-    use nom::multi::many0;
-    // identifier: alphanumeric and underscores, starting with alpha
-    let (rest, s): (&str, &str) = recognize((
-        nom::character::complete::alpha1,
-        take_while(|c: char| c.is_alphanumeric() || c == '_'),
-    ))
-    .parse(input)?;
-    Ok((rest, s.to_string()))
+fn float_num<'a>() -> Parser<'a, char, String> {
+    ((float_int() | float_std() | float_frac()) + float_exp().opt()).map(|(int_part, exp)| {
+        if let Some(e) = exp {
+            format!("{}{}", int_part, e)
+        } else {
+            int_part
+        }
+    })
 }
 
-fn parse_map(input: &str) -> IResult<&str, Value> {
-    let (rest, entries) = delimited(
-        ws(char('{')),
-        terminated(
-            separated_list0(
-                ws(char(',')),
-                separated_pair(ws(parse_string), ws(char(':')), ws(parse_value)),
-            ),
-            opt(ws(char(','))),
-        ),
-        ws(char('}')),
-    )
-    .parse(input)?;
-
-    let map: Map<Value> = entries.into_iter().map(|(k, v)| (k, v)).collect();
-
-    Ok((rest, Value::Map(map)))
+fn float_int<'a>() -> Parser<'a, char, String> {
+    (digit() + (digit() | sym('_')).repeat(0..)).map(|(first, rest)| {
+        let mut s = String::new();
+        s.push(first);
+        for c in rest {
+            if c != '_' {
+                s.push(c);
+            }
+        }
+        s
+    })
 }
 
-fn parse_unit_struct_or_enum(input: &str) -> IResult<&str, Value> {
-    let (rest, name) = parse_ident(input)?;
-    Ok((rest, Value::UnitStructOrEnum(Cow::Owned(name))))
+fn float_std<'a>() -> Parser<'a, char, String> {
+    (float_int() + sym('.') + float_int().opt()).map(|((int_part, _), frac)| {
+        let mut s = int_part;
+        s.push('.');
+        if let Some(frac) = frac {
+            s.push_str(&frac);
+        }
+        s
+    })
 }
 
-fn parse_enum_tuple(input: &str) -> IResult<&str, Value> {
-    let (rest, (name, vec)) = (
-        ws(parse_ident),
-        delimited(
-            ws(char('(')),
-            separated_list0(ws(char(',')), parse_value),
-            ws(char(')')),
-        ),
-    )
-        .parse(input)?;
-    Ok((rest, Value::EnumTuple(Cow::Owned(name), vec)))
+fn float_frac<'a>() -> Parser<'a, char, String> {
+    (sym('.') * float_int()).map(|num| format!("0.{num}"))
 }
 
-fn parse_struct_or_enum_named(input: &str) -> IResult<&str, Value> {
-    let (rest, (name, entries)) = (
-        ws(parse_ident),
-        delimited(
-            ws(char('{')),
-            terminated(
-                separated_list0(
-                    ws(char(',')),
-                    separated_pair(ws(parse_ident), ws(char(':')), ws(parse_value)),
-                ),
-                opt(ws(char(','))),
-            ),
-            ws(char('}')),
-        ),
-    )
-        .parse(input)?;
-
-    let map: crate::Map<std::borrow::Cow<'static, str>> = entries
-        .into_iter()
-        .map(|(k, v)| (std::borrow::Cow::Owned(k), v))
-        .collect();
-
-    Ok((
-        rest,
-        Value::Struct(Some(std::borrow::Cow::Owned(name)), map),
-    ))
+fn float_exp<'a>() -> Parser<'a, char, String> {
+    (one_of("eE")
+        + (sym('+') | sym('-')).opt()
+        + (digit() | sym('_')).repeat(0..)
+        + digit()
+        + (digit() | sym('_')).repeat(0..))
+    .map(|((((e, sign), digit1), digit2), digit3)| {
+        let mut s = String::new();
+        s.push(e);
+        if let Some(c) = sign {
+            s.push(c);
+        }
+        for c in digit1 {
+            if c != '_' {
+                s.push(c);
+            }
+        }
+        s.push(digit2);
+        for c in digit3 {
+            if c != '_' {
+                s.push(c);
+            }
+        }
+        s
+    })
 }
 
-fn parse_value(input: &str) -> IResult<&str, Value> {
-    alt((
-        parse_bool,
-        parse_option,
-        parse_number,
-        parse_char,
-        parse_string,
-        parse_list,
-        parse_tuple,
-        parse_map,
-        parse_struct_or_enum_named,
-        parse_enum_tuple,
-        parse_unit_struct_or_enum,
-    ))
-    .parse(input)
+fn float_suffix<'a>() -> Parser<'a, char, &'static str> {
+    seq(&['f', '3', '2']).map(|_| "f32") | seq(&['f', '6', '4']).map(|_| "f64")
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::Number;
+fn string<'a>() -> Parser<'a, char, String> {
+    string_std() | string_raw()
+}
 
-    #[test]
-    fn parse_unit_ok() {
-        assert_eq!(parse_unit("()"), Ok(("", Value::Unit)));
-    }
+fn string_std<'a>() -> Parser<'a, char, String> {
+    sym('"')
+        * no_double_quote_or_escape()
+            .repeat(0..)
+            .map(|s| s.into_iter().collect::<String>())
+        - sym('"')
+}
 
-    #[test]
-    fn parse_bools_ok() {
-        assert_eq!(parse_bool("true"), Ok(("", Value::Bool(true))));
-        assert_eq!(parse_bool("false"), Ok(("", Value::Bool(false))));
-    }
+fn no_double_quote_or_escape<'a>() -> Parser<'a, char, char> {
+    // Match any char except double quote and backslash, or a valid escape sequence
+    none_of("\"\\") | string_escape()
+}
 
-    #[test]
-    fn parse_number_ok() {
-        assert_eq!(
-            parse_number("  42 "),
-            Ok(("", Value::Number(Number::I64(42))))
-        );
-    }
+fn string_escape<'a>() -> Parser<'a, char, char> {
+    sym('\\') * (escape_ascii() | escape_byte().map(|c| c as char) | escape_unicode())
+}
 
-    #[test]
-    fn parse_string_ok() {
-        assert_eq!(
-            parse_string("\"hello\""),
-            Ok(("", Value::String(String::from("hello"))))
-        );
-    }
+fn string_raw<'a>() -> Parser<'a, char, String> {
+    sym('r') * string_raw_content()
+}
 
-    #[test]
-    fn parse_list_ok() {
-        let expected = Value::List(vec![
-            Value::Number(Number::I64(1)),
-            Value::Number(Number::I64(2)),
-            Value::Number(Number::I64(3)),
-        ]);
-        assert_eq!(parse_list("[1, 2,3]"), Ok(("", expected)));
-    }
+fn string_raw_content<'a>() -> Parser<'a, char, String> {
+    Parser::new(|input, start| {
+        let mut pos = start;
+        let mut hash_count = 0;
 
-    #[test]
-    fn parse_tuple_ok() {
-        let expected = Value::Tuple(vec![
-            Value::Number(Number::I64(1)),
-            Value::String(String::from("a")),
-        ]);
-        assert_eq!(parse_tuple("(1, \"a\")"), Ok(("", expected)));
-    }
+        // Count leading #'s
+        while pos < input.len() && input[pos] == '#' {
+            hash_count += 1;
+            pos += 1;
+        }
 
-    #[test]
-    fn parse_option_ok() {
-        assert_eq!(parse_option("None"), Ok(("", Value::Option(None))));
-        assert_eq!(
-            parse_option("Some(5)"),
-            Ok((
-                "",
-                Value::Option(Some(Box::new(Value::Number(Number::I64(5)))))
-            ))
-        );
-    }
+        // Next must be '"'
+        if pos >= input.len() || input[pos] != '"' {
+            return Err(pom::Error::Incomplete);
+        }
 
-    #[test]
-    fn parse_value_dispatch() {
-        assert_eq!(parse_value("true"), Ok(("", Value::Bool(true))));
-        assert_eq!(
-            parse_value("123"),
-            Ok(("", Value::Number(Number::I64(123))))
-        );
-    }
+        pos += 1; // skip opening "
+
+        let mut content = String::new();
+
+        'outer: while pos < input.len() {
+            if input[pos] == '"' {
+                // Check for matching trailing #'s
+                let mut match_hash = true;
+                for i in 0..hash_count {
+                    if pos + 1 + i >= input.len() || input[pos + 1 + i] != '#' {
+                        match_hash = false;
+                        break;
+                    }
+                }
+
+                if match_hash {
+                    pos += 1 + hash_count; // skip closing quote + hashes
+                    break 'outer;
+                } else {
+                    content.push('"');
+                    pos += 1;
+                }
+            } else {
+                content.push(input[pos]);
+                pos += 1;
+            }
+        }
+
+        Ok((content, pos))
+    })
+}
+
+fn escape_ascii<'a>() -> Parser<'a, char, char> {
+    one_of("'\"\\nrt0").map(|c| match c {
+        'n' => '\n',
+        'r' => '\r',
+        't' => '\t',
+        '0' => '\0',
+        other => other,
+    })
+}
+
+fn escape_byte<'a>() -> Parser<'a, char, u8> {
+    (sym('x') * digit_hexadecimal() + digit_hexadecimal()).map(|(high, low)| {
+        let str = [high, low].iter().collect::<String>();
+        u8::from_str_radix(&str, 16).unwrap()
+    })
+}
+
+fn escape_unicode<'a>() -> Parser<'a, char, char> {
+    sym('u')
+        * digit_hexadecimal().repeat(1..=6).map(|s| {
+            let s = s.into_iter().collect::<String>();
+            let code = u32::from_str_radix(&s, 16).unwrap();
+            std::char::from_u32(code).unwrap()
+        })
+}
+
+fn byte_string<'a>() -> Parser<'a, char, Vec<u8>> {
+    byte_string_std() | byte_string_raw()
+}
+
+fn byte_string_std<'a>() -> Parser<'a, char, Vec<u8>> {
+    sym('b')
+        * sym('"')
+        * no_double_quote_or_escape_bytes()
+            .repeat(0..)
+            .map(|v| v.into_iter().collect::<Vec<u8>>())
+        - sym('"')
+}
+
+// not really make sens since the input is a vec of char (valid utf-8)
+fn byte_string_raw<'a>() -> Parser<'a, char, Vec<u8>> {
+    seq(&['b', 'r'])
+        * Parser::new(|input, start| {
+            // delegate to existing string_raw_content and validate ASCII
+            let (s, next) = string_raw_content().parse_at(input, start)?;
+            if s.is_ascii() {
+                Ok((s.into_bytes(), next))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        })
+}
+fn no_double_quote_or_escape_bytes<'a>() -> Parser<'a, char, u8> {
+    none_of("\"\\").map(|c| c as u8)
+        | (sym('\\') * (escape_ascii().map(|c| c as u8) | escape_byte()))
+}
+
+fn char<'a>() -> Parser<'a, char, char> {
+    sym('\'') * (none_of("'\\") | (sym('\\') * (sym('\\').map(|_| '\\') | sym('\'').map(|_| '\''))))
+        - sym('\'')
+}
+
+fn bool<'a>() -> Parser<'a, char, bool> {
+    seq(&['t', 'r', 'u', 'e']).map(|_| true) | seq(&['f', 'a', 'l', 's', 'e']).map(|_| false)
+}
+
+fn option<'a>() -> Parser<'a, char, Option<Value>> {
+    seq(&['N', 'o', 'n', 'e']).map(|_| None) | option_some()
+}
+
+fn option_some<'a>() -> Parser<'a, char, Option<Value>> {
+    (seq(&['S', 'o', 'm', 'e']) * ws() * sym('(') * ws() * call(value) - ws() - sym(')')).map(Some)
+}
+
+fn value<'a>() -> Parser<'a, char, Value> {
+    integer().map(Value::Number)
+        | byte().map(|b| Value::Bytes(vec![b]))
+        | float().map(Value::Number)
+        | string().map(Value::String)
+        | byte_string().map(Value::Bytes)
+        | char().map(Value::Char)
+        | bool().map(Value::Bool)
+        | option().map(|v| Value::Option(v.map(Box::new)))
+        | list().map(Value::List)
+        | map().map(Value::Map)
+        | tuple().map(Value::Tuple)
+        | struct_()
+}
+
+fn list<'a>() -> Parser<'a, char, Vec<Value>> {
+    (sym('[') * (call(value) + (comma() * call(value)).repeat(0..) - comma().opt()).opt()
+        - sym(']'))
+    .map(|v| {
+        let mut vec: Vec<Value> = Vec::new();
+
+        if let Some((first, rest)) = v {
+            vec.push(first);
+            vec.extend(rest);
+        }
+
+        vec
+    })
+}
+
+fn map<'a>() -> Parser<'a, char, Map<Value>> {
+    (sym('{') * (map_entry() + (comma() * map_entry()).repeat(0..) - comma().opt()).opt()
+        - sym('}'))
+    .map(|v| {
+        let mut map: Map<Value> = Map::new();
+
+        if let Some((first, rest)) = v {
+            map.insert(first.0, first.1);
+
+            for v in rest {
+                map.insert(v.0, v.1);
+            }
+        }
+
+        map
+    })
+}
+
+fn map_entry<'a>() -> Parser<'a, char, (Value, Value)> {
+    call(value) - ws() - sym(':') - ws() + call(value)
+}
+
+fn tuple<'a>() -> Parser<'a, char, Vec<Value>> {
+    (sym('(') * (call(value) + (comma() * call(value)).repeat(0..) - comma().opt()).opt()
+        - sym(')'))
+    .map(|v| {
+        let mut vec: Vec<Value> = Vec::new();
+
+        if let Some((first, rest)) = v {
+            vec.push(first);
+            vec.extend(rest);
+        }
+
+        vec
+    })
+}
+
+fn struct_<'a>() -> Parser<'a, char, Value> {
+    tuple_struct() | named_struct() | unit_struct()
+}
+
+fn unit_struct<'a>() -> Parser<'a, char, Value> {
+    seq(&['(', ')']).map(|_| Value::Unit) | ident().map(Value::UnitStruct)
+}
+
+fn tuple_struct<'a>() -> Parser<'a, char, Value> {
+    (ident().opt() - ws() + tuple()).map(|(ident, tuple)| match ident {
+        Some(ident) => Value::NamedTuple(ident, tuple),
+        None => Value::Tuple(tuple),
+    })
+}
+
+fn named_struct<'a>() -> Parser<'a, char, Value> {
+    (ident().opt() - ws() - sym('(') - ws()
+        + (named_field() + (comma() * named_field()).repeat(0..) - comma().opt()).opt()
+        - sym(')'))
+    .map(|(ident, v)| {
+        let mut map = Map::new();
+
+        if let Some((first, rest)) = v {
+            map.insert(first.0, first.1);
+
+            for v in rest {
+                map.insert(v.0, v.1);
+            }
+        }
+
+        Value::Struct(ident, map)
+    })
+}
+
+fn named_field<'a>() -> Parser<'a, char, (String, Value)> {
+    ident() - ws() - sym(':') - ws() + call(value)
+}
+
+fn ident<'a>() -> Parser<'a, char, String> {
+    ident_std() | ident_raw()
+}
+
+fn ident_std<'a>() -> Parser<'a, char, String> {
+    (ident_std_first() + ident_std_rest().repeat(0..)).map(|(first, rest)| {
+        let mut s = String::new();
+        s.push(first);
+        s.extend(rest);
+        s
+    })
+}
+
+fn ident_std_first<'a>() -> Parser<'a, char, char> {
+    Parser::new(|input, start| {
+        if start < input.len() {
+            let c: char = input[start];
+            if is_xid_start(c) || c == '_' {
+                Ok((c, start + 1))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        } else {
+            Err(pom::Error::Incomplete)
+        }
+    })
+}
+
+fn ident_std_rest<'a>() -> Parser<'a, char, char> {
+    Parser::new(|input, start| {
+        if start < input.len() {
+            let c: char = input[start];
+            if is_xid_continue(c) {
+                Ok((c, start + 1))
+            } else {
+                Err(pom::Error::Incomplete)
+            }
+        } else {
+            Err(pom::Error::Incomplete)
+        }
+    })
+}
+
+fn ident_raw<'a>() -> Parser<'a, char, String> {
+    (seq(&['r', '#']) * ident_raw_rest().repeat(1..))
+        .map(|chars| chars.into_iter().collect::<String>())
+}
+
+fn ident_raw_rest<'a>() -> Parser<'a, char, char> {
+    ident_std_rest() | sym('.') | sym('+') | sym('-')
 }

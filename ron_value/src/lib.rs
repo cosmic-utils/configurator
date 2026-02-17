@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 // mod de;
-mod de_pom;
+mod de;
 mod map;
 mod number;
 mod ser;
@@ -12,8 +12,7 @@ mod test;
 pub use map::Map;
 pub use number::{F32, F64, Number};
 
-// pub use de::{DeserializeError, from_str};
-pub use de_pom::from_str;
+pub use de::from_str;
 
 pub use ser::{SerializeError, to_string};
 

@@ -55,9 +55,9 @@ pub fn to_string(value: &Value) -> Result<String, SerializeError> {
                 .map(|(k, v)| Ok(format!("{}: {}", k, to_string(v)?)))
                 .collect();
             if let Some(name) = opt_name {
-                Ok(format!("{} {{ {} }}", name, elems?.join(", ")))
+                Ok(format!("{} ( {} )", name, elems?.join(", ")))
             } else {
-                Ok(format!("{{ {} }}", elems?.join(", ")))
+                Ok(format!("( {} )", elems?.join(", ")))
             }
         }
         Value::NamedTuple(name, vec) => {
