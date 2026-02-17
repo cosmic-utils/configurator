@@ -151,19 +151,16 @@ pub fn read(path: &Path) -> anyhow::Result<Value> {
 }
 
 pub fn write(path: &Path, value: Value) -> anyhow::Result<()> {
-    let ron_value = value_to_ron_value(value);
+    let value = value_to_ron_value(value);
 
-    let map = if let Value::Struct(_, map) = value {
+    let map = if let ron_value::Value::Struct(_, map) = value {
         map
     } else {
         bail!("initial value is not a struct")
     };
 
-    for (key, value) in map.0 {
-        let value = value_to_ron_value(value);
-
+    for (key, value) in map {
         let content = ron_value::to_string(&value).unwrap();
-
         write_and_create_parent(&path.join(key), content.as_bytes())?;
     }
 
