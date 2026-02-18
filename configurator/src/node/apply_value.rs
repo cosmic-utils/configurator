@@ -9,12 +9,11 @@ use crate::{generic_value::Value, node::NumberValue, utils::json_value_eq_value}
 use super::{Node, NodeContainer};
 
 impl NodeContainer {
-    // todo: the modified logic in the function seems wrong (i probably fixed it)
-    // todo2: analyze the entire logic
+
+    // todo: apply default
+    #[instrument(skip_all)]
     pub fn apply_value(&mut self, value: &Value, modified: bool) -> anyhow::Result<()> {
-        if value == &Value::Empty {
-            return Ok(());
-        }
+        debug!("{self:#?}, {value:?}, {modified}");
 
         // debug!("merge_figment_rec {:?} {:?}", &self, &value);
         self.modified = modified;
@@ -106,6 +105,7 @@ impl NodeContainer {
         Ok(())
     }
 
+    // todo: remove ALL values. Pass in each node container.
     pub fn remove_value_rec(&mut self) {
         match &mut self.node {
             Node::Null => {}
