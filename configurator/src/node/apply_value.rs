@@ -111,9 +111,17 @@ impl NodeContainer {
             Node::Bool(node_bool) => value.as_bool().is_some(),
             Node::String(node_string) => value.as_str().is_some(),
             Node::Number(node_number) => value.as_number().is_some(),
-            Node::Object(node_object) => {
-                todo!()
-            }
+            Node::Object(node_object) => value
+                .as_struct()
+                .map(|(_, map)| {
+                    node_object.nodes.iter().all(|(key, node)| {
+                        map.0
+                            .get(key)
+                            .map(|value| node.is_matching(value))
+                            .unwrap_or(false)
+                    })
+                })
+                .unwrap_or(false),
             Node::Enum(node_enum) => todo!(),
             Node::Array(node_array) => todo!(),
             Node::Value(node_value) => {
