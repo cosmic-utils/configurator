@@ -344,7 +344,10 @@ fn enum_value_to_value(json_value: json::Value) -> Value {
     }
 }
 
+#[instrument(skip_all)]
 fn default_value_to_value(node: &NodeContainer, value: &json::Value) -> Option<Value> {
+    // debug!("{value}.\n{:#?}", node);
+
     match (&node.node, value) {
         (Node::Null, json::Value::Null) => Some(Value::Option(None)),
         (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
@@ -372,6 +375,6 @@ fn default_value_to_value(node: &NodeContainer, value: &json::Value) -> Option<V
             .nodes
             .iter()
             .find_map(|n| default_value_to_value(n, value)),
-        _ => panic!("error: no match for {value} and {node:#?}"),
+        _ => None,
     }
 }

@@ -15,9 +15,11 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
     let schema = schema_for!(S);
 
-    // dbg!(&schema);
+    dbg!(&schema);
 
     let mut tree = NodeContainer::from_json_schema(&schema);
+
+    dbg!(&tree);
 
     let config1 = S::default();
 
