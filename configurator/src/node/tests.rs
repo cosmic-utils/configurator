@@ -84,6 +84,7 @@ fn test_option() {
     test_schema::<TestOption>(true);
 }
 
+// marche pas
 #[test]
 fn test_tuple() {
     test_schema::<TestTuple>(true);

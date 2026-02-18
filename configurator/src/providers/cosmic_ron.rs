@@ -107,7 +107,7 @@ pub fn ron_value_to_value(value: ron_value::Value) -> Value {
             Value::Map(map2)
         }
         ron_value::Value::Tuple(values) => {
-            Value::List(values.into_iter().map(ron_value_to_value).collect())
+            Value::Tuple(values.into_iter().map(ron_value_to_value).collect())
         }
         ron_value::Value::UnitStruct(name) => Value::UnitStruct(name),
         ron_value::Value::Struct(name, map) => {
