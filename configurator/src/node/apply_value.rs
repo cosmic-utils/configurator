@@ -70,6 +70,12 @@ impl NodeContainer {
                     }
                 }
 
+                if let Some((name, _)) = value.as_named_tuple() {
+                    if let Some(node) = node_object.nodes.get_mut(name) {
+                        node.apply_value(value, modified)?;
+                    }
+                }
+
                 if value.is_empty() {
                     for (key, n) in &mut node_object.nodes {
                         if let Some(default) = &n.default {

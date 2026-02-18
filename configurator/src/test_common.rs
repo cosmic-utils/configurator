@@ -47,8 +47,8 @@ impl Default for Rec {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq)]
 pub enum EnumComplex {
     A,
-    C(Complex, i32),
     B(i32),
+    C(Complex, i32),
     D { a: i32, b: Complex },
 }
 
@@ -133,7 +133,7 @@ pub struct TestEnumSimple {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestEnumComplex {
-    x: EnumComplex,
+    pub x: EnumComplex,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]

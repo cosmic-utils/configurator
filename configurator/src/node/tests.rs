@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 /// 1. Generate a node from schema
 /// 2. Apply the default impl to it
 /// 3. assert that the serialization equal the default val if is_default_complete is true
-fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
-    setup_log_for_test();
+fn test_schema<S: JsonSchema + Serialize>(config1: &S, is_default_complete: bool) {
+    // setup_log_for_test();
 
     let schema = schema_for!(S);
 
@@ -20,8 +20,6 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     let mut tree = NodeContainer::from_json_schema(&schema);
 
     dbg!(&tree);
-
-    let config1 = S::default();
 
     let ron = ron::to_string(&config1).unwrap();
 
@@ -60,69 +58,102 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
 #[test]
 fn test_bool() {
-    test_schema::<TestBool>(true);
+    test_schema(&TestBool::default(), true);
 }
 
 #[test]
 fn test_string() {
-    test_schema::<TestString>(true);
+    test_schema(&TestString::default(), true);
 }
 
 #[test]
 fn test_number() {
-    test_schema::<TestNumber>(true);
+    test_schema(&TestNumber::default(), true);
 }
 
 #[test]
 fn test_float() {
-    test_schema::<TestFloat>(true);
+    test_schema(&TestFloat::default(), true);
 }
 
 #[test]
 fn test_enum_simple() {
-    test_schema::<TestEnumSimple>(true);
+    test_schema(&TestEnumSimple::default(), true);
 }
 
 #[test]
 fn test_option() {
-    test_schema::<TestOption>(true);
+    test_schema(&TestOption::default(), true);
 }
 
 #[test]
 fn test_tuple() {
-    test_schema::<TestTuple>(true);
+    test_schema(&TestTuple::default(), true);
 }
 
 #[test]
 fn test_vec() {
-    test_schema::<TestVec>(true);
+    test_schema(&TestVec::default(), true);
 }
 
 #[test]
 fn test_hash_map() {
-    test_schema::<TestHashMap>(true);
+    test_schema(&TestHashMap::default(), true);
 }
 
 #[test]
 fn test_option_complex() {
-    test_schema::<TestOptionComplex>(true);
+    test_schema(&TestOptionComplex::default(), true);
 }
 
 #[test]
 fn test_complex() {
-    test_schema::<TestComplex>(true);
+    test_schema(&TestComplex::default(), true);
 }
 
 // marche pas
 #[test]
-fn test_enum_complex() {
-    test_schema::<TestEnumComplex>(true);
+fn test_enum_complex_tuple0() {
+    test_schema(&TestEnumComplex { x: EnumComplex::A }, true);
+}
+
+#[test]
+fn test_enum_complex_tuple1() {
+    test_schema(
+        &TestEnumComplex {
+            x: EnumComplex::B(1),
+        },
+        true,
+    );
+}
+
+#[test]
+fn test_enum_complex_tuple2() {
+    test_schema(
+        &TestEnumComplex {
+            x: EnumComplex::C(Complex::default(), 1),
+        },
+        true,
+    );
+}
+
+#[test]
+fn test_enum_complex_tuple_struct_like() {
+    test_schema(
+        &TestEnumComplex {
+            x: EnumComplex::D {
+                a: 1,
+                b: Complex::default(),
+            },
+        },
+        true,
+    );
 }
 
 // marche pas
 #[test]
 fn test_very_complex() {
-    test_schema::<TestVeryComplex>(true);
+    test_schema(&TestVeryComplex::default(), true);
 }
 
 // marche pas
