@@ -1,8 +1,10 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, str::FromStr};
 
 use configurator_utils::ConfigFormat;
 use schemars::JsonSchema;
 use serde::Serialize;
+
+use crate::node::NodeContainer;
 
 mod testing1;
 mod testing2;
@@ -21,6 +23,15 @@ pub fn print_schema<C: JsonSchema>(name: &str) {
     let e = get_schema::<C>(name);
 
     print!("{}", e);
+}
+
+pub fn print_node_container<C: JsonSchema>(name: &str) {
+    let content = get_schema::<C>(name);
+
+    let json_value = json::Value::from_str(&content).unwrap();
+    let tree = NodeContainer::from_json_schema(&json::from_value(json_value).unwrap());
+
+    println!("{:#?}", tree);
 }
 
 pub fn gen_schema<C: JsonSchema>(name: &str) {

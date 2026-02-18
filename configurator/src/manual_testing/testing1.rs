@@ -53,3 +53,9 @@ fn print_ron() {
 fn print_schema() {
     super::print_schema::<Config>(NAME);
 }
+
+#[test]
+#[ignore]
+fn print_node_container() {
+    super::print_node_container::<Config>(NAME);
+}
