@@ -84,7 +84,6 @@ impl NodeContainer {
                     panic!(
                         "can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}"
                     );
-                    warn!("can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}");
                 }
             }
             Node::Array(node_array) => {

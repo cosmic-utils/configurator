@@ -359,12 +359,59 @@ impl NodeContainer {
         }
     }
 
+    fn default_value_to_value(&self, json_value: &json::Value) -> Option<Value> {
+        match &self.node {
+            Node::Null => todo!(),
+            Node::Bool(node_bool) => todo!(),
+            Node::String(node_string) => todo!(),
+            Node::Number(node_number) => todo!(),
+            Node::Object(node_object) => todo!(),
+            Node::Enum(node_enum) => node_enum
+                .nodes
+                .iter()
+                .find_map(|e| e.is_matching3(json_value)),
+            Node::Array(node_array) => todo!(),
+            Node::Value(node_value) => todo!(),
+            Node::Any => todo!(),
+        }
+    }
+
+    fn is_matching3(&self, value: &json::Value) -> Option<Value> {
+        match (&self.node, value) {
+            (Node::Null, json::Value::Null) => Some(Value::Option(None)),
+            (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
+            (Node::String(node_string), json::Value::String(v)) => {
+                Some(Value::String(v.to_owned()))
+            }
+            (Node::Number(node_number), json::Value::Number(number)) => {
+                let num = if let Some(n) = number.as_u128() {
+                    Number::U128(n)
+                } else if let Some(n) = number.as_i128() {
+                    Number::I128(n)
+                } else if let Some(n) = number.as_f64() {
+                    Number::F64(F64(n))
+                } else {
+                    panic!("not a valid number")
+                };
+
+                Some(Value::Number(num))
+            }
+            (Node::Value(node_value), value) => match (&node_value.value, value) {
+                (Value::UnitStruct(s1), json::Value::String(s2)) if s1 == s2 => {
+                    Some(Value::UnitStruct(s1.to_owned()))
+                }
+                _ => panic!("error: no match for node_value {value} and {node_value:#?}"),
+            },
+            _ => panic!("error: no match for {value} and {self:#?}"),
+        }
+    }
+
     fn metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
         Self {
             default: metadata
                 .as_ref()
                 .and_then(|m| m.default.as_ref())
-                .map(json_value_to_value),
+                .and_then(|d| self.default_value_to_value(d)),
             title: metadata.as_ref().and_then(|m| m.title.clone()),
             desc: metadata.as_ref().and_then(|m| m.description.clone()),
             ..self

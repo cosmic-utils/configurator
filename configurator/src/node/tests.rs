@@ -25,8 +25,8 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     let ron_value = ron_value::from_str(&ron).unwrap();
     let value = crate::providers::cosmic_ron::ron_value_to_value(ron_value);
 
-    // tree.apply_value(&value, true).unwrap();
-    tree.apply_value(&Value::Empty, true).unwrap();
+    tree.apply_value(&value, true).unwrap();
+    // tree.apply_value(&Value::Empty, true).unwrap();
 
     let value_from_node = tree.to_value();
 
