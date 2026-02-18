@@ -344,49 +344,34 @@ fn enum_value_to_value(json_value: json::Value) -> Value {
     }
 }
 
-fn default_value_to_value(node: &NodeContainer, json_value: &json::Value) -> Option<Value> {
-    fn json_value_to_value_if_match(node: &NodeContainer, value: &json::Value) -> Option<Value> {
-        match (&node.node, value) {
-            (Node::Null, json::Value::Null) => Some(Value::Option(None)),
-            (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
-            (Node::String(node_string), json::Value::String(v)) => {
-                Some(Value::String(v.to_owned()))
-            }
-            (Node::Number(node_number), json::Value::Number(number)) => {
-                let num = if let Some(n) = number.as_u128() {
-                    Number::U128(n)
-                } else if let Some(n) = number.as_i128() {
-                    Number::I128(n)
-                } else if let Some(n) = number.as_f64() {
-                    Number::F64(F64(n))
-                } else {
-                    panic!("not a valid number")
-                };
+fn default_value_to_value(node: &NodeContainer, value: &json::Value) -> Option<Value> {
+    match (&node.node, value) {
+        (Node::Null, json::Value::Null) => Some(Value::Option(None)),
+        (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
+        (Node::String(node_string), json::Value::String(v)) => Some(Value::String(v.to_owned())),
+        (Node::Number(node_number), json::Value::Number(number)) => {
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
+            } else if let Some(n) = number.as_f64() {
+                Number::F64(F64(n))
+            } else {
+                panic!("not a valid number")
+            };
 
-                Some(Value::Number(num))
-            }
-            (Node::Value(node_value), value) => match (&node_value.value, value) {
-                (Value::UnitStruct(s1), json::Value::String(s2)) if s1 == s2 => {
-                    Some(Value::UnitStruct(s1.to_owned()))
-                }
-                _ => panic!("error: no match for node_value {value} and {node_value:#?}"),
-            },
-            _ => panic!("error: no match for {value} and {node:#?}"),
+            Some(Value::Number(num))
         }
-    }
-
-    match &node.node {
-        Node::Null => todo!(),
-        Node::Bool(node_bool) => todo!(),
-        Node::String(node_string) => todo!(),
-        Node::Number(node_number) => todo!(),
-        Node::Object(node_object) => todo!(),
-        Node::Enum(node_enum) => node_enum
+        (Node::Value(node_value), value) => match (&node_value.value, value) {
+            (Value::UnitStruct(s1), json::Value::String(s2)) if s1 == s2 => {
+                Some(Value::UnitStruct(s1.to_owned()))
+            }
+            _ => panic!("error: no match for node_value {value} and {node_value:#?}"),
+        },
+        (Node::Enum(node_enum), value) => node_enum
             .nodes
             .iter()
-            .find_map(|n| json_value_to_value_if_match(n, json_value)),
-        Node::Array(node_array) => todo!(),
-        Node::Value(node_value) => todo!(),
-        Node::Any => todo!(),
+            .find_map(|n| default_value_to_value(n, value)),
+        _ => panic!("error: no match for {value} and {node:#?}"),
     }
 }
