@@ -185,8 +185,7 @@ fn node_list<'a>(
                         row()
                             .push_maybe(node_enum.value.map(|pos| {
                                 text(
-                                    node_enum.nodes[pos]
-                                        .name()
+                                    node_to_str(&node_enum.nodes[pos])
                                         .unwrap_or(Cow::Owned(pos.to_string())),
                                 )
                             }))
@@ -197,7 +196,8 @@ fn node_list<'a>(
                                     .enumerate()
                                     .map(|(pos, node)| Key {
                                         pos,
-                                        value: node.name().unwrap_or(Cow::Owned(pos.to_string())),
+                                        value: node_to_str(node)
+                                            .unwrap_or(Cow::Owned(pos.to_string())),
                                     })
                                     .collect::<Vec<_>>(),
                                 node_enum.value.map(|pos| Key {
@@ -348,7 +348,7 @@ fn view_enum<'a>(
 
                             row()
                                 .push(text(
-                                    inner_node.name().unwrap_or(Cow::Owned(pos.to_string())),
+                                    node_to_str(inner_node).unwrap_or(Cow::Owned(pos.to_string())),
                                 ))
                                 .push(horizontal_space())
                                 .push_maybe(is_active.map(|_| {
@@ -379,7 +379,10 @@ fn view_enum<'a>(
                         row()
                             .push(text("Default value"))
                             .push(horizontal_space())
-                            .push(text(value_to_str(default))),
+                            .push(text(
+                                value_to_str(default)
+                                    .unwrap_or(Cow::Borrowed("Value not displayable")),
+                            )),
                     )
                     .padding(10),
                 )
@@ -599,23 +602,37 @@ fn view_value<'a>(
         .into()
 }
 
-fn value_to_str(value: &Value) -> Cow<'_, str> {
+fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
+    match &node.node {
+        Node::Null => Some(Cow::Borrowed("Null")),
+        Node::Bool(node_bool) => None,
+        Node::String(node_string) => None,
+        Node::Number(node_number) => None,
+        Node::Object(node_object) => None,
+        Node::Enum(node_enum) => None,
+        Node::Array(node_array) => None,
+        Node::Value(node_value) => value_to_str(&node_value.value),
+        Node::Any => Some(Cow::Borrowed("Any")),
+    }
+}
+
+fn value_to_str(value: &Value) -> Option<Cow<'_, str>> {
     match value {
-        Value::Empty => Cow::Borrowed("Empty"),
-        Value::Unit => Cow::Borrowed("Unit"),
+        Value::Empty => Some(Cow::Borrowed("Empty")),
+        Value::Unit => Some(Cow::Borrowed("Unit")),
         Value::Bool(v) => match v {
-            true => Cow::Borrowed("true"),
-            false => Cow::Borrowed("false"),
+            true => Some(Cow::Borrowed("true")),
+            false => Some(Cow::Borrowed("false")),
         },
         Value::Char(_) => todo!(),
-        Value::Number(number) => Cow::Owned(number.to_string()),
-        Value::String(s) => Cow::Borrowed(s),
+        Value::Number(number) => Some(Cow::Owned(number.to_string())),
+        Value::String(s) => Some(Cow::Borrowed(s)),
         Value::Bytes(items) => todo!(),
         Value::Option(value) => todo!(),
         Value::List(values) => todo!(),
         Value::Map(map) => todo!(),
         Value::Tuple(values) => todo!(),
-        Value::UnitStruct(s) => Cow::Borrowed(s),
+        Value::UnitStruct(s) => Some(Cow::Borrowed(s)),
         Value::Struct(_, map) => todo!(),
         Value::NamedTuple(_, values) => todo!(),
     }

@@ -215,20 +215,6 @@ impl NodeContainer {
             Node::Any => true,
         }
     }
-
-    pub fn name(&self) -> Option<Cow<'_, str>> {
-        match &self.node {
-            Node::Null => Some(Cow::Borrowed("Null")),
-            Node::Bool(node_bool) => None,
-            Node::String(node_string) => None,
-            Node::Number(node_number) => None,
-            Node::Object(node_object) => None,
-            Node::Enum(node_enum) => None,
-            Node::Array(node_array) => None,
-            Node::Value(node_value) => node_value.value.as_str().map(Cow::Borrowed),
-            Node::Any => Some(Cow::Borrowed("Any")),
-        }
-    }
 }
 
 impl NodeEnum {
