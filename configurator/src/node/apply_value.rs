@@ -141,7 +141,7 @@ impl NodeContainer {
                     .get(name)
                     .map(|node| node.is_matching(value))
                     .unwrap_or(false),
-                _ => panic!("{self:#?}\n{value:#?}"),
+                _ => false,
             },
             Node::Enum(node_enum) => todo!(),
             Node::Array(node_array) => match &node_array.template {
