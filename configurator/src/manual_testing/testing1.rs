@@ -18,7 +18,7 @@ enum ConfigEnum {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
-    x: ConfigEnum,
+    x: HashMap<String, Complex>,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]

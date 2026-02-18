@@ -93,16 +93,19 @@ fn test_option_complex() {
     test_schema::<TestOptionComplex>(true);
 }
 
+// marche pas
 #[test]
 fn test_enum_complex() {
     test_schema::<TestEnumComplex>(true);
 }
 
+// marche pas
 #[test]
 fn test_very_complex() {
     test_schema::<TestVeryComplex>(true);
 }
 
+// marche pas
 #[test]
 fn test_rec() {
     test_schema::<Rec>(true);

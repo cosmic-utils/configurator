@@ -24,15 +24,25 @@ impl NodeContainer {
                 .as_ref()
                 .map(|value| Value::Number(value.to_number())),
             Node::Object(node_object) => {
-                let mut map = Map::new();
+                if node_object.template.is_some() {
+                    let mut map = Map::new();
 
-                for (key, node) in &node_object.nodes {
-                    if let Some(value) = node.to_value() {
-                        map.0.insert(key.clone(), value);
+                    for (key, node) in &node_object.nodes {
+                        if let Some(value) = node.to_value() {
+                            map.0.insert(Value::String(key.to_owned()), value);
+                        }
                     }
-                }
+                    Some(Value::Map(map))
+                } else {
+                    let mut map = Map::new();
 
-                Some(Value::Struct(None, map))
+                    for (key, node) in &node_object.nodes {
+                        if let Some(value) = node.to_value() {
+                            map.0.insert(key.to_owned(), value);
+                        }
+                    }
+                    Some(Value::Struct(None, map))
+                }
             }
             Node::Enum(node_enum) => node_enum
                 .value

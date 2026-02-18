@@ -9,7 +9,7 @@ use schemars::schema::{
     InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation,
 };
 
-use crate::generic_value::{F64, Number};
+use crate::generic_value::{F64, Map, Number};
 
 use super::*;
 
@@ -375,6 +375,22 @@ fn default_value_to_value(node: &NodeContainer, value: &json::Value) -> Option<V
             .nodes
             .iter()
             .find_map(|n| default_value_to_value(n, value)),
+
+        (Node::Object(node_object), json::Value::Object(json_object)) => {
+            if let Some(template) = &node_object.template {
+                let mut map = Map::with_capacity(json_object.len());
+
+                for (key, value) in json_object {
+                    let value = default_value_to_value(template, value).unwrap();
+                    map.0.insert(Value::String(key.to_owned()), value);
+                }
+
+                Some(Value::Map(map))
+            } else {
+                todo!()
+            }
+        }
+
         _ => None,
     }
 }
