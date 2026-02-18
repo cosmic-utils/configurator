@@ -11,7 +11,7 @@ use super::{Node, NodeContainer};
 impl NodeContainer {
     #[instrument(skip_all)]
     pub fn apply_value(&mut self, value: &Value, modified: bool) -> anyhow::Result<()> {
-        debug!("{self:#?}, {value:?}, {modified}");
+        debug!("\n{value:#?}\n{self:#?}\n{modified}");
 
         // debug!("merge_figment_rec {:?} {:?}", &self, &value);
         self.modified = modified;
@@ -81,7 +81,9 @@ impl NodeContainer {
                     node_enum.value = Some(pos);
                     node_enum.nodes[pos].apply_value(value, modified)?;
                 } else {
-                    panic!("can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}");
+                    panic!(
+                        "can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}"
+                    );
                     warn!("can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}");
                 }
             }
@@ -116,7 +118,8 @@ impl NodeContainer {
             Node::Enum(node_enum) => todo!(),
             Node::Array(node_array) => todo!(),
             Node::Value(node_value) => {
-                json_value_eq_value(&node_value.value, value)
+                dbg!("is matching", &node_value.value, &value);
+                &node_value.value == value
             }
             Node::Any => todo!(),
         }
@@ -178,7 +181,7 @@ impl NodeContainer {
                 // todo: more complicated logic
                 true
             }
-            (value, Node::Value(node_value)) => json_value_eq_value(&node_value.value, value),
+            (value, Node::Value(node_value)) => &node_value.value == value,
             _ => false,
         }
     }

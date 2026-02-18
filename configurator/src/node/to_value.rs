@@ -41,7 +41,7 @@ impl NodeContainer {
                 .values
                 .as_ref()
                 .map(|values| Value::List(values.iter().map(|n| n.to_value().unwrap()).collect())),
-            Node::Value(node_value) => Some(json_value_to_value(&node_value.value)),
+            Node::Value(node_value) => Some(node_value.value.clone()),
             Node::Any => todo!(),
         }
     }

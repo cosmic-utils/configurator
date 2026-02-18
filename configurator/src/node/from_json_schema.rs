@@ -101,13 +101,15 @@ pub(crate) fn schema_object_to_node(
 
     if let Some(enum_values) = &schema_object.enum_values {
         let node = if enum_values.len() == 1 {
-            NodeContainer::from_node(Node::Value(NodeValue::new(enum_values[0].clone())))
+            NodeContainer::from_node(Node::Value(NodeValue::new(enum_value_to_value(
+                enum_values[0].clone(),
+            ))))
         } else {
             let mut nodes = Vec::new();
 
             for value in enum_values {
                 nodes.push(NodeContainer::from_node(Node::Value(NodeValue::new(
-                    value.clone(),
+                    enum_value_to_value(value.clone()),
                 ))));
             }
 
@@ -225,6 +227,40 @@ impl ToSchemaObject for Schema {
     }
 }
 
+fn enum_value_to_value(json_value: json::Value) -> Value {
+    match json_value {
+        json::Value::Null => Value::Option(None),
+        json::Value::Bool(value) => Value::Bool(value),
+        json::Value::Number(number) => {
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
+            } else if let Some(n) = number.as_f64() {
+                Number::F64(F64(n))
+            } else {
+                panic!("not a valid number")
+            };
+
+            Value::Number(num)
+        }
+        json::Value::String(str) => Value::UnitStruct(str),
+        json::Value::Array(vec) => {
+            let array = vec.into_iter().map(enum_value_to_value).collect();
+
+            Value::List(array)
+        }
+        json::Value::Object(fields) => {
+            let map = fields
+                .into_iter()
+                .map(|(name, value)| (name, enum_value_to_value(value)))
+                .collect();
+
+            Value::Struct(None, map)
+        }
+    }
+}
+
 pub(crate) fn json_value_to_value(json_value: &json::Value) -> Value {
     match json_value {
         json::Value::Null => Value::Option(None),
@@ -320,6 +356,18 @@ impl NodeContainer {
 
                 None
             }
+        }
+    }
+
+    fn metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
+        Self {
+            default: metadata
+                .as_ref()
+                .and_then(|m| m.default.as_ref())
+                .map(json_value_to_value),
+            title: metadata.as_ref().and_then(|m| m.title.clone()),
+            desc: metadata.as_ref().and_then(|m| m.description.clone()),
+            ..self
         }
     }
 }

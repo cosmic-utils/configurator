@@ -29,6 +29,23 @@ mod manual_testing;
 #[cfg(test)]
 mod test_common;
 
+
+fn setup_log_for_test() {
+    use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
+
+    let fmt_layer = fmt::layer().with_target(false);
+    let filter_layer = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new(format!(
+        "warn,{}=debug",
+        env!("CARGO_CRATE_NAME")
+    )));
+
+    tracing_subscriber::registry()
+            .with(filter_layer)
+            .with(fmt_layer)
+            .init();
+}
+
+
 fn setup_logs() {
     use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 

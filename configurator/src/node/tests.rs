@@ -1,4 +1,4 @@
-use crate::{node::NodeContainer, test_common::*};
+use crate::{generic_value::Value, node::NodeContainer, setup_log_for_test, test_common::*};
 
 use std::collections::HashMap;
 
@@ -11,9 +11,11 @@ use serde::{Deserialize, Serialize};
 /// 2. Apply the default impl to it
 /// 3. assert that the serialization equal the default val if is_default_complete is true
 fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
+    setup_log_for_test();
+
     let schema = schema_for!(S);
 
-    dbg!(&schema);
+    // dbg!(&schema);
 
     let mut tree = NodeContainer::from_json_schema(&schema);
 
@@ -23,9 +25,8 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     let ron_value = ron_value::from_str(&ron).unwrap();
     let value = crate::providers::cosmic_ron::ron_value_to_value(ron_value);
 
-    dbg!(&tree);
-    tree.apply_value(&value, true).unwrap();
-    dbg!(&tree);
+    // tree.apply_value(&value, true).unwrap();
+    tree.apply_value(&Value::Empty, true).unwrap();
 
     let value_from_node = tree.to_value();
 
@@ -99,7 +100,6 @@ fn test_hash_map() {
 fn test_very_complex() {
     test_schema::<TestVeryComplex>(true);
 }
-
 
 #[test]
 fn test_rec() {

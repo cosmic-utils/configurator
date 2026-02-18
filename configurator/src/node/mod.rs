@@ -20,10 +20,10 @@ mod to_value;
 
 #[derive(Debug, Clone)]
 pub struct NodeContainer {
-    pub node: Node,
+    pub title: Option<String>,
     // todo: use Arc here ?
     pub default: Option<Value>,
-    pub title: Option<String>,
+    pub node: Node,
     pub desc: Option<String>,
     /// Node that are modified should be written to disk
     pub modified: bool,
@@ -93,7 +93,7 @@ pub struct NodeNumber {
 
 #[derive(Debug, Clone)]
 pub struct NodeValue {
-    pub value: json::Value,
+    pub value: Value,
 }
 
 #[derive(Debug, Clone)]
@@ -135,7 +135,7 @@ impl NodeString {
 }
 
 impl NodeValue {
-    pub fn new(value: json::Value) -> Self {
+    pub fn new(value: Value) -> Self {
         Self { value }
     }
 }
@@ -216,18 +216,6 @@ impl NodeContainer {
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
             Node::Value(node_value) => true,
             Node::Any => true,
-        }
-    }
-
-    pub fn metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
-        Self {
-            default: metadata
-                .as_ref()
-                .and_then(|m| m.default.as_ref())
-                .map(json_value_to_value),
-            title: metadata.as_ref().and_then(|m| m.title.clone()),
-            desc: metadata.as_ref().and_then(|m| m.description.clone()),
-            ..self
         }
     }
 
