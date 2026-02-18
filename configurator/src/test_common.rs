@@ -16,7 +16,7 @@ pub struct Complex {
 impl Default for Complex {
     fn default() -> Self {
         Self {
-            x: "default of complex mgl".into(),
+            x: "hello complex".into(),
             y: 10,
         }
     }

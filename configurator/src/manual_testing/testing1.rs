@@ -6,12 +6,20 @@ use std::{collections::HashMap, fmt::Debug};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
-use crate::{node::NodeContainer, test_common::EnumComplex};
+use crate::{
+    node::NodeContainer,
+    test_common::{Complex, EnumComplex},
+};
+
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
+#[serde(default)]
+struct NewStruct(u32);
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
-    x: EnumComplex,
+    x: NewStruct,
+    y: Complex,
 }
 
 const NAME: &str = "testing1";
@@ -32,6 +40,12 @@ fn print_json() {
 #[ignore]
 fn print_ron() {
     super::print_ron::<Config>();
+}
+
+#[test]
+#[ignore]
+fn from_ron() {
+    super::from_ron::<Config>("(x:0,y:(x:\"hello\",y:10))");
 }
 
 #[test]

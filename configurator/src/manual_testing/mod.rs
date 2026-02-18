@@ -1,8 +1,8 @@
-use std::{fs, path::Path, str::FromStr};
+use std::{fmt::Debug, fs, path::Path, str::FromStr};
 
 use configurator_utils::ConfigFormat;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
 
 use crate::node::NodeContainer;
 
@@ -58,4 +58,10 @@ pub fn print_ron<C: Default + Serialize>() {
     let e = ron::to_string(&C::default()).unwrap();
 
     println!("{}", e);
+}
+
+pub fn from_ron<C: Debug + DeserializeOwned>(ron: &str) {
+    let e: C = ron::from_str(ron).unwrap();
+
+    println!("{:?}", e);
 }
