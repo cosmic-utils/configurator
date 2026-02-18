@@ -69,9 +69,13 @@ impl NodeContainer {
                     }
                 }
 
-                if let Some((name, _)) = value.as_named_tuple() {
+                if let Some((name, vec)) = value.as_named_tuple() {
                     if let Some(node) = node_object.nodes.get_mut(name) {
-                        node.apply_value(value, modified)?;
+                        if vec.len() == 1 {
+                            node.apply_value(&vec[0], modified)?;
+                        } else {
+                            node.apply_value(value, modified)?;
+                        }
                     }
                 }
 
@@ -135,10 +139,16 @@ impl NodeContainer {
                         .map(|value| node.is_matching(value))
                         .unwrap_or(false)
                 }),
-                Value::NamedTuple(name, _) => node_object
+                Value::NamedTuple(name, vec) => node_object
                     .nodes
                     .get(name)
-                    .map(|node| node.is_matching(value))
+                    .map(|node| {
+                        if vec.len() == 1 {
+                            node.is_matching(&vec[0])
+                        } else {
+                            node.is_matching(value)
+                        }
+                    })
                     .unwrap_or(false),
                 _ => false,
             },
