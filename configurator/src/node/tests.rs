@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// 2. Apply the default impl to it
 /// 3. assert that the serialization equal the default val if is_default_complete is true
 fn test_schema<S: JsonSchema + Serialize>(config1: &S, is_default_complete: bool) {
-    // setup_log_for_test();
+    setup_log_for_test();
 
     let schema = schema_for!(S);
 

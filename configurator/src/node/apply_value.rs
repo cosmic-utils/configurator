@@ -17,7 +17,6 @@ impl NodeContainer {
     pub fn apply_value(&mut self, value: &Value, modified: bool) -> anyhow::Result<()> {
         debug!("\n{value:#?}\n{self:#?}\n{modified}");
 
-        // debug!("merge_figment_rec {:?} {:?}", &self, &value);
         self.modified = modified;
 
         match &mut self.node {
@@ -122,7 +121,7 @@ impl NodeContainer {
 
     #[instrument(skip_all)]
     fn is_matching(&self, value: &Value) -> bool {
-        // debug!("\n{value:#?}\n{self:#?}\n");
+        debug!("\n{value:#?}\n{self:#?}\n");
 
         match &self.node {
             Node::Null => value.is_null(),
