@@ -69,18 +69,8 @@ fn test_enum_simple() {
 }
 
 #[test]
-fn test_enum_complex() {
-    test_schema::<TestEnumComplex>(true);
-}
-
-#[test]
 fn test_option() {
     test_schema::<TestOption>(true);
-}
-
-#[test]
-fn test_option_complex() {
-    test_schema::<TestOptionComplex>(true);
 }
 
 #[test]
@@ -96,6 +86,16 @@ fn test_vec() {
 #[test]
 fn test_hash_map() {
     test_schema::<TestHashMap>(true);
+}
+
+#[test]
+fn test_option_complex() {
+    test_schema::<TestOptionComplex>(true);
+}
+
+#[test]
+fn test_enum_complex() {
+    test_schema::<TestEnumComplex>(true);
 }
 
 #[test]
