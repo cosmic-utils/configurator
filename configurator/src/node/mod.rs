@@ -59,6 +59,7 @@ pub enum Node {
     /// represent a final value
     /// currently only string is supported
     Value(NodeValue),
+    // todo: support any
     Any,
 }
 

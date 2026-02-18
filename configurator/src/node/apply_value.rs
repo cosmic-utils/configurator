@@ -9,8 +9,6 @@ use crate::{generic_value::Value, node::NumberValue, utils::json_value_eq_value}
 use super::{Node, NodeContainer};
 
 impl NodeContainer {
-
-    // todo: apply default
     #[instrument(skip_all)]
     pub fn apply_value(&mut self, value: &Value, modified: bool) -> anyhow::Result<()> {
         debug!("{self:#?}, {value:?}, {modified}");
@@ -18,12 +16,69 @@ impl NodeContainer {
         // debug!("merge_figment_rec {:?} {:?}", &self, &value);
         self.modified = modified;
 
-        match (value, &mut self.node) {
-            (Value::String(value), Node::String(node_string)) => {
-                node_string.value = Some(value.clone());
+        match &mut self.node {
+            Node::Null => {
+                // nothing to do ?
             }
-            (Value::Struct(name, values), Node::Enum(node_enum)) => {
-                let pos = values.0
+            Node::Bool(node_bool) => {
+                if let Some(value) = value.as_bool() {
+                    node_bool.value = Some(*value)
+                }
+            }
+            Node::String(node_string) => {
+                if let Some(value) = value.as_str() {
+                    node_string.value = Some(value.to_owned());
+                }
+            }
+            Node::Number(node_number) => {
+                if let Some(value) = value.as_number() {
+                    let value = NumberValue::from_number(value);
+
+                    node_number.value_string = value.to_string();
+                    node_number.value = Some(value);
+                }
+            }
+            Node::Value(node_value) => {
+                // pass
+            }
+            Node::Object(node_object) => {
+                // hashmap are overided by existence of a value
+                // should this be in the remove_value_rec function ?
+                node_object.nodes.retain(|_, node| !node.removable);
+
+                if let Some((_, map)) = value.as_struct() {
+                    // for known object field ?
+                    for (key, n) in &mut node_object.nodes {
+                        if let Some(value) = map.0.get(key) {
+                            n.apply_value(value, modified)?;
+                        } else if let Some(default) = &n.default {
+                            n.apply_value(&default.clone(), false)?;
+                        }
+                    }
+
+                    // for hashmap ?
+                    if let Some(template) = node_object.template() {
+                        for (key, value) in &map.0 {
+                            let mut node_type = template.clone();
+                            node_type.apply_value(value, modified)?;
+                            node_object.nodes.insert(key.to_owned(), node_type);
+                        }
+                    }
+                }
+
+                if value.is_empty() {
+                    for (key, n) in &mut node_object.nodes {
+                        if let Some(default) = &n.default {
+                            n.apply_value(&default.clone(), false)?;
+                        }
+                    }
+                }
+            }
+            // todo: refractor this
+            // we can probably include both case in is_matching
+            Node::Enum(node_enum) => {
+                if let Some((_, map)) = value.as_struct() {
+                    let pos = map.0
                     .iter()
                     .find_map(|(key, value)| {
                         let key = Value::String(key.clone());
@@ -31,15 +86,14 @@ impl NodeContainer {
                     })
                     .ok_or_else(|| {
                         anyhow!(
-                            "can't find a compatible enum variant for dict \n{values:#?}.\n{node_enum:#?}"
+                            "can't find a compatible enum variant for dict \n{map:#?}.\n{node_enum:#?}"
                         )
                     })?;
 
-                node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value(value, modified)?;
-            }
-            (value, Node::Enum(node_enum)) => {
-                let pos = node_enum
+                    node_enum.value = Some(pos);
+                    node_enum.nodes[pos].apply_value(value, modified)?;
+                } else {
+                    let pos = node_enum
                     .nodes
                     .iter()
                     .position(|e| e.is_matching(value))
@@ -49,57 +103,24 @@ impl NodeContainer {
                         )
                     })?;
 
-                node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value(value, modified)?;
+                    node_enum.value = Some(pos);
+                    node_enum.nodes[pos].apply_value(value, modified)?;
+                }
             }
-            (Value::String(value), Node::Value(node_value)) => {
-                // pass
-            }
-            (Value::Bool(value), Node::Bool(node_bool)) => node_bool.value = Some(*value),
-            (Value::Number(number), Node::Number(node_number)) => {
-                // dbg!(&value);
-                // dbg!(&node_number);
+            Node::Array(node_array) => {
+                if let Some(list) = value.as_list() {
+                    let mut nodes = Vec::new();
 
-                let value = NumberValue::from_number(number);
-
-                node_number.value_string = value.to_string();
-                node_number.value = Some(value);
-            }
-            (Value::Struct(tag, values), Node::Object(node_object)) => {
-                // hashmap are overided by existence of a value
-                node_object.nodes.retain(|_, node| !node.removable);
-
-                // for known object field ?
-                for (key, n) in &mut node_object.nodes {
-                    if let Some(value) = values.0.get(key) {
-                        n.apply_value(value, modified)?;
-                    } else if let Some(default) = &n.default {
-                        n.apply_value(&default.clone(), false)?;
+                    for (pos, value) in list.iter().enumerate() {
+                        let mut new_node = node_array.template(Some(pos));
+                        new_node.apply_value(value, modified)?;
+                        nodes.push(new_node);
                     }
-                }
 
-                // for hashmap ?
-                if let Some(template) = node_object.template() {
-                    for (key, value) in &values.0 {
-                        let mut node_type = template.clone();
-                        node_type.apply_value(value, modified)?;
-                        node_object.nodes.insert(key.to_owned(), node_type);
-                    }
+                    node_array.values = Some(nodes);
                 }
             }
-            (Value::List(values), Node::Array(node_array)) => {
-                let mut nodes = Vec::new();
-
-                for (pos, value) in values.iter().enumerate() {
-                    let mut new_node = node_array.template(Some(pos));
-                    new_node.apply_value(value, modified)?;
-                    nodes.push(new_node);
-                }
-
-                node_array.values = Some(nodes);
-            }
-            (Value::Option(None), Node::Null) => {}
-            (value, node) => bail!("no compatible node for value = \n{value:#?}. \n{node:#?}"),
+            Node::Any => todo!(),
         };
 
         Ok(())

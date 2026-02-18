@@ -15,9 +15,8 @@ enum ConfigEnum {
     B,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
-#[derive(Default)]
 struct Config {
     x: ConfigEnum,
 }

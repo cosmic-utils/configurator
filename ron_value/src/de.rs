@@ -94,40 +94,42 @@ fn integer<'a>() -> Parser<'a, char, Number> {
         .opt()
         .map(|s| s.unwrap_or(1));
 
-    (sign + unsigned_decimal() - !sym('.') + integer_suffix().opt()).convert(|((sign, digits), suffix)| {
-        let default = if sign == 1 { "u128" } else { "i128" };
+    (sign + unsigned_decimal() - !sym('.') + integer_suffix().opt()).convert(
+        |((sign, digits), suffix)| {
+            let default = if sign == 1 { "u128" } else { "i128" };
 
-        let number = match suffix.unwrap_or(default) {
-            "i8" => {
-                let n: i8 = digits.try_into()?;
-                Number::I8(n * sign)
-            }
-            "i16" => {
-                let n: i16 = digits.try_into()?;
-                Number::I16(n * sign as i16)
-            }
-            "i32" => {
-                let n: i32 = digits.try_into()?;
-                Number::I32(n * sign as i32)
-            }
-            "i64" => {
-                let n: i64 = digits.try_into()?;
-                Number::I64(n * sign as i64)
-            }
-            "i128" => {
-                let n: i128 = digits.try_into()?;
-                Number::I128(n * sign as i128)
-            }
-            "u8" => Number::U8(digits.try_into()?),
-            "u16" => Number::U16(digits.try_into()?),
-            "u32" => Number::U32(digits.try_into()?),
-            "u64" => Number::U64(digits.try_into()?),
-            "u128" => Number::U128(digits),
-            _ => unreachable!(),
-        };
+            let number = match suffix.unwrap_or(default) {
+                "i8" => {
+                    let n: i8 = digits.try_into()?;
+                    Number::I8(n * sign)
+                }
+                "i16" => {
+                    let n: i16 = digits.try_into()?;
+                    Number::I16(n * sign as i16)
+                }
+                "i32" => {
+                    let n: i32 = digits.try_into()?;
+                    Number::I32(n * sign as i32)
+                }
+                "i64" => {
+                    let n: i64 = digits.try_into()?;
+                    Number::I64(n * sign as i64)
+                }
+                "i128" => {
+                    let n: i128 = digits.try_into()?;
+                    Number::I128(n * sign as i128)
+                }
+                "u8" => Number::U8(digits.try_into()?),
+                "u16" => Number::U16(digits.try_into()?),
+                "u32" => Number::U32(digits.try_into()?),
+                "u64" => Number::U64(digits.try_into()?),
+                "u128" => Number::U128(digits),
+                _ => unreachable!(),
+            };
 
-        Ok::<Number, TryFromIntError>(number)
-    })
+            Ok::<Number, TryFromIntError>(number)
+        },
+    )
 }
 
 fn integer_suffix<'a>() -> Parser<'a, char, &'static str> {

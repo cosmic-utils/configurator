@@ -63,8 +63,20 @@ impl Value {
         }
     }
 
-    pub fn as_struct(&self) -> Option<&Map<String, Value>> {
-        if let Value::Struct(_, v) = self {
+    pub fn as_struct(&self) -> Option<(&Option<String>, &Map<String, Value>)> {
+        if let Value::Struct(name, v) = self {
+            Some((name, v))
+        } else {
+            None
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self == &Value::Empty
+    }
+
+    pub fn as_list(&self) -> Option<&Vec<Value>> {
+        if let Value::List(v) = self {
             Some(v)
         } else {
             None

@@ -67,7 +67,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
 
                 let content = file.contents_utf8().unwrap();
 
-                let appid = appid_from_schema_path(file.path());
+                let appid = appid_from_schema_path(file.path())?;
 
                 if !config.masked.contains(&appid) {
                     Some(Page::from_str(&appid, content).unwrap())
@@ -102,7 +102,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
         .flatten()
         .filter_map(|entry| {
             let schema_path = entry.path();
-            let appid = appid_from_schema_path(&schema_path);
+            let appid = appid_from_schema_path(&schema_path)?;
 
             if !config.masked.contains(&appid) {
                 match fs::read_to_string(&schema_path) {
@@ -125,10 +125,14 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
         .chain(cosmic_compat(config))
 }
 
-fn appid_from_schema_path(schema_path: &Path) -> String {
+fn appid_from_schema_path(schema_path: &Path) -> Option<String> {
     let schema_name = schema_path.file_name().unwrap().to_string_lossy();
 
-    schema_name.strip_suffix(".json").unwrap().to_string()
+    if schema_name.starts_with('.') {
+        return None;
+    }
+
+    schema_name.strip_suffix(".json").map(ToString::to_string)
 }
 
 impl Page {
