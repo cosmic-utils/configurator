@@ -81,6 +81,7 @@ impl NodeContainer {
                     node_enum.value = Some(pos);
                     node_enum.nodes[pos].apply_value(value, modified)?;
                 } else {
+                    panic!("can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}");
                     warn!("can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}");
                 }
             }

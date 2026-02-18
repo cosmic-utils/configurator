@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     let schema = schema_for!(S);
 
+    dbg!(&schema);
+
     let mut tree = NodeContainer::from_json_schema(&schema);
 
     let config1 = S::default();
@@ -21,7 +23,9 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     let ron_value = ron_value::from_str(&ron).unwrap();
     let value = crate::providers::cosmic_ron::ron_value_to_value(ron_value);
 
+    dbg!(&tree);
     tree.apply_value(&value, true).unwrap();
+    dbg!(&tree);
 
     let value_from_node = tree.to_value();
 
@@ -94,4 +98,10 @@ fn test_hash_map() {
 #[test]
 fn test_very_complex() {
     test_schema::<TestVeryComplex>(true);
+}
+
+
+#[test]
+fn test_rec() {
+    test_schema::<Rec>(true);
 }
