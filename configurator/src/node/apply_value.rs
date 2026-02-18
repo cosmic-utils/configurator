@@ -4,7 +4,11 @@ use anyhow::{anyhow, bail};
 
 use indexmap::map::MutableKeys;
 
-use crate::{generic_value::Value, node::NumberValue, utils::json_value_eq_value};
+use crate::{
+    generic_value::Value,
+    node::{NodeArrayTemplate, NumberValue},
+    utils::json_value_eq_value,
+};
 
 use super::{Node, NodeContainer};
 
@@ -110,29 +114,49 @@ impl NodeContainer {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     fn is_matching(&self, value: &Value) -> bool {
+        // debug!("\n{value:#?}\n{self:#?}\n");
+
         match &self.node {
             Node::Null => value.is_null(),
             Node::Bool(node_bool) => value.as_bool().is_some(),
             Node::String(node_string) => value.as_str().is_some(),
             Node::Number(node_number) => value.as_number().is_some(),
-            Node::Object(node_object) => value
-                .as_struct()
-                .map(|(_, map)| {
-                    node_object.nodes.iter().all(|(key, node)| {
-                        map.0
-                            .get(key)
-                            .map(|value| node.is_matching(value))
-                            .unwrap_or(false)
-                    })
-                })
-                .unwrap_or(false),
+            Node::Object(node_object) => match value {
+                Value::Struct(_, map) => node_object.nodes.iter().all(|(key, node)| {
+                    map.0
+                        .get(key)
+                        .map(|value| node.is_matching(value))
+                        .unwrap_or(false)
+                }),
+                Value::NamedTuple(name, _) => node_object
+                    .nodes
+                    .get(name)
+                    .map(|node| node.is_matching(value))
+                    .unwrap_or(false),
+                _ => panic!("{self:#?}\n{value:#?}"),
+            },
             Node::Enum(node_enum) => todo!(),
-            Node::Array(node_array) => todo!(),
-            Node::Value(node_value) => {
-                dbg!("is matching", &node_value.value, &value);
-                &node_value.value == value
-            }
+            Node::Array(node_array) => match &node_array.template {
+                NodeArrayTemplate::All(node_container) => todo!(),
+                NodeArrayTemplate::FirstN(node_containers) => {
+                    let vec = value
+                        .as_tuple()
+                        .or_else(|| value.as_named_tuple().map(|(_, v)| v));
+
+                    if let Some(vec) = vec {
+                        node_containers.len() == vec.len()
+                            && vec
+                                .iter()
+                                .zip(node_containers)
+                                .all(|(value, node)| node.is_matching(value))
+                    } else {
+                        false
+                    }
+                }
+            },
+            Node::Value(node_value) => &node_value.value == value,
             Node::Any => todo!(),
         }
     }

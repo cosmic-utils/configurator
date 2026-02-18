@@ -47,17 +47,20 @@ impl Default for Rec {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq)]
 pub enum EnumComplex {
     A,
+    C(Complex, i32),
     B(i32),
-    C(Complex),
     D { a: i32, b: Complex },
 }
 
 impl Default for EnumComplex {
     fn default() -> Self {
-        Self::C(Complex {
-            x: "hello".into(),
-            y: 1,
-        })
+        Self::C(
+            Complex {
+                x: "hello".into(),
+                y: 1,
+            },
+            1,
+        )
     }
 }
 

@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// 2. Apply the default impl to it
 /// 3. assert that the serialization equal the default val if is_default_complete is true
 fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
-    // setup_log_for_test();
+    setup_log_for_test();
 
     let schema = schema_for!(S);
 
@@ -27,6 +27,8 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
     let ron_value = ron_value::from_str(&ron).unwrap();
     let value = crate::providers::cosmic_ron::ron_value_to_value(ron_value);
+
+    dbg!(&value);
 
     tree.apply_value(&value, true).unwrap();
     // tree.apply_value(&Value::Empty, true).unwrap();
