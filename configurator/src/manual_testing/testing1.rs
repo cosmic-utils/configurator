@@ -6,25 +6,12 @@ use std::{collections::HashMap, fmt::Debug};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
-use crate::node::NodeContainer;
-
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
-enum ConfigEnum {
-    #[default]
-    A,
-    B,
-}
+use crate::{node::NodeContainer, test_common::EnumComplex};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
-    x: HashMap<String, Complex>,
-}
-
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
-#[serde(default)]
-struct Complex {
-    str: String,
+    x: EnumComplex,
 }
 
 const NAME: &str = "testing1";

@@ -22,7 +22,7 @@ fn get_schema<C: JsonSchema>(name: &str) -> String {
 pub fn print_schema<C: JsonSchema>(name: &str) {
     let e = get_schema::<C>(name);
 
-    print!("{}", e);
+    println!("{}", e);
 }
 
 pub fn print_node_container<C: JsonSchema>(name: &str) {
@@ -51,11 +51,11 @@ pub fn gen_schema<C: JsonSchema>(name: &str) {
 pub fn print_json<C: Default + Serialize>() {
     let e = json::to_string_pretty(&C::default()).unwrap();
 
-    print!("{}", e);
+    println!("{}", e);
 }
 
 pub fn print_ron<C: Default + Serialize>() {
     let e = ron::to_string(&C::default()).unwrap();
 
-    print!("{}", e);
+    println!("{}", e);
 }
