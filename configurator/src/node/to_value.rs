@@ -50,7 +50,14 @@ impl NodeContainer {
             Node::Array(node_array) => node_array
                 .values
                 .as_ref()
-                .map(|values| Value::List(values.iter().map(|n| n.to_value().unwrap()).collect())),
+                .map(|values| values.iter().map(|n| n.to_value().unwrap()).collect())
+                .map(|values| {
+                    if node_array.is_tuple() {
+                        Value::Tuple(values)
+                    } else {
+                        Value::List(values)
+                    }
+                }),
             Node::Value(node_value) => Some(node_value.value.clone()),
             Node::Any => todo!(),
         }

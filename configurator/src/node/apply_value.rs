@@ -87,10 +87,15 @@ impl NodeContainer {
                 }
             }
             Node::Array(node_array) => {
-                if let Some(list) = value.as_list() {
+                let vec = value
+                    .as_list()
+                    .or_else(|| value.as_tuple())
+                    .or_else(|| value.as_named_tuple().map(|(_, v)| v));
+
+                if let Some(vec) = vec {
                     let mut nodes = Vec::new();
 
-                    for (pos, value) in list.iter().enumerate() {
+                    for (pos, value) in vec.iter().enumerate() {
                         let mut new_node = node_array.template(Some(pos));
                         new_node.apply_value(value, modified)?;
                         nodes.push(new_node);

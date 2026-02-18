@@ -20,7 +20,9 @@ pub enum Value {
     Option(Option<Box<Value>>),
     List(Vec<Value>),
     Map(Map<Value, Value>),
+    // todo: merge with NamedTuple?
     Tuple(Vec<Value>),
+    // todo: merge with Struct ?
     UnitStruct(String),
     Struct(Option<String>, Map<String, Value>),
     NamedTuple(String, Vec<Value>),
@@ -78,6 +80,22 @@ impl Value {
     pub fn as_list(&self) -> Option<&Vec<Value>> {
         if let Value::List(v) = self {
             Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_tuple(&self) -> Option<&Vec<Value>> {
+        if let Value::Tuple(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_named_tuple(&self) -> Option<(&String, &Vec<Value>)> {
+        if let Value::NamedTuple(name, v) = self {
+            Some((name, v))
         } else {
             None
         }

@@ -31,6 +31,8 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     tree.apply_value(&value, true).unwrap();
     // tree.apply_value(&Value::Empty, true).unwrap();
 
+    dbg!(&tree);
+
     let value_from_node = tree.to_value();
 
     let value_from_node = if is_default_complete {
@@ -84,7 +86,6 @@ fn test_option() {
     test_schema::<TestOption>(true);
 }
 
-// marche pas
 #[test]
 fn test_tuple() {
     test_schema::<TestTuple>(true);

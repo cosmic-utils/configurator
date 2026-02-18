@@ -193,6 +193,13 @@ impl NodeArray {
             }
         }
     }
+
+    pub fn is_tuple(&self) -> bool {
+        match &self.template {
+            NodeArrayTemplate::All(_) => false,
+            NodeArrayTemplate::FirstN(_) => true,
+        }
+    }
 }
 
 impl NodeContainer {
