@@ -16,7 +16,7 @@ use cosmic::{
 
 use crate::{
     app::App,
-    generic_value::Value,
+    generic_value::{Number, Value},
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
@@ -608,14 +608,14 @@ fn value_to_str(value: &Value) -> Cow<'_, str> {
             false => Cow::Borrowed("false"),
         },
         Value::Char(_) => todo!(),
-        Value::Number(number) => todo!(),
-        Value::String(s) => Cow::Borrowed(s.as_str()),
+        Value::Number(number) => Cow::Owned(number.to_string()),
+        Value::String(s) => Cow::Borrowed(s),
         Value::Bytes(items) => todo!(),
         Value::Option(value) => todo!(),
         Value::List(values) => todo!(),
         Value::Map(map) => todo!(),
         Value::Tuple(values) => todo!(),
-        Value::UnitStruct(_) => todo!(),
+        Value::UnitStruct(s) => Cow::Borrowed(s),
         Value::Struct(_, map) => todo!(),
         Value::NamedTuple(_, values) => todo!(),
     }
