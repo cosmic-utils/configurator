@@ -9,14 +9,13 @@ use crate::{generic_value::Value, node::NumberValue, utils::json_value_eq_value}
 use super::{Node, NodeContainer};
 
 impl NodeContainer {
-    // todo: use figment Value instead
-    pub fn apply_value(&mut self, value: &Value) -> anyhow::Result<()> {
-        self.apply_value2(value, value == &Value::Empty)
-    }
-
     // todo: the modified logic in the function seems wrong (i probably fixed it)
     // todo2: analyze the entire logic
-    pub fn apply_value2(&mut self, value: &Value, modified: bool) -> anyhow::Result<()> {
+    pub fn apply_value(&mut self, value: &Value, modified: bool) -> anyhow::Result<()> {
+        if value == &Value::Empty {
+            return Ok(());
+        }
+
         // debug!("merge_figment_rec {:?} {:?}", &self, &value);
         self.modified = modified;
 
@@ -38,7 +37,7 @@ impl NodeContainer {
                     })?;
 
                 node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value2(value, modified)?;
+                node_enum.nodes[pos].apply_value(value, modified)?;
             }
             (value, Node::Enum(node_enum)) => {
                 let pos = node_enum
@@ -52,7 +51,7 @@ impl NodeContainer {
                     })?;
 
                 node_enum.value = Some(pos);
-                node_enum.nodes[pos].apply_value2(value, modified)?;
+                node_enum.nodes[pos].apply_value(value, modified)?;
             }
             (Value::String(value), Node::Value(node_value)) => {
                 // pass
@@ -74,9 +73,9 @@ impl NodeContainer {
                 // for known object field ?
                 for (key, n) in &mut node_object.nodes {
                     if let Some(value) = values.0.get(key) {
-                        n.apply_value2(value, modified)?;
+                        n.apply_value(value, modified)?;
                     } else if let Some(default) = &n.default {
-                        n.apply_value2(&default.clone(), false)?;
+                        n.apply_value(&default.clone(), false)?;
                     }
                 }
 
@@ -84,7 +83,7 @@ impl NodeContainer {
                 if let Some(template) = node_object.template() {
                     for (key, value) in &values.0 {
                         let mut node_type = template.clone();
-                        node_type.apply_value2(value, modified)?;
+                        node_type.apply_value(value, modified)?;
                         node_object.nodes.insert(key.to_owned(), node_type);
                     }
                 }
@@ -94,7 +93,7 @@ impl NodeContainer {
 
                 for (pos, value) in values.iter().enumerate() {
                     let mut new_node = node_array.template(Some(pos));
-                    new_node.apply_value2(value, modified)?;
+                    new_node.apply_value(value, modified)?;
                     nodes.push(new_node);
                 }
 

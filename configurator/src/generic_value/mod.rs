@@ -9,6 +9,7 @@ pub use map::Map;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {
+    /// Represent the absence of value.
     Empty,
     Unit,
     Bool(bool),
