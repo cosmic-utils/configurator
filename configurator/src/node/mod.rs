@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
+use std::{borrow::Cow, collections::BTreeMap, fmt::Display, rc::Rc};
 
 use derive_more::derive::Unwrap;
 use indexmap::IndexMap;
@@ -20,8 +20,7 @@ mod to_value;
 #[derive(Debug, Clone)]
 pub struct NodeContainer {
     pub title: Option<String>,
-    // todo: use Arc here ?
-    pub default: Option<Value>,
+    pub default: Option<Rc<Value>>,
     pub node: Node,
     pub description: Option<String>,
     /// Node that are modified should be written to disk

@@ -209,7 +209,7 @@ pub(crate) fn schema_object_to_node(
             .as_ref()
             .and_then(|d| default_value_to_value(&res, d))
         {
-            res.default = Some(default);
+            res.default = Some(Rc::new(default));
         }
 
         if let Some(title) = &metadata.title {
