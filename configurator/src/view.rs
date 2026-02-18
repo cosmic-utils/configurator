@@ -243,7 +243,7 @@ fn view_object<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -282,7 +282,7 @@ fn view_array<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -328,7 +328,7 @@ fn view_enum<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -407,7 +407,7 @@ fn view_bool<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -461,7 +461,7 @@ fn view_string<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -520,7 +520,7 @@ fn view_number<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -586,7 +586,7 @@ fn view_value<'a>(
 ) -> Element<'a, PageMsg> {
     column()
         .push_maybe(
-            node.desc
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )

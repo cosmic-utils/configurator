@@ -29,7 +29,6 @@ mod manual_testing;
 #[cfg(test)]
 mod test_common;
 
-
 fn setup_log_for_test() {
     use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -40,11 +39,10 @@ fn setup_log_for_test() {
     )));
 
     tracing_subscriber::registry()
-            .with(filter_layer)
-            .with(fmt_layer)
-            .init();
+        .with(filter_layer)
+        .with(fmt_layer)
+        .init();
 }
-
 
 fn setup_logs() {
     use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};

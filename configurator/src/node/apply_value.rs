@@ -75,7 +75,7 @@ impl NodeContainer {
                 }
             }
             Node::Enum(node_enum) => {
-                let pos = node_enum.nodes.iter().position(|e| e.is_matching2(value));
+                let pos = node_enum.nodes.iter().position(|e| e.is_matching(value));
 
                 if let Some(pos) = pos {
                     node_enum.value = Some(pos);
@@ -105,7 +105,7 @@ impl NodeContainer {
         Ok(())
     }
 
-    fn is_matching2(&self, value: &Value) -> bool {
+    fn is_matching(&self, value: &Value) -> bool {
         match &self.node {
             Node::Null => value.is_null(),
             Node::Bool(node_bool) => value.as_bool().is_some(),
@@ -155,33 +155,5 @@ impl NodeContainer {
             Node::Any => todo!(),
         };
         self.modified = false;
-    }
-
-    fn is_matching(&self, value: &Value) -> bool {
-        // todo: should this match so many things ?
-        // maybe only what is possible to put in an enum key
-        // is it correct tho, maybe we should do a full equivalence on String
-        match (value, &self.node) {
-            (Value::String(_), Node::String(node_string)) => true,
-            (Value::String(value), Node::Object(node_object)) => {
-                node_object.nodes.contains_key(value)
-            }
-            (Value::Bool(_), Node::Bool(_)) => true,
-            (Value::Number(_), Node::Number(_)) => true,
-            (Value::Option(None), Node::Null) => true,
-            (Value::List(values), Node::Object(node_object)) => {
-                // todo: use zip here (and probably use the tuple variant)
-                node_object.nodes.iter().enumerate().all(|(pos, (key, n))| {
-                    let v = values.get(pos).unwrap();
-                    n.is_matching(v)
-                })
-            }
-            (Value::List(values), Node::Array(node_array)) => {
-                // todo: more complicated logic
-                true
-            }
-            (value, Node::Value(node_value)) => &node_value.value == value,
-            _ => false,
-        }
     }
 }

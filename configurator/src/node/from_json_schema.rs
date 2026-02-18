@@ -203,7 +203,24 @@ pub(crate) fn schema_object_to_node(
         res = res.merge(&node)?;
     }
 
-    let res = res.metadata(&schema_object.metadata);
+    if let Some(metadata) = &schema_object.metadata {
+        if let Some(default) = metadata
+            .default
+            .as_ref()
+            .and_then(|d| default_value_to_value(&res, d))
+        {
+            res.default = Some(default);
+        }
+
+        if let Some(title) = &metadata.title {
+            res.title = Some(title.to_owned());
+        }
+
+        if let Some(description) = &metadata.description {
+            res.description = Some(description.to_owned());
+        }
+    }
+
     Some(res)
 }
 
@@ -261,41 +278,8 @@ fn enum_value_to_value(json_value: json::Value) -> Value {
     }
 }
 
-pub(crate) fn json_value_to_value(json_value: &json::Value) -> Value {
-    match json_value {
-        json::Value::Null => Value::Option(None),
-        json::Value::Bool(value) => Value::Bool(*value),
-        json::Value::Number(number) => {
-            let num = if let Some(n) = number.as_u128() {
-                Number::U128(n)
-            } else if let Some(n) = number.as_i128() {
-                Number::I128(n)
-            } else if let Some(n) = number.as_f64() {
-                Number::F64(F64(n))
-            } else {
-                panic!("not a valid number")
-            };
-
-            Value::Number(num)
-        }
-        json::Value::String(str) => Value::String(str.clone()),
-        json::Value::Array(vec) => {
-            let array = vec.iter().map(json_value_to_value).collect();
-
-            Value::List(array)
-        }
-        json::Value::Object(fields) => {
-            let map = fields
-                .iter()
-                .map(|(name, value)| (name.clone(), json_value_to_value(value)))
-                .collect();
-
-            Value::Struct(None, map)
-        }
-    }
-}
-
 impl NodeContainer {
+    // todo: &mut variant ?
     fn merge(&self, other: &NodeContainer) -> Option<NodeContainer> {
         match (&self.node, &other.node) {
             (Node::Null, Node::Null) => Some(other.clone()),
@@ -358,63 +342,49 @@ impl NodeContainer {
             }
         }
     }
+}
 
-    fn default_value_to_value(&self, json_value: &json::Value) -> Option<Value> {
-        match &self.node {
-            Node::Null => todo!(),
-            Node::Bool(node_bool) => todo!(),
-            Node::String(node_string) => todo!(),
-            Node::Number(node_number) => todo!(),
-            Node::Object(node_object) => todo!(),
-            Node::Enum(node_enum) => node_enum
-                .nodes
-                .iter()
-                .find_map(|e| e.is_matching3(json_value)),
-            Node::Array(node_array) => todo!(),
-            Node::Value(node_value) => todo!(),
-            Node::Any => todo!(),
-        }
+fn default_value_to_value(node: &NodeContainer, json_value: &json::Value) -> Option<Value> {
+    match &node.node {
+        Node::Null => todo!(),
+        Node::Bool(node_bool) => todo!(),
+        Node::String(node_string) => todo!(),
+        Node::Number(node_number) => todo!(),
+        Node::Object(node_object) => todo!(),
+        Node::Enum(node_enum) => node_enum
+            .nodes
+            .iter()
+            .find_map(|n| json_value_to_value_if_match(n, json_value)),
+        Node::Array(node_array) => todo!(),
+        Node::Value(node_value) => todo!(),
+        Node::Any => todo!(),
     }
+}
 
-    fn is_matching3(&self, value: &json::Value) -> Option<Value> {
-        match (&self.node, value) {
-            (Node::Null, json::Value::Null) => Some(Value::Option(None)),
-            (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
-            (Node::String(node_string), json::Value::String(v)) => {
-                Some(Value::String(v.to_owned()))
-            }
-            (Node::Number(node_number), json::Value::Number(number)) => {
-                let num = if let Some(n) = number.as_u128() {
-                    Number::U128(n)
-                } else if let Some(n) = number.as_i128() {
-                    Number::I128(n)
-                } else if let Some(n) = number.as_f64() {
-                    Number::F64(F64(n))
-                } else {
-                    panic!("not a valid number")
-                };
+fn json_value_to_value_if_match(node: &NodeContainer, value: &json::Value) -> Option<Value> {
+    match (&node.node, value) {
+        (Node::Null, json::Value::Null) => Some(Value::Option(None)),
+        (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
+        (Node::String(node_string), json::Value::String(v)) => Some(Value::String(v.to_owned())),
+        (Node::Number(node_number), json::Value::Number(number)) => {
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
+            } else if let Some(n) = number.as_f64() {
+                Number::F64(F64(n))
+            } else {
+                panic!("not a valid number")
+            };
 
-                Some(Value::Number(num))
-            }
-            (Node::Value(node_value), value) => match (&node_value.value, value) {
-                (Value::UnitStruct(s1), json::Value::String(s2)) if s1 == s2 => {
-                    Some(Value::UnitStruct(s1.to_owned()))
-                }
-                _ => panic!("error: no match for node_value {value} and {node_value:#?}"),
-            },
-            _ => panic!("error: no match for {value} and {self:#?}"),
+            Some(Value::Number(num))
         }
-    }
-
-    fn metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
-        Self {
-            default: metadata
-                .as_ref()
-                .and_then(|m| m.default.as_ref())
-                .and_then(|d| self.default_value_to_value(d)),
-            title: metadata.as_ref().and_then(|m| m.title.clone()),
-            desc: metadata.as_ref().and_then(|m| m.description.clone()),
-            ..self
-        }
+        (Node::Value(node_value), value) => match (&node_value.value, value) {
+            (Value::UnitStruct(s1), json::Value::String(s2)) if s1 == s2 => {
+                Some(Value::UnitStruct(s1.to_owned()))
+            }
+            _ => panic!("error: no match for node_value {value} and {node_value:#?}"),
+        },
+        _ => panic!("error: no match for {value} and {node:#?}"),
     }
 }

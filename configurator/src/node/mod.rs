@@ -1,7 +1,6 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
 
 use derive_more::derive::Unwrap;
-use from_json_schema::json_value_to_value;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
 use schemars::schema::SchemaObject;
@@ -24,7 +23,7 @@ pub struct NodeContainer {
     // todo: use Arc here ?
     pub default: Option<Value>,
     pub node: Node,
-    pub desc: Option<String>,
+    pub description: Option<String>,
     /// Node that are modified should be written to disk
     pub modified: bool,
     /// Used for HashMap. We need to know if the node
@@ -38,7 +37,7 @@ impl NodeContainer {
             node,
             default: None,
             title: None,
-            desc: None,
+            description: None,
             modified: false,
             removable: false,
         }

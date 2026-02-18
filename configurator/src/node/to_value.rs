@@ -3,7 +3,7 @@ use crate::{
     node::Node,
 };
 
-use super::{NodeContainer, NumberValue, from_json_schema::json_value_to_value};
+use super::{NodeContainer, NumberValue};
 
 impl NodeContainer {
     // todo: return a result with info about the node missing a value
