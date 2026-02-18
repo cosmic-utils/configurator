@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// 2. Apply the default impl to it
 /// 3. assert that the serialization equal the default val if is_default_complete is true
 fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
-    setup_log_for_test();
+    // setup_log_for_test();
 
     let schema = schema_for!(S);
 
@@ -24,6 +24,7 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
     let config1 = S::default();
 
     let ron = ron::to_string(&config1).unwrap();
+
     let ron_value = ron_value::from_str(&ron).unwrap();
     let value = crate::providers::cosmic_ron::ron_value_to_value(ron_value);
 
@@ -36,9 +37,19 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
         value_from_node.expect("no value found but is_default_complete is true")
     } else {
         assert!(value_from_node.is_none());
-
         return;
     };
+
+    dbg!(&value, &value_from_node);
+
+    let ron_from_node = ron_value::to_string(&crate::providers::cosmic_ron::value_to_ron_value(
+        value_from_node.clone(),
+    ))
+    .unwrap();
+
+    // let value
+
+    dbg!(&ron, &ron_from_node);
 
     assert_eq!(value_from_node, value);
 }
@@ -91,6 +102,11 @@ fn test_hash_map() {
 #[test]
 fn test_option_complex() {
     test_schema::<TestOptionComplex>(true);
+}
+
+#[test]
+fn test_complex() {
+    test_schema::<TestComplex>(true);
 }
 
 // marche pas

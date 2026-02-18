@@ -204,13 +204,13 @@ pub(crate) fn schema_object_to_node(
     }
 
     if let Some(metadata) = &schema_object.metadata {
-        if let Some(default) = metadata
-            .default
-            .as_ref()
-            .and_then(|d| default_value_to_value(&res, d))
-        {
-            res.default = Some(Rc::new(default));
-        }
+        // if let Some(default) = metadata
+        //     .default
+        //     .as_ref()
+        //     .and_then(|d| default_value_to_value(&res, d))
+        // {
+        //     res.default = Some(Rc::new(default));
+        // }
 
         if let Some(title) = &metadata.title {
             res.title = Some(title.to_owned());

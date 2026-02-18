@@ -135,6 +135,12 @@ pub struct TestEnumComplex {
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
+pub struct TestComplex {
+    x: Complex,
+}
+
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[serde(default)]
 pub struct TestOption {
     x: Option<String>,
 }

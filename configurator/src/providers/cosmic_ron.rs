@@ -13,7 +13,8 @@ use crate::{
     providers::write_and_create_parent,
 };
 
-fn value_to_ron_value(value: Value) -> ron_value::Value {
+// public until generic value implement serde
+pub fn value_to_ron_value(value: Value) -> ron_value::Value {
     match value {
         Value::Empty => ron_value::Value::Unit,
         Value::Unit => ron_value::Value::Unit,
@@ -67,7 +68,8 @@ fn value_to_ron_value(value: Value) -> ron_value::Value {
     }
 }
 
-pub(crate) fn ron_value_to_value(value: ron_value::Value) -> Value {
+// public until generic value implement serde
+pub fn ron_value_to_value(value: ron_value::Value) -> Value {
     match value {
         ron_value::Value::Unit => Value::Empty,
         ron_value::Value::Bool(bool) => Value::Bool(bool),
