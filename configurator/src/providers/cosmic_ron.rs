@@ -67,7 +67,7 @@ fn value_to_ron_value(value: Value) -> ron_value::Value {
     }
 }
 
-fn ron_value_to_value(value: ron_value::Value) -> Value {
+pub(crate) fn ron_value_to_value(value: ron_value::Value) -> Value {
     match value {
         ron_value::Value::Unit => Value::Empty,
         ron_value::Value::Bool(bool) => Value::Bool(bool),

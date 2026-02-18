@@ -17,9 +17,11 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
     let config1 = S::default();
 
-    let value = config1.serialize(serializer)
+    let ron = ron::to_string(&config1).unwrap();
+    let ron_value = ron_value::from_str(&ron).unwrap();
+    let value = crate::providers::cosmic_ron::ron_value_to_value(ron_value);
 
-    tree.apply_value(&value).unwrap();
+    tree.apply_value(&value, true).unwrap();
 
     let value_from_node = tree.to_value();
 
@@ -31,9 +33,7 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
         return;
     };
 
-    let initial_value = Value::serialize(&config1).unwrap();
-
-    assert_eq!(value_from_node, initial_value);
+    assert_eq!(value_from_node, value);
 }
 
 #[test]

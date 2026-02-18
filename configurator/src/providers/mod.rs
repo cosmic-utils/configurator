@@ -5,7 +5,7 @@ use configurator_utils::ConfigFormat;
 
 use crate::generic_value::Value;
 
-mod cosmic_ron;
+pub mod cosmic_ron;
 // #[cfg(test)]
 // mod tests;
 

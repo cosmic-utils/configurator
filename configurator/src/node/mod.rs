@@ -14,8 +14,8 @@ pub mod from_json_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
 // mod ser;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 mod to_value;
 
 #[derive(Debug, Clone)]
