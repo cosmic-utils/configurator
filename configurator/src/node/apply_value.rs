@@ -74,37 +74,14 @@ impl NodeContainer {
                     }
                 }
             }
-            // todo: refractor this
-            // we can probably include both case in is_matching
             Node::Enum(node_enum) => {
-                if let Some((_, map)) = value.as_struct() {
-                    let pos = map.0
-                    .iter()
-                    .find_map(|(key, value)| {
-                        let key = Value::String(key.clone());
-                        node_enum.nodes.iter().position(|e| e.is_matching(&key))
-                    })
-                    .ok_or_else(|| {
-                        anyhow!(
-                            "can't find a compatible enum variant for dict \n{map:#?}.\n{node_enum:#?}"
-                        )
-                    })?;
+                let pos = node_enum.nodes.iter().position(|e| e.is_matching2(value));
 
+                if let Some(pos) = pos {
                     node_enum.value = Some(pos);
                     node_enum.nodes[pos].apply_value(value, modified)?;
                 } else {
-                    let pos = node_enum
-                    .nodes
-                    .iter()
-                    .position(|e| e.is_matching(value))
-                    .ok_or_else(|| {
-                        anyhow!(
-                            "can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}"
-                        )
-                    })?;
-
-                    node_enum.value = Some(pos);
-                    node_enum.nodes[pos].apply_value(value, modified)?;
+                    warn!("can't find a compatible enum variant for \n{value:#?}.\n{node_enum:#?}");
                 }
             }
             Node::Array(node_array) => {
@@ -124,6 +101,24 @@ impl NodeContainer {
         };
 
         Ok(())
+    }
+
+    fn is_matching2(&self, value: &Value) -> bool {
+        match &self.node {
+            Node::Null => value.is_null(),
+            Node::Bool(node_bool) => value.as_bool().is_some(),
+            Node::String(node_string) => value.as_str().is_some(),
+            Node::Number(node_number) => value.as_number().is_some(),
+            Node::Object(node_object) => {
+                todo!()
+            }
+            Node::Enum(node_enum) => todo!(),
+            Node::Array(node_array) => todo!(),
+            Node::Value(node_value) => {
+                json_value_eq_value(&node_value.value, value)
+            }
+            Node::Any => todo!(),
+        }
     }
 
     // todo: remove ALL values. Pass in each node container.

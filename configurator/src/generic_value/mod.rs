@@ -82,4 +82,8 @@ impl Value {
             None
         }
     }
+
+    pub fn is_null(&self) -> bool {
+        self == &Value::Option(None)
+    }
 }
