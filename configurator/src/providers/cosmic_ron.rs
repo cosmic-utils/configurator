@@ -124,6 +124,10 @@ fn ron_value_to_value(value: ron_value::Value) -> Value {
 }
 
 pub fn read(path: &Path) -> anyhow::Result<Value> {
+    if !path.exists() {
+        return Ok(Value::Empty);
+    }
+
     let mut map = Map::new();
 
     for dir_entry in fs::read_dir(path)? {

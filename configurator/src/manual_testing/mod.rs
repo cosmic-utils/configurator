@@ -1,7 +1,6 @@
 use std::{fs, path::Path};
 
 use configurator_utils::ConfigFormat;
-use figment::{Figment, Profile, providers};
 use schemars::JsonSchema;
 use serde::Serialize;
 
@@ -36,13 +35,6 @@ pub fn gen_schema<C: JsonSchema>(name: &str) {
     let schema_path = schemas_path.join(format!("{}.json", name));
 
     fs::write(schema_path, &schema).unwrap();
-}
-
-pub fn print_default_figment<C: Default + Serialize>() {
-    let figment =
-        Figment::new().merge(providers::Serialized::from(&C::default(), Profile::Default));
-
-    dbg!(&figment);
 }
 
 pub fn print_json<C: Default + Serialize>() {
