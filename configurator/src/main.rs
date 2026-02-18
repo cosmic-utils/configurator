@@ -38,10 +38,10 @@ fn setup_log_for_test() {
         env!("CARGO_CRATE_NAME")
     )));
 
-    tracing_subscriber::registry()
+    let _ = tracing_subscriber::registry()
         .with(filter_layer)
         .with(fmt_layer)
-        .init();
+        .try_init();
 }
 
 fn setup_logs() {
