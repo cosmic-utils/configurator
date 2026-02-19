@@ -8,6 +8,8 @@ keywords.workspace = true
 
 [dependencies]
 facet = "0.43.2"
+json.workspace = true
+schemars = "1"
 serde = { workspace = true, features = ["derive"] }
 
 [lints]

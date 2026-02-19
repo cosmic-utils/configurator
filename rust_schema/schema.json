@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Config": {
+      "properties": {
+        "c": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Config"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "x": {
+          "default": [
+            0,
+            ""
+          ],
+          "items": [
+            {
+              "format": "uint32",
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "y": {
+          "default": 88,
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "c": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Config"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "x": {
+      "default": [
+        0,
+        ""
+      ],
+      "items": [
+        {
+          "format": "uint32",
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array"
+    },
+    "y": {
+      "default": 88,
+      "format": "uint32",
+      "minimum": 0.0,
+      "type": "integer"
+    }
+  },
+  "title": "Config",
+  "type": "object"
+}
