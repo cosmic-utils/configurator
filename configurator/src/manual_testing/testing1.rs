@@ -5,7 +5,7 @@ use std::{collections::HashMap, fmt::Debug};
 
 use figment::value::Value;
 use schemars::JsonSchema;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de};
 
 use crate::node::NodeContainer;
 

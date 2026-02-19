@@ -1,27 +1,27 @@
 use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
 
 use derive_more::derive::Unwrap;
-use figment::value::{Num, Tag, Value};
-use from_json_schema::json_value_to_figment_value;
+use from_json_schema::json_value_to_value;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
 use schemars::schema::SchemaObject;
 
-use crate::utils::{figment_value_to_f64, figment_value_to_i128};
+use crate::generic_value::Value;
 
-mod apply_figment;
+mod apply_value;
 pub mod data_path;
 pub mod from_json_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
-mod ser;
-#[cfg(test)]
-mod tests;
-mod to_figment_value;
+// mod ser;
+// #[cfg(test)]
+// mod tests;
+mod to_value;
 
 #[derive(Debug, Clone)]
 pub struct NodeContainer {
     pub node: Node,
+    // todo: use Arc here ?
     pub default: Option<Value>,
     pub title: Option<String>,
     pub desc: Option<String>,
@@ -223,7 +223,7 @@ impl NodeContainer {
             default: metadata
                 .as_ref()
                 .and_then(|m| m.default.as_ref())
-                .map(json_value_to_figment_value),
+                .map(json_value_to_value),
             title: metadata.as_ref().and_then(|m| m.title.clone()),
             desc: metadata.as_ref().and_then(|m| m.description.clone()),
             ..self

@@ -2,7 +2,7 @@ use bon::builder;
 pub use configurator_utils::ConfigFormat;
 use json::Value;
 pub use schemars;
-use schemars::{schema_for, JsonSchema};
+use schemars::{JsonSchema, schema_for};
 
 #[builder]
 pub fn gen_schema<S: JsonSchema>(

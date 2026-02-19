@@ -1,6 +1,6 @@
 
 [env]
 # RUST_LOG = "none,[from_str{appid=com.system76.CosmicPanel.Panel}]=debug"
-RUST_LOG = "none,[from_str{appid=testing1}]=debug"
-# RUST_LOG = "warn,configurator=debug"
+# RUST_LOG = "none,[from_str{appid=testing1}]=debug"
+RUST_LOG = "warn,configurator=debug"
 RUST_BACKTRACE = "0"

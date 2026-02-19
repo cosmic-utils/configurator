@@ -4,8 +4,8 @@ use std::{
 };
 
 use serde::{
-    ser::{SerializeMap, SerializeStruct, SerializeTuple},
     Serialize,
+    ser::{SerializeMap, SerializeStruct, SerializeTuple},
 };
 
 use super::NodeContainer;
@@ -45,8 +45,7 @@ mod test {
     use crate::test_common::*;
 
     use super::NodeContainer;
-    use figment::{providers, value::Tag, Figment, Profile};
-    use schemars::{schema_for, JsonSchema};
+    use schemars::{JsonSchema, schema_for};
     use serde::{Deserialize, Serialize};
 
     fn test_schema<S: JsonSchema + Default + Serialize>() {
@@ -58,7 +57,7 @@ mod test {
 
         let figment = Figment::new().join(providers::Serialized::from(&config1, Profile::Default));
 
-        tree.apply_figment(&figment).unwrap();
+        tree.apply_value(&figment).unwrap();
 
         let str1 = ron::ser::to_string_pretty(&config1, ron::ser::PrettyConfig::new()).unwrap();
 

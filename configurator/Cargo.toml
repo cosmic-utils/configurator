@@ -10,43 +10,36 @@ keywords.workspace = true
 workspace = true
 
 [dependencies]
-i18n-embed = { version = "0.15", features = [
-    "fluent-system",
-    "desktop-requester",
-] }
-rust-embed = "8"
-i18n-embed-fl = "0.9"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = [
+i18n-embed.workspace = true
+rust-embed.workspace = true
+i18n-embed-fl.workspace = true
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = [
     "fmt",
     "env-filter",
     "ansi",
 ] }
-tracing-journald = "0.3"
+tracing-journald.workspace = true
 anyhow.workspace = true
-figment.workspace = true
-schemars = { workspace = true }
+# figment = { workspace = true, features = ["json"] }
+schemars = { workspace = true, features = ["preserve_order"] }
 serde = { workspace = true, features = ["derive"] }
 json = { workspace = true }
 zconf2 = { workspace = true }
-derive_more = { version = "1", features = ["unwrap"] }
+derive_more = { workspace = true, features = ["unwrap"] }
 ron.workspace = true
 xdg.workspace = true
 directories.workspace = true
 indexmap.workspace = true
 configurator_utils.workspace = true
-light_enum = "0.2"
-include_dir = "0.7"
+light_enum.workspace = true
+include_dir.workspace = true
 bon.workspace = true
-constcat = "0.5"
+constcat.workspace = true
+ron_value.workspace = true
 
 [dependencies.libcosmic]
-git = "https://github.com/pop-os/libcosmic"
-branch = "master"
-# git = "https://github.com/wiiznokes/libcosmic"
-# branch = "section-imprv"
-default-features = false
-# path = "../../libcosmic"
+workspace = true
 features = [
     "wgpu",
     "winit",
@@ -57,5 +50,6 @@ features = [
 
 [dev-dependencies]
 configurator_schema = { workspace = true }
-serial_test = "3"
+serial_test.workspace = true
 pretty_assertions.workspace = true
+dir-assert.workspace = true

@@ -3,12 +3,8 @@ use crate::{node::NodeContainer, test_common::*};
 use std::collections::HashMap;
 
 use cosmic::iced_futures::backend::default;
-use figment::{
-    providers,
-    value::{Tag, Value},
-    Figment, Profile,
-};
-use schemars::{schema_for, JsonSchema};
+
+use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 
 /// 1. Generate a node from schema
@@ -21,11 +17,11 @@ fn test_schema<S: JsonSchema + Default + Serialize>(is_default_complete: bool) {
 
     let config1 = S::default();
 
-    let figment = Figment::new().join(providers::Serialized::from(&config1, Profile::Default));
+    let value = config1.serialize(serializer)
 
-    tree.apply_figment(&figment).unwrap();
+    tree.apply_value(&value).unwrap();
 
-    let value_from_node = tree.to_value(&Tag::Default);
+    let value_from_node = tree.to_value();
 
     let value_from_node = if is_default_complete {
         value_from_node.expect("no value found but is_default_complete is true")

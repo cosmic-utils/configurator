@@ -1,40 +1,27 @@
 use std::fmt::Display;
 
 use anyhow::bail;
-use figment::value::Num;
 use light_enum::LightEnum;
+
+use crate::generic_value::{F32, F64, Number};
 
 use super::NodeNumber;
 
 #[derive(Debug, Clone, LightEnum)]
 pub enum NumberValue {
-    /// An 8-bit unsigned integer.
     U8(u8),
-    /// A 16-bit unsigned integer.
     U16(u16),
-    /// A 32-bit unsigned integer.
     U32(u32),
-    /// A 64-bit unsigned integer.
     U64(u64),
-    /// A 128-bit unsigned integer.
     U128(u128),
-    /// An unsigned integer of platform width.
     USize(usize),
-    /// An 8-bit signed integer.
     I8(i8),
-    /// A 16-bit signed integer.
     I16(i16),
-    /// A 32-bit signed integer.
     I32(i32),
-    /// A 64-bit signed integer.
     I64(i64),
-    /// A 128-bit signed integer.
     I128(i128),
-    /// A signed integer of platform width.
     ISize(isize),
-    /// A 32-bit wide float.
     F32(f32),
-    /// A 64-bit wide float.
     F64(f64),
 }
 
@@ -85,22 +72,41 @@ impl NumberValue {
         Some(v)
     }
 
-    pub fn into_num(self) -> Num {
-        match self {
-            NumberValue::U8(v) => Num::U8(v),
-            NumberValue::U16(v) => Num::U16(v),
-            NumberValue::U32(v) => Num::U32(v),
-            NumberValue::U64(v) => Num::U64(v),
-            NumberValue::U128(v) => Num::U128(v),
-            NumberValue::USize(v) => Num::USize(v),
-            NumberValue::I8(v) => Num::I8(v),
-            NumberValue::I16(v) => Num::I16(v),
-            NumberValue::I32(v) => Num::I32(v),
-            NumberValue::I64(v) => Num::I64(v),
-            NumberValue::I128(v) => Num::I128(v),
-            NumberValue::ISize(v) => Num::ISize(v),
-            NumberValue::F32(v) => Num::F32(v),
-            NumberValue::F64(v) => Num::F64(v),
+    pub fn to_number(&self) -> Number {
+        match *self {
+            NumberValue::U8(v) => Number::U8(v),
+            NumberValue::U16(v) => Number::U16(v),
+            NumberValue::U32(v) => Number::U32(v),
+            NumberValue::U64(v) => Number::U64(v),
+            NumberValue::U128(v) => Number::U128(v),
+            NumberValue::USize(v) => Number::USize(v),
+            NumberValue::I8(v) => Number::I8(v),
+            NumberValue::I16(v) => Number::I16(v),
+            NumberValue::I32(v) => Number::I32(v),
+            NumberValue::I64(v) => Number::I64(v),
+            NumberValue::I128(v) => Number::I128(v),
+            NumberValue::ISize(v) => Number::ISize(v),
+            NumberValue::F32(v) => Number::F32(F32(v)),
+            NumberValue::F64(v) => Number::F64(F64(v)),
+        }
+    }
+
+    pub fn from_number(number: &Number) -> NumberValue {
+        match *number {
+            Number::U8(v) => NumberValue::U8(v),
+            Number::U16(v) => NumberValue::U16(v),
+            Number::U32(v) => NumberValue::U32(v),
+            Number::U64(v) => NumberValue::U64(v),
+            Number::U128(v) => NumberValue::U128(v),
+            Number::USize(v) => NumberValue::USize(v),
+            Number::I8(v) => NumberValue::I8(v),
+            Number::I16(v) => NumberValue::I16(v),
+            Number::I32(v) => NumberValue::I32(v),
+            Number::I64(v) => NumberValue::I64(v),
+            Number::I128(v) => NumberValue::I128(v),
+            Number::ISize(v) => NumberValue::ISize(v),
+            Number::F32(v) => NumberValue::F32(v.0),
+            Number::F64(v) => NumberValue::F64(v.0),
         }
     }
 }
@@ -112,27 +118,6 @@ impl NodeNumber {
             value_string: String::new(),
             kind,
         }
-    }
-
-    pub fn try_from_figment_num(&self, value: figment::value::Num) -> anyhow::Result<NumberValue> {
-        let s = match value {
-            Num::U8(v) => v.to_string(),
-            Num::U16(v) => v.to_string(),
-            Num::U32(v) => v.to_string(),
-            Num::U64(v) => v.to_string(),
-            Num::U128(v) => v.to_string(),
-            Num::USize(v) => v.to_string(),
-            Num::I8(v) => v.to_string(),
-            Num::I16(v) => v.to_string(),
-            Num::I32(v) => v.to_string(),
-            Num::I64(v) => v.to_string(),
-            Num::I128(v) => v.to_string(),
-            Num::ISize(v) => v.to_string(),
-            Num::F32(v) => v.to_string(),
-            Num::F64(v) => v.to_string(),
-        };
-
-        self.try_parse_from_str(&s)
     }
 
     pub fn try_parse_from_str(&self, str: &str) -> anyhow::Result<NumberValue> {
