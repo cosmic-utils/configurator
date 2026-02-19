@@ -39,7 +39,7 @@ type RustSchemaId = u64;
 
 enum RustSchemaOrRef {
     Ref(RustSchemaId),
-    Schema(RustSchema),
+    Schema(Box<RustSchema>),
 }
 
 enum RustSchemaKind {
