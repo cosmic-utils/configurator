@@ -24,6 +24,7 @@ type RustSchemaId = u64;
 
 struct RustSchema {
     kind: RustSchemaKind,
+    default: Option<Value>,
 }
 
 enum RustSchemaKind {
