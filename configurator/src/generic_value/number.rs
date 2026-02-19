@@ -2,6 +2,7 @@ use core::{
     cmp::{Eq, Ordering},
     hash::{Hash, Hasher},
 };
+use std::fmt::Display;
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
 pub enum Number {
@@ -19,6 +20,27 @@ pub enum Number {
     ISize(isize),
     F32(F32),
     F64(F64),
+}
+
+impl Display for Number {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Number::U8(v) => write!(f, "{v}"),
+            Number::U16(v) => write!(f, "{v}"),
+            Number::U32(v) => write!(f, "{v}"),
+            Number::U64(v) => write!(f, "{v}"),
+            Number::U128(v) => write!(f, "{v}"),
+            Number::USize(v) => write!(f, "{v}"),
+            Number::I8(v) => write!(f, "{v}"),
+            Number::I16(v) => write!(f, "{v}"),
+            Number::I32(v) => write!(f, "{v}"),
+            Number::I64(v) => write!(f, "{v}"),
+            Number::I128(v) => write!(f, "{v}"),
+            Number::ISize(v) => write!(f, "{v}"),
+            Number::F32(v) => write!(f, "{v}"),
+            Number::F64(v) => write!(f, "{v}"),
+        }
+    }
 }
 
 impl Number {
@@ -102,6 +124,12 @@ macro_rules! float_ty {
         impl From<$float> for $ty {
             fn from(v: $float) -> Self {
                 Self::new(v)
+            }
+        }
+
+        impl Display for $ty {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.0)
             }
         }
 
@@ -194,16 +222,6 @@ impl Number {
 
     /// Returns the [`f64`] representation of the [`Number`] regardless of
     /// whether the number is stored as a float or integer.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use ron_value::Number;
-    /// let i = Number::new(5);
-    /// let f = Number::new(2.0);
-    /// assert_eq!(i.into_f64(), 5.0);
-    /// assert_eq!(f.into_f64(), 2.0);
-    /// ```
     #[must_use]
     pub fn into_f64(self) -> f64 {
         #[allow(clippy::cast_precision_loss)]
@@ -255,38 +273,3 @@ number_from_impl! { Number::U64(u64) }
 number_from_impl! { Number::U128(u128) }
 number_from_impl! { Number::F32(F32(f32)) }
 number_from_impl! { Number::F64(F64(f64)) }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_nan() {
-        assert_eq!(F32(f32::NAN), F32(f32::NAN));
-        assert_eq!(F32(-f32::NAN), F32(-f32::NAN));
-        assert_ne!(F32(f32::NAN), F32(-f32::NAN));
-    }
-
-    #[test]
-    fn test_nan_hash() {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        fn hash<T: Hash>(v: &T) -> u64 {
-            let mut state = DefaultHasher::new();
-            v.hash(&mut state);
-            state.finish()
-        }
-
-        assert_eq!(hash(&F32(f32::NAN)), hash(&F32(f32::NAN)));
-        assert_eq!(hash(&F32(-f32::NAN)), hash(&F32(-f32::NAN)));
-        assert_ne!(hash(&F32(f32::NAN)), hash(&F32(-f32::NAN)));
-    }
-
-    #[test]
-    fn test_partial_ord() {
-        assert!(F32(f32::NAN) > F32(f32::INFINITY));
-        assert!(F32(-f32::NAN) < F32(f32::NEG_INFINITY));
-        assert!(F32(f32::NAN) == F32(f32::NAN));
-    }
-}

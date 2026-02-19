@@ -3,30 +3,23 @@
 
 use std::{collections::HashMap, fmt::Debug};
 
-use figment::value::Value;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, de};
 
-use crate::node::NodeContainer;
+use crate::{
+    node::NodeContainer,
+    test_common::{Complex, EnumComplex},
+};
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
-enum ConfigEnum {
-    #[default]
-    A,
-    B,
-}
-
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
 #[serde(default)]
-#[derive(Default)]
+struct NewStruct(u32);
+
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
+#[serde(default)]
 struct Config {
-    x: ConfigEnum,
-}
-
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
-#[serde(default)]
-struct Complex {
-    str: String,
+    x: NewStruct,
+    y: Complex,
 }
 
 const NAME: &str = "testing1";
@@ -35,12 +28,6 @@ const NAME: &str = "testing1";
 #[ignore]
 fn gen_schema() {
     super::gen_schema::<Config>(NAME);
-}
-
-#[test]
-#[ignore]
-fn print_default_figment() {
-    super::print_default_figment::<Config>();
 }
 
 #[test]
@@ -57,75 +44,18 @@ fn print_ron() {
 
 #[test]
 #[ignore]
+fn from_ron() {
+    super::from_ron::<Config>("(x:0,y:(x:\"hello\",y:10))");
+}
+
+#[test]
+#[ignore]
 fn print_schema() {
     super::print_schema::<Config>(NAME);
 }
 
 #[test]
 #[ignore]
-fn t() {
-    let ron = "(x:A)";
-
-    let c: Config = ron::from_str(ron).unwrap();
-    dbg!(&c);
-
-    let v: ValueDeserializer = ron::from_str(ron).unwrap();
-
-    dbg!(&v);
-
-    panic!()
-}
-
-struct ValueDeserializer {
-    value: figment::value::Value,
-}
-
-impl Debug for ValueDeserializer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ValueDeserializer")
-            .field("value", &self.value)
-            .finish()
-    }
-}
-
-impl<'de> Deserialize<'de> for ValueDeserializer {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        // let node: NodeContainer = todo!();
-
-        enum Field {
-            X,
-        }
-
-        struct FieldVisitor;
-
-        impl de::Visitor<'_> for FieldVisitor {
-            type Value = Field;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                todo!()
-            }
-        }
-
-        struct VisitorStruct {}
-
-        impl<'de> de::Visitor<'de> for VisitorStruct {
-            type Value = ValueDeserializer;
-
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                todo!()
-            }
-
-            fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
-            where
-                A: de::MapAccess<'de>,
-            {
-                todo!()
-            }
-        }
-
-        deserializer.deserialize_struct("Config", &["x"], VisitorStruct {})
-    }
+fn print_node_container() {
+    super::print_node_container::<Config>(NAME);
 }

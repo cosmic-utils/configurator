@@ -1,7 +1,6 @@
-use std::{borrow::Cow, collections::BTreeMap, fmt::Display};
+use std::{borrow::Cow, collections::BTreeMap, fmt::Display, rc::Rc};
 
 use derive_more::derive::Unwrap;
-use from_json_schema::json_value_to_value;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
 use schemars::schema::SchemaObject;
@@ -13,18 +12,16 @@ pub mod data_path;
 pub mod from_json_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
-// mod ser;
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 mod to_value;
 
 #[derive(Debug, Clone)]
 pub struct NodeContainer {
-    pub node: Node,
-    // todo: use Arc here ?
-    pub default: Option<Value>,
     pub title: Option<String>,
-    pub desc: Option<String>,
+    pub default: Option<Rc<Value>>,
+    pub node: Node,
+    pub description: Option<String>,
     /// Node that are modified should be written to disk
     pub modified: bool,
     /// Used for HashMap. We need to know if the node
@@ -38,7 +35,7 @@ impl NodeContainer {
             node,
             default: None,
             title: None,
-            desc: None,
+            description: None,
             modified: false,
             removable: false,
         }
@@ -59,6 +56,7 @@ pub enum Node {
     /// represent a final value
     /// currently only string is supported
     Value(NodeValue),
+    // todo: support any
     Any,
 }
 
@@ -92,7 +90,7 @@ pub struct NodeNumber {
 
 #[derive(Debug, Clone)]
 pub struct NodeValue {
-    pub value: json::Value,
+    pub value: Value,
 }
 
 #[derive(Debug, Clone)]
@@ -134,7 +132,7 @@ impl NodeString {
 }
 
 impl NodeValue {
-    pub fn new(value: json::Value) -> Self {
+    pub fn new(value: Value) -> Self {
         Self { value }
     }
 }
@@ -195,6 +193,13 @@ impl NodeArray {
             }
         }
     }
+
+    pub fn is_tuple(&self) -> bool {
+        match &self.template {
+            NodeArrayTemplate::All(_) => false,
+            NodeArrayTemplate::FirstN(_) => true,
+        }
+    }
 }
 
 impl NodeContainer {
@@ -215,32 +220,6 @@ impl NodeContainer {
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
             Node::Value(node_value) => true,
             Node::Any => true,
-        }
-    }
-
-    pub fn metadata(self, metadata: &Option<Box<schemars::schema::Metadata>>) -> Self {
-        Self {
-            default: metadata
-                .as_ref()
-                .and_then(|m| m.default.as_ref())
-                .map(json_value_to_value),
-            title: metadata.as_ref().and_then(|m| m.title.clone()),
-            desc: metadata.as_ref().and_then(|m| m.description.clone()),
-            ..self
-        }
-    }
-
-    pub fn name(&self) -> Option<Cow<'_, str>> {
-        match &self.node {
-            Node::Null => Some(Cow::Borrowed("Null")),
-            Node::Bool(node_bool) => None,
-            Node::String(node_string) => None,
-            Node::Number(node_number) => None,
-            Node::Object(node_object) => None,
-            Node::Enum(node_enum) => None,
-            Node::Array(node_array) => None,
-            Node::Value(node_value) => node_value.value.as_str().map(Cow::Borrowed),
-            Node::Any => Some(Cow::Borrowed("Any")),
         }
     }
 }

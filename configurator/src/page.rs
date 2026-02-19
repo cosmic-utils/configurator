@@ -67,7 +67,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
 
                 let content = file.contents_utf8().unwrap();
 
-                let appid = appid_from_schema_path(file.path());
+                let appid = appid_from_schema_path(file.path())?;
 
                 if !config.masked.contains(&appid) {
                     Some(Page::from_str(&appid, content).unwrap())
@@ -102,7 +102,7 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
         .flatten()
         .filter_map(|entry| {
             let schema_path = entry.path();
-            let appid = appid_from_schema_path(&schema_path);
+            let appid = appid_from_schema_path(&schema_path)?;
 
             if !config.masked.contains(&appid) {
                 match fs::read_to_string(&schema_path) {
@@ -125,10 +125,14 @@ pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
         .chain(cosmic_compat(config))
 }
 
-fn appid_from_schema_path(schema_path: &Path) -> String {
+fn appid_from_schema_path(schema_path: &Path) -> Option<String> {
     let schema_name = schema_path.file_name().unwrap().to_string_lossy();
 
-    schema_name.strip_suffix(".json").unwrap().to_string()
+    if schema_name.starts_with('.') {
+        return None;
+    }
+
+    schema_name.strip_suffix(".json").map(ToString::to_string)
 }
 
 impl Page {
@@ -240,7 +244,7 @@ impl Page {
 
         self.tree.remove_value_rec();
 
-        self.tree.apply_value(&self.full_config)?;
+        self.tree.apply_value(&self.full_config, true)?;
 
         self.data_path.sanitize_path(&self.tree);
 
@@ -283,7 +287,7 @@ impl Page {
                 match change_msg {
                     ChangeMsg::ApplyDefault => {
                         node.remove_value_rec();
-                        node.apply_value2(&node.default.clone().unwrap(), false)
+                        node.apply_value(&node.default.clone().unwrap(), false)
                             .unwrap();
 
                         self.tree
@@ -357,7 +361,7 @@ impl Page {
                         let mut new_node = node_object.template().unwrap();
 
                         let default = new_node.default.clone().unwrap();
-                        new_node.apply_value2(&default, false).unwrap();
+                        new_node.apply_value(&default, false).unwrap();
 
                         node_object.nodes.insert(name, new_node);
 
@@ -375,7 +379,7 @@ impl Page {
                         let mut new_node = node_array.template(None);
 
                         if let Some(default) = &new_node.default {
-                            new_node.apply_value2(&default.clone(), false).unwrap();
+                            new_node.apply_value(&default.clone(), false).unwrap();
                         }
                         new_node.modified = true;
 

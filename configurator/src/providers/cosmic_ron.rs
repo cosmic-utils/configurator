@@ -13,7 +13,8 @@ use crate::{
     providers::write_and_create_parent,
 };
 
-fn value_to_ron_value(value: Value) -> ron_value::Value {
+// public until generic value implement serde
+pub fn value_to_ron_value(value: Value) -> ron_value::Value {
     match value {
         Value::Empty => ron_value::Value::Unit,
         Value::Unit => ron_value::Value::Unit,
@@ -67,7 +68,8 @@ fn value_to_ron_value(value: Value) -> ron_value::Value {
     }
 }
 
-fn ron_value_to_value(value: ron_value::Value) -> Value {
+// public until generic value implement serde
+pub fn ron_value_to_value(value: ron_value::Value) -> Value {
     match value {
         ron_value::Value::Unit => Value::Empty,
         ron_value::Value::Bool(bool) => Value::Bool(bool),
@@ -105,7 +107,7 @@ fn ron_value_to_value(value: ron_value::Value) -> Value {
             Value::Map(map2)
         }
         ron_value::Value::Tuple(values) => {
-            Value::List(values.into_iter().map(ron_value_to_value).collect())
+            Value::Tuple(values.into_iter().map(ron_value_to_value).collect())
         }
         ron_value::Value::UnitStruct(name) => Value::UnitStruct(name),
         ron_value::Value::Struct(name, map) => {
@@ -124,6 +126,10 @@ fn ron_value_to_value(value: ron_value::Value) -> Value {
 }
 
 pub fn read(path: &Path) -> anyhow::Result<Value> {
+    if !path.exists() {
+        return Ok(Value::Empty);
+    }
+
     let mut map = Map::new();
 
     for dir_entry in fs::read_dir(path)? {

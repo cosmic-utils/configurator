@@ -9,7 +9,7 @@ use schemars::schema::{
     InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation,
 };
 
-use crate::generic_value::{F64, Number};
+use crate::generic_value::{F64, Map, Number};
 
 use super::*;
 
@@ -101,13 +101,15 @@ pub(crate) fn schema_object_to_node(
 
     if let Some(enum_values) = &schema_object.enum_values {
         let node = if enum_values.len() == 1 {
-            NodeContainer::from_node(Node::Value(NodeValue::new(enum_values[0].clone())))
+            NodeContainer::from_node(Node::Value(NodeValue::new(enum_value_to_value(
+                enum_values[0].clone(),
+            ))))
         } else {
             let mut nodes = Vec::new();
 
             for value in enum_values {
                 nodes.push(NodeContainer::from_node(Node::Value(NodeValue::new(
-                    value.clone(),
+                    enum_value_to_value(value.clone()),
                 ))));
             }
 
@@ -201,7 +203,24 @@ pub(crate) fn schema_object_to_node(
         res = res.merge(&node)?;
     }
 
-    let res = res.metadata(&schema_object.metadata);
+    if let Some(metadata) = &schema_object.metadata {
+        // if let Some(default) = metadata
+        //     .default
+        //     .as_ref()
+        //     .and_then(|d| default_value_to_value(&res, d))
+        // {
+        //     res.default = Some(Rc::new(default));
+        // }
+
+        if let Some(title) = &metadata.title {
+            res.title = Some(title.to_owned());
+        }
+
+        if let Some(description) = &metadata.description {
+            res.description = Some(description.to_owned());
+        }
+    }
+
     Some(res)
 }
 
@@ -225,41 +244,8 @@ impl ToSchemaObject for Schema {
     }
 }
 
-pub(crate) fn json_value_to_value(json_value: &json::Value) -> Value {
-    match json_value {
-        json::Value::Null => Value::Option(None),
-        json::Value::Bool(value) => Value::Bool(*value),
-        json::Value::Number(number) => {
-            let num = if let Some(n) = number.as_u128() {
-                Number::U128(n)
-            } else if let Some(n) = number.as_i128() {
-                Number::I128(n)
-            } else if let Some(n) = number.as_f64() {
-                Number::F64(F64(n))
-            } else {
-                panic!("not a valid number")
-            };
-
-            Value::Number(num)
-        }
-        json::Value::String(str) => Value::String(str.clone()),
-        json::Value::Array(vec) => {
-            let array = vec.iter().map(json_value_to_value).collect();
-
-            Value::List(array)
-        }
-        json::Value::Object(fields) => {
-            let map = fields
-                .iter()
-                .map(|(name, value)| (name.clone(), json_value_to_value(value)))
-                .collect();
-
-            Value::Struct(None, map)
-        }
-    }
-}
-
 impl NodeContainer {
+    // todo: &mut variant ?
     fn merge(&self, other: &NodeContainer) -> Option<NodeContainer> {
         match (&self.node, &other.node) {
             (Node::Null, Node::Null) => Some(other.clone()),
@@ -321,5 +307,90 @@ impl NodeContainer {
                 None
             }
         }
+    }
+}
+
+fn enum_value_to_value(json_value: json::Value) -> Value {
+    match json_value {
+        json::Value::Null => Value::Option(None),
+        json::Value::Bool(value) => Value::Bool(value),
+        json::Value::Number(number) => {
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
+            } else if let Some(n) = number.as_f64() {
+                Number::F64(F64(n))
+            } else {
+                panic!("not a valid number")
+            };
+
+            Value::Number(num)
+        }
+        json::Value::String(str) => Value::UnitStruct(str),
+        json::Value::Array(vec) => {
+            let array = vec.into_iter().map(enum_value_to_value).collect();
+
+            Value::List(array)
+        }
+        json::Value::Object(fields) => {
+            let map = fields
+                .into_iter()
+                .map(|(name, value)| (name, enum_value_to_value(value)))
+                .collect();
+
+            Value::Struct(None, map)
+        }
+    }
+}
+
+#[instrument(skip_all)]
+fn default_value_to_value(node: &NodeContainer, value: &json::Value) -> Option<Value> {
+    // debug!("{value}.\n{:#?}", node);
+
+    match (&node.node, value) {
+        (Node::Null, json::Value::Null) => Some(Value::Option(None)),
+        (Node::Bool(node_bool), json::Value::Bool(v)) => Some(Value::Bool(*v)),
+        (Node::String(node_string), json::Value::String(v)) => Some(Value::String(v.to_owned())),
+        (Node::Number(node_number), json::Value::Number(number)) => {
+            let num = if let Some(n) = number.as_u128() {
+                Number::U128(n)
+            } else if let Some(n) = number.as_i128() {
+                Number::I128(n)
+            } else if let Some(n) = number.as_f64() {
+                Number::F64(F64(n))
+            } else {
+                panic!("not a valid number")
+            };
+
+            Some(Value::Number(num))
+        }
+        (Node::Value(node_value), value) => match (&node_value.value, value) {
+            (Value::UnitStruct(s1), json::Value::String(s2)) if s1 == s2 => {
+                Some(Value::UnitStruct(s1.to_owned()))
+            }
+            _ => panic!("error: no match for node_value {value} and {node_value:#?}"),
+        },
+        (Node::Enum(node_enum), value) => node_enum
+            .nodes
+            .iter()
+            .find_map(|n| default_value_to_value(n, value)),
+
+        (Node::Object(node_object), json::Value::Object(json_object)) => {
+            if let Some(template) = &node_object.template {
+                let mut map = Map::with_capacity(json_object.len());
+
+                for (key, value) in json_object {
+                    let value = default_value_to_value(template, value).unwrap();
+                    map.0.insert(Value::String(key.to_owned()), value);
+                }
+
+                Some(Value::Map(map))
+            } else {
+                todo!()
+            }
+        }
+
+        _ => None,
     }
 }

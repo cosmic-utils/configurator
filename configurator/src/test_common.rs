@@ -16,7 +16,7 @@ pub struct Complex {
 impl Default for Complex {
     fn default() -> Self {
         Self {
-            x: "default of complex mgl".into(),
+            x: "hello complex".into(),
             y: 10,
         }
     }
@@ -48,16 +48,19 @@ impl Default for Rec {
 pub enum EnumComplex {
     A,
     B(i32),
-    C(Complex),
+    C(Complex, i32),
     D { a: i32, b: Complex },
 }
 
 impl Default for EnumComplex {
     fn default() -> Self {
-        Self::C(Complex {
-            x: "hello".into(),
-            y: 1,
-        })
+        Self::C(
+            Complex {
+                x: "hello".into(),
+                y: 1,
+            },
+            1,
+        )
     }
 }
 
@@ -130,7 +133,13 @@ pub struct TestEnumSimple {
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestEnumComplex {
-    x: EnumComplex,
+    pub x: EnumComplex,
+}
+
+#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[serde(default)]
+pub struct TestComplex {
+    x: Complex,
 }
 
 #[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]

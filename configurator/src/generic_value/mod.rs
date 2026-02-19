@@ -9,6 +9,7 @@ pub use map::Map;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Value {
+    /// Represent the absence of value.
     Empty,
     Unit,
     Bool(bool),
@@ -19,7 +20,9 @@ pub enum Value {
     Option(Option<Box<Value>>),
     List(Vec<Value>),
     Map(Map<Value, Value>),
+    // todo: merge with NamedTuple?
     Tuple(Vec<Value>),
+    // todo: merge with Struct ?
     UnitStruct(String),
     Struct(Option<String>, Map<String, Value>),
     NamedTuple(String, Vec<Value>),
@@ -62,11 +65,43 @@ impl Value {
         }
     }
 
-    pub fn as_struct(&self) -> Option<&Map<String, Value>> {
-        if let Value::Struct(_, v) = self {
+    pub fn as_struct(&self) -> Option<(&Option<String>, &Map<String, Value>)> {
+        if let Value::Struct(name, v) = self {
+            Some((name, v))
+        } else {
+            None
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self == &Value::Empty
+    }
+
+    pub fn as_list(&self) -> Option<&Vec<Value>> {
+        if let Value::List(v) = self {
             Some(v)
         } else {
             None
         }
+    }
+
+    pub fn as_tuple(&self) -> Option<&Vec<Value>> {
+        if let Value::Tuple(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_named_tuple(&self) -> Option<(&String, &Vec<Value>)> {
+        if let Value::NamedTuple(name, v) = self {
+            Some((name, v))
+        } else {
+            None
+        }
+    }
+
+    pub fn is_null(&self) -> bool {
+        self == &Value::Option(None)
     }
 }

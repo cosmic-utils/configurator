@@ -100,12 +100,6 @@ pub fn gen_schema() {
 
 #[test]
 #[ignore]
-fn print_default_figment() {
-    super::print_default_figment::<Config>();
-}
-
-#[test]
-#[ignore]
 fn print_json() {
     super::print_json::<Config>();
 }

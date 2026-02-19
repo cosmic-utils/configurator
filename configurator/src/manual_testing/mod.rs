@@ -1,9 +1,10 @@
-use std::{fs, path::Path};
+use std::{fmt::Debug, fs, path::Path, str::FromStr};
 
 use configurator_utils::ConfigFormat;
-use figment::{Figment, Profile, providers};
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
+
+use crate::node::NodeContainer;
 
 mod testing1;
 mod testing2;
@@ -21,7 +22,16 @@ fn get_schema<C: JsonSchema>(name: &str) -> String {
 pub fn print_schema<C: JsonSchema>(name: &str) {
     let e = get_schema::<C>(name);
 
-    print!("{}", e);
+    println!("{}", e);
+}
+
+pub fn print_node_container<C: JsonSchema>(name: &str) {
+    let content = get_schema::<C>(name);
+
+    let json_value = json::Value::from_str(&content).unwrap();
+    let tree = NodeContainer::from_json_schema(&json::from_value(json_value).unwrap());
+
+    println!("{:#?}", tree);
 }
 
 pub fn gen_schema<C: JsonSchema>(name: &str) {
@@ -38,21 +48,20 @@ pub fn gen_schema<C: JsonSchema>(name: &str) {
     fs::write(schema_path, &schema).unwrap();
 }
 
-pub fn print_default_figment<C: Default + Serialize>() {
-    let figment =
-        Figment::new().merge(providers::Serialized::from(&C::default(), Profile::Default));
-
-    dbg!(&figment);
-}
-
 pub fn print_json<C: Default + Serialize>() {
     let e = json::to_string_pretty(&C::default()).unwrap();
 
-    print!("{}", e);
+    println!("{}", e);
 }
 
 pub fn print_ron<C: Default + Serialize>() {
     let e = ron::to_string(&C::default()).unwrap();
 
-    print!("{}", e);
+    println!("{}", e);
+}
+
+pub fn from_ron<C: Debug + DeserializeOwned>(ron: &str) {
+    let e: C = ron::from_str(ron).unwrap();
+
+    println!("{:?}", e);
 }
