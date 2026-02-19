@@ -4168,6 +4168,7 @@ name = "rust_schema"
 version = "0.1.0"
 dependencies = [
  "facet",
+ "serde",
 ]
 
 [[package]]
