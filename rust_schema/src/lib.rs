@@ -37,7 +37,7 @@ enum RustSchemaKind {
     Map(RustSchemaId, RustSchemaId),
     Struct(String, BTreeMap<String, RustSchemaId>),
     TupleStruct(String, Vec<RustSchemaId>),
-    Enum(String, Vec<(String, Option<EnumVariantKind>)>),
+    Enum(String, Vec<(String, EnumVariantKind)>),
 }
 
 enum EnumVariantKind {
