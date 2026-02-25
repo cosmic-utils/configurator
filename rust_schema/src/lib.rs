@@ -7,6 +7,7 @@ use facet::Facet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+// https://github.com/facet-rs/facet/blob/main/facet-format/src/serializer.rs#L2159
 enum Value {
     Unit,
     Null,
