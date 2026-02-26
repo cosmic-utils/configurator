@@ -4,7 +4,10 @@ use facet::{Facet, ScalarType};
 use facet_format::{FormatSerializer, ScalarValue, SerializeError};
 use facet_reflect::Peek;
 
-use crate::{Number, Value};
+use crate::{
+    Number, Value,
+    number::{F32, F64},
+};
 
 #[derive(Debug)]
 pub struct ToValueError {
@@ -227,8 +230,8 @@ impl FormatSerializer for ValueSerializer {
             ScalarType::I64 => Value::Number(Number::I64(*value.get::<i64>().unwrap())),
             ScalarType::I128 => Value::Number(Number::I128(*value.get::<i128>().unwrap())),
             ScalarType::ISize => Value::Number(Number::ISize(*value.get::<isize>().unwrap())),
-            ScalarType::F32 => Value::Number(Number::F32(*value.get::<f32>().unwrap())),
-            ScalarType::F64 => Value::Number(Number::F64(*value.get::<f64>().unwrap())),
+            ScalarType::F32 => Value::Number(Number::F32(F32(*value.get::<f32>().unwrap()))),
+            ScalarType::F64 => Value::Number(Number::F64(F64(*value.get::<f64>().unwrap()))),
             _ => {
                 todo!("{:?}", scalar_type)
             }
@@ -248,7 +251,7 @@ impl FormatSerializer for ValueSerializer {
             ScalarValue::U64(v) => Value::Number(Number::U64(v)),
             ScalarValue::I128(v) => Value::Number(Number::I128(v)),
             ScalarValue::U128(v) => Value::Number(Number::U128(v)),
-            ScalarValue::F64(v) => Value::Number(Number::F64(v)),
+            ScalarValue::F64(v) => Value::Number(Number::F64(F64(v))),
             ScalarValue::Str(v) => Value::String(v.into_owned()),
             ScalarValue::Bytes(v) => todo!(),
         };
@@ -271,7 +274,7 @@ mod test {
 
     use facet::Facet;
 
-    use crate::{Value, serialize::to_value};
+    use crate::{Number, Value, number::F32, serialize::to_value};
 
     #[derive(Facet, Debug)]
     struct SimpleStruct {
@@ -366,7 +369,49 @@ mod test {
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(
+            value,
+            Value::Struct(
+                String::from("SimpleStruct"),
+                [
+                    ("s", Value::String(String::from("hello"))),
+                    ("f", Value::Number(Number::F32(F32(3.66)))),
+                    ("i", Value::Number(Number::I32(4))),
+                    ("opt", Value::Null),
+                    ("c", Value::Char('\n')),
+                    ("b", Value::Bool(false)),
+                    ("u", Value::Unit),
+                    (
+                        "v",
+                        Value::Array(
+                            [1, 2, 3]
+                                .map(|v| Value::Number(Number::I32(v)))
+                                .into_iter()
+                                .collect()
+                        )
+                    ),
+                    (
+                        "t",
+                        Value::Tuple(vec![
+                            Value::String(String::from("hello")),
+                            Value::String(String::from("world"))
+                        ])
+                    ),
+                    (
+                        "h",
+                        Value::Map(
+                            [("key1", 6), ("key2", 7)]
+                                .map(|(k, v)| (k.to_owned(), Value::Number(Number::I32(v))))
+                                .into_iter()
+                                .collect()
+                        )
+                    ),
+                ]
+                .map(|(k, v)| (k.to_owned(), v))
+                .into_iter()
+                .collect()
+            )
+        );
     }
 
     #[test]

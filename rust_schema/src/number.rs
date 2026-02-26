@@ -1,6 +1,7 @@
+use core::cmp::Ordering;
 use std::fmt::Display;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Number {
     U8(u8),
     U16(u16),
@@ -14,9 +15,58 @@ pub enum Number {
     I64(i64),
     I128(i128),
     ISize(isize),
-    F32(f32),
-    F64(f64),
+    F32(F32),
+    F64(F64),
 }
+
+macro_rules! float_ty {
+    ($ty:ident($float:ty)) => {
+        #[derive(Copy, Clone, Debug)]
+        pub struct $ty(pub $float);
+
+        impl $ty {
+            #[must_use]
+            pub fn new(v: $float) -> Self {
+                Self(v)
+            }
+        }
+
+        impl From<$float> for $ty {
+            fn from(v: $float) -> Self {
+                Self::new(v)
+            }
+        }
+
+        impl Display for $ty {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
+        impl PartialEq for $ty {
+            fn eq(&self, other: &Self) -> bool {
+                self.cmp(other).is_eq()
+            }
+        }
+
+        impl Eq for $ty {}
+
+        impl PartialOrd for $ty {
+            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+                Some(self.cmp(other))
+            }
+        }
+
+        impl Ord for $ty {
+            fn cmp(&self, other: &Self) -> Ordering {
+                self.0.total_cmp(&other.0)
+            }
+        }
+    };
+}
+
+float_ty! { F32(f32) }
+float_ty! { F64(f64) }
 
 impl Display for Number {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -89,8 +139,8 @@ impl Number {
             Number::I8(v) => v.into(),
             Number::I16(v) => v.into(),
             Number::I32(v) => v.into(),
-            Number::F32(v) => v.into(),
-            Number::F64(v) => v,
+            Number::F32(v) => v.0.into(),
+            Number::F64(v) => v.0,
             Number::U64(v) => v as f64,
             Number::U128(v) => v as f64,
             Number::USize(v) => v as f64,
@@ -102,6 +152,13 @@ impl Number {
 }
 
 macro_rules! number_from_impl {
+    (Number::$variant:ident($wrap:ident($ty:ty))) => {
+        impl From<$ty> for Number {
+            fn from(v: $ty) -> Number {
+                Number::$variant($wrap(v))
+            }
+        }
+    };
     (Number::$variant:ident($ty:ty)) => {
         impl From<$ty> for Number {
             fn from(v: $ty) -> Number {
@@ -121,5 +178,5 @@ number_from_impl! { Number::U16(u16) }
 number_from_impl! { Number::U32(u32) }
 number_from_impl! { Number::U64(u64) }
 number_from_impl! { Number::U128(u128) }
-number_from_impl! { Number::F32(f32) }
-number_from_impl! { Number::F64(f64) }
+number_from_impl! { Number::F32(F32(f32)) }
+number_from_impl! { Number::F64(F64(f64)) }

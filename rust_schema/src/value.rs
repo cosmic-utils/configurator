@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use crate::number::Number;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Value {
     Unit,
     Null,

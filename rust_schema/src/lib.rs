@@ -8,8 +8,8 @@ mod testing;
 mod number;
 mod value;
 
-pub use value::Value;
 pub use number::Number;
+pub use value::Value;
 
 struct RustSchemaRoot {
     schema: RustSchemaOrRef,
