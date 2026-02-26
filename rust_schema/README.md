@@ -12,3 +12,4 @@ todo:
 
 - struct_metadata is not called with a top level tuple struct/
 - Tuples and arrays are not differentiated.
+- for an enum tuple variant, begin_struct and begin_seq is called

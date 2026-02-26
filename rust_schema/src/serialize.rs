@@ -346,6 +346,14 @@ impl FormatSerializer for ValueSerializer {
                 Ok(())
             }
             Some(StackFrame::EnumVariantTuple { name, elems }) => {
+                // workaround the call of begin_struct and begin_seq for enum tuple variants
+                let elems = {
+                    let mut elems = elems;
+                    let Value::Array(elems) = elems.remove(0) else {
+                        panic!("first element of EnumVariantTuple is not an array")
+                    };
+                    elems
+                };
                 self.emit(Value::EnumVariantTuple(name, elems));
                 Ok(())
             }
