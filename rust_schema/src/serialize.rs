@@ -771,6 +771,23 @@ mod test {
     }
 
     #[test]
+    fn tuple_nested() {
+        #[derive(Facet)]
+        struct NestedTuple(bool, (bool, bool));
+
+        let c = NestedTuple(false, (false, false));
+
+        let value = to_value(&c).unwrap();
+
+        assert_eq!(
+            value,
+            Value::TupleStruct(String::from("NestedTuple"), vec![
+                Value::from(false), Value::Tuple(vec![Value::from(false), Value::from(false)])
+            ])
+        );
+    }
+
+    #[test]
     fn struct_nested() {
         let c = StructNested {
             v: vec![ComplexNested::new(
