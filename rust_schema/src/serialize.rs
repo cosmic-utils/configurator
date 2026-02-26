@@ -40,6 +40,7 @@ enum Pending {
     TupleStruct { name: String },
     Tuple { field_count: usize },
     EnumVariantTuple { name: String },
+    EnumVariantStruct { name: String },
 }
 
 #[derive(Debug)]
@@ -70,6 +71,11 @@ enum StackFrame {
     EnumVariantTuple {
         name: String,
         elems: Vec<Value>,
+    },
+    EnumVariantStruct {
+        name: String,
+        elems: BTreeMap<String, Value>,
+        pending_key: Option<String>,
     },
 }
 
@@ -112,6 +118,16 @@ impl ValueSerializer {
 
             Some(StackFrame::EnumVariantTuple { elems, .. }) => {
                 elems.push(value);
+            }
+
+            Some(StackFrame::EnumVariantStruct {
+                elems, pending_key, ..
+            }) => {
+                let key = pending_key
+                    .take()
+                    .expect("emit called on struct without pending key");
+
+                elems.insert(key, value);
             }
 
             Some(StackFrame::Map { elems, pending_key }) => match pending_key.take() {
@@ -191,6 +207,11 @@ impl FormatSerializer for ValueSerializer {
                     name,
                     elems: Vec::new(),
                 },
+                Pending::EnumVariantStruct { name } => StackFrame::EnumVariantStruct {
+                    name,
+                    elems: BTreeMap::new(),
+                    pending_key: None,
+                },
             },
             None => panic!("no pending struct"),
         };
@@ -247,7 +268,11 @@ impl FormatSerializer for ValueSerializer {
                     name: variant.name.to_owned(),
                 })
             }
-            StructKind::Struct => {}
+            StructKind::Struct => {
+                self.pending = Some(Pending::EnumVariantTuple {
+                    name: variant.name.to_owned(),
+                })
+            }
             StructKind::Tuple => todo!(),
         }
 
@@ -364,6 +389,7 @@ impl FormatSerializer for ValueSerializer {
                     elems: Vec::with_capacity(field_count),
                 },
                 Pending::EnumVariantTuple { name } => unreachable!(),
+                Pending::EnumVariantStruct { name } => unreachable!(),
             }
         } else {
             StackFrame::Array { elems: Vec::new() }
