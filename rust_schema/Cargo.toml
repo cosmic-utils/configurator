@@ -7,10 +7,17 @@ license.workspace = true
 keywords.workspace = true
 
 [dependencies]
-facet = "0.43.2"
-json.workspace = true
-schemars = "1"
-serde = { workspace = true, features = ["derive"] }
+facet = "0.43"
+facet-core = "0.43"
+facet-format = "0.43"
+facet-reflect = "0.43"
 
 [lints]
 workspace = true
+
+
+
+[dev-dependencies]
+json.workspace = true
+schemars = "1"
+serde = { workspace = true, features = ["derive"] }

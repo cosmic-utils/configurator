@@ -1484,6 +1484,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "facet-dessert"
+version = "0.43.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "637aa74d6510e43019c8bb764fce5e999d7cdc1d068a9b993bb2f2325fb533af"
+dependencies = [
+ "facet-core",
+ "facet-reflect",
+]
+
+[[package]]
+name = "facet-format"
+version = "0.43.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ae2f526d1c4797fffe1e41ccb53104473f947b1f146d0e91a7290658078e22b"
+dependencies = [
+ "facet-core",
+ "facet-dessert",
+ "facet-path",
+ "facet-reflect",
+ "facet-solver",
+]
+
+[[package]]
 name = "facet-macro-parse"
 version = "0.43.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1526,6 +1549,34 @@ dependencies = [
  "quote",
  "strsim",
  "unsynn",
+]
+
+[[package]]
+name = "facet-path"
+version = "0.43.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfbb5bdb426428005af0658b46e0c8d73c42b73c59a2a9e47cb52fa2f4dbc8b8"
+dependencies = [
+ "facet-core",
+]
+
+[[package]]
+name = "facet-reflect"
+version = "0.43.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4418c9fceaac9adcd055cc3732954d79b5d67ef04fb855dd219f2b314ba26cff"
+dependencies = [
+ "facet-core",
+]
+
+[[package]]
+name = "facet-solver"
+version = "0.43.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e658ff4822b1ece03ab0cfeee867d41e7483b593be63345468806994d6fcd942"
+dependencies = [
+ "facet-core",
+ "facet-reflect",
 ]
 
 [[package]]
@@ -4188,6 +4239,9 @@ name = "rust_schema"
 version = "0.1.0"
 dependencies = [
  "facet",
+ "facet-core",
+ "facet-format",
+ "facet-reflect",
  "schemars 1.2.1",
  "serde",
  "serde_json",
