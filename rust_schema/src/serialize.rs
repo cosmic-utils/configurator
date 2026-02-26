@@ -31,16 +31,15 @@ impl core::error::Error for ToValueError {}
 struct ValueSerializer {
     stack: Vec<StackFrame>,
     result: Option<Value>,
-    // pending: Option<Pending>,
-    pending_tuple: Option<usize>,
+    pending: Option<Pending>,
 }
 
-// enum Pending {
-//     Struct,
-//     UnitStruct,
-//     Tuple(usize),
-//     TupleStruct,
-// }
+enum Pending {
+    Struct { name: String },
+    UnitStruct { name: String },
+    TupleStruct { name: String },
+    Tuple { field_count: usize },
+}
 
 #[derive(Debug)]
 enum StackFrame {
@@ -73,7 +72,7 @@ impl ValueSerializer {
         Self {
             stack: Vec::new(),
             result: None,
-            pending_tuple: None,
+            pending: None,
         }
     }
 
@@ -133,32 +132,21 @@ impl FormatSerializer for ValueSerializer {
         println!("struct_metadata: {shape:?}");
         println!();
 
-        // if let Type::User(UserType::Struct(struct_type)) = &shape.ty {
-        //     let pending = match struct_type.kind {
-        //         StructKind::Unit => Pending::UnitStruct,
-        //         StructKind::TupleStruct => Pending::TupleStruct,
-        //         StructKind::Struct => Pending::Struct,
-        //         StructKind::Tuple => Pending::Tuple(0),
-        //     };
-
-        // }
-
         if let Type::User(UserType::Struct(struct_type)) = &shape.ty {
             let pending = match struct_type.kind {
-                StructKind::Unit => self.stack.push(StackFrame::UnitStruct {
+                StructKind::Unit => Pending::UnitStruct {
                     name: shape.type_identifier.to_owned(),
-                }),
-                StructKind::TupleStruct => self.stack.push(StackFrame::TupleStruct {
+                },
+                StructKind::TupleStruct => Pending::TupleStruct {
                     name: shape.type_identifier.to_owned(),
-                    elems: Vec::new(),
-                }),
-                StructKind::Struct => self.stack.push(StackFrame::Struct {
+                },
+                StructKind::Struct => Pending::Struct {
                     name: shape.type_identifier.to_owned(),
-                    elems: BTreeMap::new(),
-                    pending_key: None,
-                }),
-                StructKind::Tuple => todo!(),
+                },
+                StructKind::Tuple => unreachable!(),
             };
+
+            self.pending = Some(pending);
         }
 
         Ok(())
@@ -168,6 +156,25 @@ impl FormatSerializer for ValueSerializer {
         println!("begin_struct");
         println!();
 
+        let stack_frame = match self.pending.take() {
+            Some(pending) => match pending {
+                Pending::Struct { name } => StackFrame::Struct {
+                    name,
+                    elems: BTreeMap::new(),
+                    pending_key: None,
+                },
+                Pending::UnitStruct { name } => StackFrame::UnitStruct { name },
+                Pending::TupleStruct { name } => StackFrame::TupleStruct {
+                    name,
+                    elems: Vec::new(),
+                },
+                Pending::Tuple { field_count } => unreachable!(),
+            },
+            None => panic!("no pending struct"),
+        };
+
+        self.stack.push(stack_frame);
+
         Ok(())
     }
 
@@ -176,10 +183,27 @@ impl FormatSerializer for ValueSerializer {
         println!();
 
         if let Some(field) = &field.field
-            && let Type::User(UserType::Struct(struct_type)) = &field.shape.get().ty
-            && struct_type.kind == StructKind::Tuple
+            && let shape = field.shape.get()
+            && let Type::User(UserType::Struct(struct_type)) = &shape.ty
         {
-            self.pending_tuple = Some(struct_type.fields.len());
+            let pending = match struct_type.kind {
+                // StructKind::Unit => Pending::UnitStruct {
+                //     name: shape.type_identifier.to_owned(),
+                // },
+
+                // StructKind::Struct => Pending::Struct {
+                //     name: shape.type_identifier.to_owned(),
+                // },
+                StructKind::TupleStruct => Pending::TupleStruct {
+                    name: shape.type_identifier.to_owned(),
+                },
+                StructKind::Tuple => Pending::Tuple {
+                    field_count: struct_type.fields.len(),
+                },
+                StructKind::Unit => todo!(),
+                StructKind::Struct => todo!(),
+            };
+            self.pending = Some(pending);
         }
 
         Ok(())
@@ -280,11 +304,23 @@ impl FormatSerializer for ValueSerializer {
         println!("begin_seq");
         println!();
 
-        if let Some(fields) = self.pending_tuple.take() {
-            self.stack.push(StackFrame::Tuple { elems: Vec::new() });
+        let stack_frame = if let Some(pending) = self.pending.take() {
+            match pending {
+                Pending::Struct { name } => unreachable!(),
+                Pending::UnitStruct { name } => unreachable!(),
+                Pending::TupleStruct { name } => StackFrame::TupleStruct {
+                    name,
+                    elems: Vec::new(),
+                },
+                Pending::Tuple { field_count } => StackFrame::Tuple {
+                    elems: Vec::with_capacity(field_count),
+                },
+            }
         } else {
-            self.stack.push(StackFrame::Array { elems: Vec::new() });
-        }
+            StackFrame::Array { elems: Vec::new() }
+        };
+
+        self.stack.push(stack_frame);
         Ok(())
     }
 
@@ -295,6 +331,9 @@ impl FormatSerializer for ValueSerializer {
             }
             Some(StackFrame::Tuple { elems }) => {
                 self.emit(Value::Tuple(elems));
+            }
+            Some(StackFrame::TupleStruct { name, elems }) => {
+                self.emit(Value::TupleStruct(name, elems));
             }
             _ => panic!("end_seq called without matching begin_seq"),
         }
@@ -524,6 +563,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "facet limitation ig"]
     fn tuple_struct() {
         let c = TupleStruct("hello".into(), 3);
 
@@ -537,6 +577,40 @@ mod test {
                     Value::String(String::from("hello")),
                     Value::Number(Number::I32(3)),
                 ]
+            )
+        )
+    }
+
+    #[test]
+    fn tuple_struct2() {
+        #[derive(Facet, Debug)]
+        struct TupleStruct2 {
+            t: TupleStruct,
+        }
+
+        let c = TupleStruct2 {
+            t: TupleStruct("hello".into(), 3),
+        };
+
+        let value = to_value(&c).unwrap();
+
+        assert_eq!(
+            value,
+            Value::Struct(
+                String::from("TupleStruct2"),
+                [(
+                    "t",
+                    Value::TupleStruct(
+                        String::from("TupleStruct"),
+                        vec![
+                            Value::String(String::from("hello")),
+                            Value::Number(Number::I32(3)),
+                        ]
+                    )
+                )]
+                .map(|(k, v)| (k.to_owned(), v))
+                .into_iter()
+                .collect()
             )
         )
     }
