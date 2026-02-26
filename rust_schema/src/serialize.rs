@@ -162,6 +162,10 @@ impl ValueSerializer {
 impl FormatSerializer for ValueSerializer {
     type Error = ToValueError;
 
+    fn map_encoding(&self) -> facet_format::MapEncoding {
+        facet_format::MapEncoding::Pairs
+    }
+
     fn struct_metadata(&mut self, shape: &facet_core::Shape) -> Result<(), Self::Error> {
         println!("struct_metadata: {shape:?}");
         println!();
@@ -182,41 +186,6 @@ impl FormatSerializer for ValueSerializer {
 
             self.pending = Some(pending);
         }
-
-        Ok(())
-    }
-
-    fn begin_struct(&mut self) -> Result<(), Self::Error> {
-        println!("begin_struct");
-        println!();
-
-        let stack_frame = match self.pending.take() {
-            Some(pending) => match pending {
-                Pending::Struct { name } => StackFrame::Struct {
-                    name,
-                    elems: BTreeMap::new(),
-                    pending_key: None,
-                },
-                Pending::UnitStruct { name } => StackFrame::UnitStruct { name },
-                Pending::TupleStruct { name } => StackFrame::TupleStruct {
-                    name,
-                    elems: Vec::new(),
-                },
-                Pending::Tuple { field_count } => unreachable!(),
-                Pending::EnumVariantTuple { name } => StackFrame::EnumVariantTuple {
-                    name,
-                    elems: Vec::new(),
-                },
-                Pending::EnumVariantStruct { name } => StackFrame::EnumVariantStruct {
-                    name,
-                    elems: BTreeMap::new(),
-                    pending_key: None,
-                },
-            },
-            None => panic!("no pending struct"),
-        };
-
-        self.stack.push(stack_frame);
 
         Ok(())
     }
@@ -290,22 +259,6 @@ impl FormatSerializer for ValueSerializer {
         Ok(false)
     }
 
-    fn map_encoding(&self) -> facet_format::MapEncoding {
-        facet_format::MapEncoding::Pairs
-    }
-
-    fn begin_map_with_len(&mut self, _len: usize) -> Result<(), Self::Error> {
-        println!("begin_map_with_len");
-        println!();
-
-        self.stack.push(StackFrame::Map {
-            elems: BTreeMap::new(),
-            pending_key: None,
-        });
-
-        Ok(())
-    }
-
     fn field_key(&mut self, key: &str) -> Result<(), Self::Error> {
         println!("field_key: {key}");
         println!();
@@ -325,6 +278,41 @@ impl FormatSerializer for ValueSerializer {
             }
             _ => panic!("field_key called outside of object"),
         }
+        Ok(())
+    }
+
+    fn begin_struct(&mut self) -> Result<(), Self::Error> {
+        println!("begin_struct");
+        println!();
+
+        let stack_frame = match self.pending.take() {
+            Some(pending) => match pending {
+                Pending::Struct { name } => StackFrame::Struct {
+                    name,
+                    elems: BTreeMap::new(),
+                    pending_key: None,
+                },
+                Pending::UnitStruct { name } => StackFrame::UnitStruct { name },
+                Pending::TupleStruct { name } => StackFrame::TupleStruct {
+                    name,
+                    elems: Vec::new(),
+                },
+                Pending::Tuple { field_count } => unreachable!(),
+                Pending::EnumVariantTuple { name } => StackFrame::EnumVariantTuple {
+                    name,
+                    elems: Vec::new(),
+                },
+                Pending::EnumVariantStruct { name } => StackFrame::EnumVariantStruct {
+                    name,
+                    elems: BTreeMap::new(),
+                    pending_key: None,
+                },
+            },
+            None => panic!("no pending struct"),
+        };
+
+        self.stack.push(stack_frame);
+
         Ok(())
     }
 
@@ -359,6 +347,18 @@ impl FormatSerializer for ValueSerializer {
             }
             _ => panic!("end_struct called without matching begin_struct"),
         }
+    }
+
+    fn begin_map_with_len(&mut self, _len: usize) -> Result<(), Self::Error> {
+        println!("begin_map_with_len");
+        println!();
+
+        self.stack.push(StackFrame::Map {
+            elems: BTreeMap::new(),
+            pending_key: None,
+        });
+
+        Ok(())
     }
 
     fn end_map(&mut self) -> Result<(), Self::Error> {
