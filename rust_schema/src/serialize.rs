@@ -269,7 +269,7 @@ impl FormatSerializer for ValueSerializer {
                 })
             }
             StructKind::Struct => {
-                self.pending = Some(Pending::EnumVariantTuple {
+                self.pending = Some(Pending::EnumVariantStruct {
                     name: variant.name.to_owned(),
                 })
             }
@@ -318,6 +318,9 @@ impl FormatSerializer for ValueSerializer {
                 *pending_key = Some(key.to_owned());
             }
             Some(StackFrame::EnumVariantTuple { .. }) => {
+                // pass ?
+            }
+            Some(StackFrame::EnumVariantStruct { .. }) => {
                 // pass ?
             }
             _ => panic!("field_key called outside of object"),
