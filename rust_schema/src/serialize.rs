@@ -520,7 +520,7 @@ mod test {
     use crate::{
         Number, Value,
         number::{F32, F64},
-        serialize::to_value,
+        serialize::{make_enum_struct, make_map, make_struct, to_value},
     };
 
     #[derive(Facet, Debug)]
@@ -570,11 +570,11 @@ mod test {
     }
 
     impl ComplexNested {
-        fn new(c: &str, o: Option<ComplexNested>, o2: Option<EnumNested>) -> Self {
+        fn new(c: &str, opt_c: Option<ComplexNested>, opt_e: Option<EnumNested>) -> Self {
             Self {
                 c: Complex::new(c),
-                opt_c: o.map(Box::new),
-                opt_e: o2.map(Box::new),
+                opt_c: opt_c.map(Box::new),
+                opt_e: opt_e.map(Box::new),
             }
         }
     }
@@ -806,6 +806,124 @@ mod test {
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(
+            value,
+            make_struct(
+                "StructNested",
+                &[
+                    (
+                        "v",
+                        Value::Array(vec![make_struct(
+                            "ComplexNested",
+                            &[
+                                ("c", make_struct("Complex", &[("c", Value::from("hello")),])),
+                                (
+                                    "opt_c",
+                                    make_struct(
+                                        "ComplexNested",
+                                        &[
+                                            (
+                                                "c",
+                                                make_struct(
+                                                    "Complex",
+                                                    &[("c", Value::from("world")),]
+                                                )
+                                            ),
+                                            ("opt_c", Value::Null),
+                                            ("opt_e", Value::Null)
+                                        ]
+                                    )
+                                ),
+                                ("opt_e", Value::EnumVariantUnit("Unit".to_owned()))
+                            ]
+                        ),])
+                    ),
+                    (
+                        "t",
+                        Value::Tuple(vec![
+                            Value::from("hello"),
+                            make_struct(
+                                "ComplexNested",
+                                &[
+                                    ("c", make_struct("Complex", &[("c", Value::from("c")),])),
+                                    ("opt_c", Value::Null),
+                                    (
+                                        "opt_e",
+                                        Value::EnumVariantTuple(
+                                            "Tuple".to_owned(),
+                                            vec![
+                                                make_struct(
+                                                    "Complex",
+                                                    &[("c", Value::from("neested")),]
+                                                ),
+                                                Value::Number(Number::I32(0))
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        ])
+                    ),
+                    (
+                        "m",
+                        make_map(&[(
+                            "k",
+                            make_struct(
+                                "ComplexNested",
+                                &[
+                                    ("c", make_struct("Complex", &[("c", Value::from("c")),])),
+                                    ("opt_c", Value::Null),
+                                    (
+                                        "opt_e",
+                                        make_enum_struct(
+                                            "Struct",
+                                            &[
+                                                (
+                                                    "c",
+                                                    make_struct(
+                                                        "Complex",
+                                                        &[("c", Value::from("hello")),]
+                                                    )
+                                                ),
+                                                ("s", Value::from("world"))
+                                            ]
+                                        )
+                                    )
+                                ]
+                            )
+                        )])
+                    ),
+                ]
+            )
+        );
     }
+}
+
+fn make_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Value {
+    Value::Struct(
+        name.to_owned(),
+        fields
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v.clone()))
+            .collect(),
+    )
+}
+
+fn make_enum_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Value {
+    Value::EnumVariantStruct(
+        name.to_owned(),
+        fields
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v.clone()))
+            .collect(),
+    )
+}
+
+fn make_map(fields: &[(&'static str, Value)]) -> Value {
+    Value::Map(
+        fields
+            .into_iter()
+            .map(|(k, v)| (k.to_string(), v.clone()))
+            .collect(),
+    )
 }

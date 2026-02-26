@@ -20,3 +20,9 @@ pub enum Value {
     EnumVariantTuple(String, Vec<Value>),
     EnumVariantStruct(String, BTreeMap<String, Value>),
 }
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(value.to_owned())
+    }
+}
