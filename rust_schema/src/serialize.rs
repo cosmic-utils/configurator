@@ -39,6 +39,7 @@ enum Pending {
     UnitStruct { name: String },
     TupleStruct { name: String },
     Tuple { field_count: usize },
+    EnumVariantTuple { name: String },
 }
 
 #[derive(Debug)]
@@ -64,6 +65,11 @@ enum StackFrame {
     Map {
         elems: BTreeMap<String, Value>,
         pending_key: Option<String>,
+    },
+    EnumVariantUnit,
+    EnumVariantTuple {
+        name: String,
+        elems: Vec<Value>,
     },
 }
 
@@ -104,6 +110,10 @@ impl ValueSerializer {
                 elems.push(value);
             }
 
+            Some(StackFrame::EnumVariantTuple { elems, .. }) => {
+                elems.push(value);
+            }
+
             Some(StackFrame::Map { elems, pending_key }) => match pending_key.take() {
                 Some(key) => {
                     elems.insert(key, value);
@@ -117,6 +127,14 @@ impl ValueSerializer {
             },
             Some(StackFrame::UnitStruct { .. }) => {
                 panic!("emit value in unit struct")
+            }
+            Some(StackFrame::EnumVariantUnit) => {
+                if let Value::String(name) = value {
+                    self.stack.pop();
+                    self.emit(Value::EnumVariantUnit(name));
+                } else {
+                    panic!("value of enum variant unit is not a string")
+                }
             }
             None => {
                 self.result = Some(value);
@@ -169,6 +187,10 @@ impl FormatSerializer for ValueSerializer {
                     elems: Vec::new(),
                 },
                 Pending::Tuple { field_count } => unreachable!(),
+                Pending::EnumVariantTuple { name } => StackFrame::EnumVariantTuple {
+                    name,
+                    elems: Vec::new(),
+                },
             },
             None => panic!("no pending struct"),
         };
@@ -211,10 +233,23 @@ impl FormatSerializer for ValueSerializer {
 
     fn variant_metadata(
         &mut self,
-        _variant: &'static facet_core::Variant,
+        variant: &'static facet_core::Variant,
     ) -> Result<(), Self::Error> {
-        println!("variant_metadata: {_variant:?}");
+        println!("variant_metadata: {variant:?}");
         println!();
+
+        match variant.data.kind {
+            StructKind::Unit => {
+                self.stack.push(StackFrame::EnumVariantUnit);
+            }
+            StructKind::TupleStruct => {
+                self.pending = Some(Pending::EnumVariantTuple {
+                    name: variant.name.to_owned(),
+                })
+            }
+            StructKind::Struct => {}
+            StructKind::Tuple => todo!(),
+        }
 
         Ok(())
     }
@@ -257,12 +292,18 @@ impl FormatSerializer for ValueSerializer {
             Some(StackFrame::Map { pending_key, .. }) => {
                 *pending_key = Some(key.to_owned());
             }
+            Some(StackFrame::EnumVariantTuple { .. }) => {
+                // pass ?
+            }
             _ => panic!("field_key called outside of object"),
         }
         Ok(())
     }
 
     fn end_struct(&mut self) -> Result<(), Self::Error> {
+        println!("end_struct");
+        println!();
+
         match self.stack.pop() {
             Some(StackFrame::Struct { name, elems, .. }) => {
                 self.emit(Value::Struct(name, elems));
@@ -276,11 +317,18 @@ impl FormatSerializer for ValueSerializer {
                 self.emit(Value::TupleStruct(name, elems));
                 Ok(())
             }
+            Some(StackFrame::EnumVariantTuple { name, elems }) => {
+                self.emit(Value::EnumVariantTuple(name, elems));
+                Ok(())
+            }
             _ => panic!("end_struct called without matching begin_struct"),
         }
     }
 
     fn end_map(&mut self) -> Result<(), Self::Error> {
+        println!("end_map");
+        println!();
+
         match self.stack.pop() {
             Some(StackFrame::Map { elems, .. }) => {
                 self.emit(Value::Map(elems));
@@ -315,6 +363,7 @@ impl FormatSerializer for ValueSerializer {
                 Pending::Tuple { field_count } => StackFrame::Tuple {
                     elems: Vec::with_capacity(field_count),
                 },
+                Pending::EnumVariantTuple { name } => unreachable!(),
             }
         } else {
             StackFrame::Array { elems: Vec::new() }
@@ -325,6 +374,9 @@ impl FormatSerializer for ValueSerializer {
     }
 
     fn end_seq(&mut self) -> Result<(), Self::Error> {
+        println!("end_seq");
+        println!();
+
         match self.stack.pop() {
             Some(StackFrame::Array { elems }) => {
                 self.emit(Value::Array(elems));
@@ -345,6 +397,9 @@ impl FormatSerializer for ValueSerializer {
         scalar_type: facet::ScalarType,
         value: Peek<'_, '_>,
     ) -> Result<(), Self::Error> {
+        println!("typed_scalar");
+        println!();
+
         let value = match scalar_type {
             ScalarType::Unit => Value::Unit,
             ScalarType::Bool => Value::Bool(*value.get::<bool>().unwrap()),
@@ -376,6 +431,9 @@ impl FormatSerializer for ValueSerializer {
     }
 
     fn scalar(&mut self, scalar: ScalarValue<'_>) -> Result<(), Self::Error> {
+        println!("scalar");
+        println!();
+
         let value = match scalar {
             ScalarValue::Unit => Value::Unit,
             ScalarValue::Null => Value::Null,
@@ -621,17 +679,25 @@ mod test {
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(value, Value::EnumVariantUnit(String::from("Unit")));
     }
 
+    #[test]
     fn enum_variant_tuple() {
         let c = EnumSimple::Tuple("hello".into(), 3);
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(
+            value,
+            Value::EnumVariantTuple(
+                String::from("Tuple"),
+                vec![Value::String("hello".into()), Value::Number(Number::I32(3))]
+            )
+        );
     }
 
+    #[test]
     fn enum_variant_struct() {
         let c = EnumSimple::Struct {
             b: false,
@@ -640,9 +706,22 @@ mod test {
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(
+            value,
+            Value::EnumVariantStruct(
+                String::from("Struct"),
+                [
+                    ("b", Value::Bool(false)),
+                    ("s", Value::String("hello".into()))
+                ]
+                .map(|(k, v)| (k.to_owned(), v))
+                .into_iter()
+                .collect()
+            )
+        );
     }
 
+    #[test]
     fn struct_nested() {
         let c = StructNested {
             v: vec![ComplexNested::new(
