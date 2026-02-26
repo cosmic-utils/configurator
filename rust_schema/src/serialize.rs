@@ -77,6 +77,7 @@ enum StackFrame {
         elems: BTreeMap<String, Value>,
         pending_key: Option<String>,
     },
+    Ignore,
 }
 
 impl ValueSerializer {
@@ -92,10 +93,18 @@ impl ValueSerializer {
         self.result.unwrap()
     }
 
+    fn last_mut(&mut self) -> Option<&mut StackFrame> {
+        self.stack
+            .iter_mut()
+            .rev()
+            .skip_while(|s| matches!(s, StackFrame::Ignore))
+            .next()
+    }
+
     fn emit(&mut self, value: Value) {
         // println!("emit: {:?} : {:?}", self.stack, value);
 
-        match self.stack.last_mut() {
+        match self.last_mut() {
             Some(StackFrame::Struct {
                 elems, pending_key, ..
             }) => {
@@ -152,6 +161,7 @@ impl ValueSerializer {
                     panic!("value of enum variant unit is not a string")
                 }
             }
+            Some(StackFrame::Ignore) => unreachable!(),
             None => {
                 self.result = Some(value);
             }
@@ -263,7 +273,7 @@ impl FormatSerializer for ValueSerializer {
         println!("field_key: {key}");
         println!();
 
-        match self.stack.last_mut() {
+        match self.last_mut() {
             Some(StackFrame::Struct { pending_key, .. }) => {
                 *pending_key = Some(key.to_owned());
             }
@@ -271,10 +281,10 @@ impl FormatSerializer for ValueSerializer {
                 *pending_key = Some(key.to_owned());
             }
             Some(StackFrame::EnumVariantTuple { .. }) => {
-                // pass ?
+                // pass
             }
-            Some(StackFrame::EnumVariantStruct { .. }) => {
-                // pass ?
+            Some(StackFrame::EnumVariantStruct { pending_key, .. }) => {
+                *pending_key = Some(key.to_owned());
             }
             _ => panic!("field_key called outside of object"),
         }
@@ -308,7 +318,7 @@ impl FormatSerializer for ValueSerializer {
                     pending_key: None,
                 },
             },
-            None => panic!("no pending struct"),
+            None => StackFrame::Ignore,
         };
 
         self.stack.push(stack_frame);
@@ -323,15 +333,12 @@ impl FormatSerializer for ValueSerializer {
         match self.stack.pop() {
             Some(StackFrame::Struct { name, elems, .. }) => {
                 self.emit(Value::Struct(name, elems));
-                Ok(())
             }
             Some(StackFrame::UnitStruct { name }) => {
                 self.emit(Value::UnitStruct(name));
-                Ok(())
             }
             Some(StackFrame::TupleStruct { name, elems }) => {
                 self.emit(Value::TupleStruct(name, elems));
-                Ok(())
             }
             Some(StackFrame::EnumVariantTuple { name, elems }) => {
                 // workaround the call of begin_struct and begin_seq for enum tuple variants
@@ -343,10 +350,16 @@ impl FormatSerializer for ValueSerializer {
                     elems
                 };
                 self.emit(Value::EnumVariantTuple(name, elems));
-                Ok(())
+            }
+            Some(StackFrame::EnumVariantStruct { name, elems, .. }) => {
+                self.emit(Value::EnumVariantStruct(name, elems));
+            }
+            Some(StackFrame::Ignore) => {
+                // pass
             }
             _ => panic!("end_struct called without matching begin_struct"),
         }
+        Ok(())
     }
 
     fn begin_map_with_len(&mut self, _len: usize) -> Result<(), Self::Error> {
