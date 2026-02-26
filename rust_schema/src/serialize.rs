@@ -851,11 +851,14 @@ mod test {
                                         Value::EnumVariantTuple(
                                             "Tuple".to_owned(),
                                             vec![
-                                                make_struct(
-                                                    "Complex",
-                                                    &[("s", Value::from("neested")),]
-                                                ),
-                                                Value::Number(Number::I32(0))
+                                                Value::from("c2"),
+                                                Value::Tuple(vec![
+                                                    make_struct(
+                                                        "Complex",
+                                                        &[("s", Value::from("neested")),]
+                                                    ),
+                                                    Value::Number(Number::I32(0))
+                                                ]),
                                             ]
                                         )
                                     )
