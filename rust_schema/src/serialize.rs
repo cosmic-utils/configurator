@@ -77,6 +77,7 @@ enum StackFrame {
         elems: BTreeMap<String, Value>,
         pending_key: Option<String>,
     },
+    // workaround because begin_struct is called 2 times for EnumVariantStruct
     Ignore,
 }
 
@@ -209,21 +210,19 @@ impl FormatSerializer for ValueSerializer {
             && let Type::User(UserType::Struct(struct_type)) = &shape.ty
         {
             let pending = match struct_type.kind {
-                // StructKind::Unit => Pending::UnitStruct {
-                //     name: shape.type_identifier.to_owned(),
-                // },
+                StructKind::Unit => Pending::UnitStruct {
+                    name: shape.type_identifier.to_owned(),
+                },
 
-                // StructKind::Struct => Pending::Struct {
-                //     name: shape.type_identifier.to_owned(),
-                // },
+                StructKind::Struct => Pending::Struct {
+                    name: shape.type_identifier.to_owned(),
+                },
                 StructKind::TupleStruct => Pending::TupleStruct {
                     name: shape.type_identifier.to_owned(),
                 },
                 StructKind::Tuple => Pending::Tuple {
                     field_count: struct_type.fields.len(),
                 },
-                StructKind::Unit => todo!(),
-                StructKind::Struct => todo!(),
             };
             self.pending = Some(pending);
         }
@@ -816,7 +815,7 @@ mod test {
                         Value::Array(vec![make_struct(
                             "ComplexNested",
                             &[
-                                ("c", make_struct("Complex", &[("c", Value::from("hello")),])),
+                                ("c", make_struct("Complex", &[("s", Value::from("hello")),])),
                                 (
                                     "opt_c",
                                     make_struct(
@@ -826,7 +825,7 @@ mod test {
                                                 "c",
                                                 make_struct(
                                                     "Complex",
-                                                    &[("c", Value::from("world")),]
+                                                    &[("s", Value::from("world")),]
                                                 )
                                             ),
                                             ("opt_c", Value::Null),
@@ -845,7 +844,7 @@ mod test {
                             make_struct(
                                 "ComplexNested",
                                 &[
-                                    ("c", make_struct("Complex", &[("c", Value::from("c")),])),
+                                    ("c", make_struct("Complex", &[("s", Value::from("c")),])),
                                     ("opt_c", Value::Null),
                                     (
                                         "opt_e",
@@ -854,7 +853,7 @@ mod test {
                                             vec![
                                                 make_struct(
                                                     "Complex",
-                                                    &[("c", Value::from("neested")),]
+                                                    &[("s", Value::from("neested")),]
                                                 ),
                                                 Value::Number(Number::I32(0))
                                             ]
@@ -871,7 +870,7 @@ mod test {
                             make_struct(
                                 "ComplexNested",
                                 &[
-                                    ("c", make_struct("Complex", &[("c", Value::from("c")),])),
+                                    ("c", make_struct("Complex", &[("s", Value::from("c")),])),
                                     ("opt_c", Value::Null),
                                     (
                                         "opt_e",
@@ -882,7 +881,7 @@ mod test {
                                                     "c",
                                                     make_struct(
                                                         "Complex",
-                                                        &[("c", Value::from("hello")),]
+                                                        &[("s", Value::from("hello")),]
                                                     )
                                                 ),
                                                 ("s", Value::from("world"))
