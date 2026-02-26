@@ -31,11 +31,26 @@ impl core::error::Error for ToValueError {}
 struct ValueSerializer {
     stack: Vec<StackFrame>,
     result: Option<Value>,
+    // pending: Option<Pending>,
     pending_tuple: Option<usize>,
 }
 
+// enum Pending {
+//     Struct,
+//     UnitStruct,
+//     Tuple(usize),
+//     TupleStruct,
+// }
+
 #[derive(Debug)]
 enum StackFrame {
+    UnitStruct {
+        name: String,
+    },
+    TupleStruct {
+        name: String,
+        elems: Vec<Value>,
+    },
     Struct {
         name: String,
         elems: BTreeMap<String, Value>,
@@ -80,6 +95,9 @@ impl ValueSerializer {
                 elems.insert(key, value);
             }
 
+            Some(StackFrame::TupleStruct { elems, .. }) => {
+                elems.push(value);
+            }
             Some(StackFrame::Array { elems }) => {
                 elems.push(value);
             }
@@ -98,6 +116,9 @@ impl ValueSerializer {
                     };
                 }
             },
+            Some(StackFrame::UnitStruct { .. }) => {
+                panic!("emit value in unit struct")
+            }
             None => {
                 self.result = Some(value);
             }
@@ -112,11 +133,40 @@ impl FormatSerializer for ValueSerializer {
         println!("struct_metadata: {shape:?}");
         println!();
 
-        self.stack.push(StackFrame::Struct {
-            name: shape.type_identifier.to_owned(),
-            elems: BTreeMap::new(),
-            pending_key: None,
-        });
+        // if let Type::User(UserType::Struct(struct_type)) = &shape.ty {
+        //     let pending = match struct_type.kind {
+        //         StructKind::Unit => Pending::UnitStruct,
+        //         StructKind::TupleStruct => Pending::TupleStruct,
+        //         StructKind::Struct => Pending::Struct,
+        //         StructKind::Tuple => Pending::Tuple(0),
+        //     };
+
+        // }
+
+        if let Type::User(UserType::Struct(struct_type)) = &shape.ty {
+            let pending = match struct_type.kind {
+                StructKind::Unit => self.stack.push(StackFrame::UnitStruct {
+                    name: shape.type_identifier.to_owned(),
+                }),
+                StructKind::TupleStruct => self.stack.push(StackFrame::TupleStruct {
+                    name: shape.type_identifier.to_owned(),
+                    elems: Vec::new(),
+                }),
+                StructKind::Struct => self.stack.push(StackFrame::Struct {
+                    name: shape.type_identifier.to_owned(),
+                    elems: BTreeMap::new(),
+                    pending_key: None,
+                }),
+                StructKind::Tuple => todo!(),
+            };
+        }
+
+        Ok(())
+    }
+
+    fn begin_struct(&mut self) -> Result<(), Self::Error> {
+        println!("begin_struct");
+        println!();
 
         Ok(())
     }
@@ -172,13 +222,6 @@ impl FormatSerializer for ValueSerializer {
         Ok(())
     }
 
-    fn begin_struct(&mut self) -> Result<(), Self::Error> {
-        println!("begin_struct");
-        println!();
-
-        Ok(())
-    }
-
     fn field_key(&mut self, key: &str) -> Result<(), Self::Error> {
         println!("field_key: {key}");
         println!();
@@ -199,6 +242,14 @@ impl FormatSerializer for ValueSerializer {
         match self.stack.pop() {
             Some(StackFrame::Struct { name, elems, .. }) => {
                 self.emit(Value::Struct(name, elems));
+                Ok(())
+            }
+            Some(StackFrame::UnitStruct { name }) => {
+                self.emit(Value::UnitStruct(name));
+                Ok(())
+            }
+            Some(StackFrame::TupleStruct { name, elems }) => {
+                self.emit(Value::TupleStruct(name, elems));
                 Ok(())
             }
             _ => panic!("end_struct called without matching begin_struct"),
@@ -469,7 +520,7 @@ mod test {
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(value, Value::UnitStruct(String::from("UnitStruct")))
     }
 
     #[test]
@@ -478,7 +529,16 @@ mod test {
 
         let value = to_value(&c).unwrap();
 
-        dbg!(&value);
+        assert_eq!(
+            value,
+            Value::TupleStruct(
+                String::from("TupleStruct"),
+                vec![
+                    Value::String(String::from("hello")),
+                    Value::Number(Number::I32(3)),
+                ]
+            )
+        )
     }
 
     #[test]
