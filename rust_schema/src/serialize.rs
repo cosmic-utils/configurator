@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
+use std::{any::Any, collections::BTreeMap};
 
-use facet::{Facet, ScalarType};
+use facet::{Facet, Field, ScalarType, StructKind, Type, UserType};
 use facet_format::{FormatSerializer, ScalarValue, SerializeError};
 use facet_reflect::Peek;
 
@@ -31,6 +31,7 @@ impl core::error::Error for ToValueError {}
 struct ValueSerializer {
     stack: Vec<StackFrame>,
     result: Option<Value>,
+    pending_tuple: Option<usize>,
 }
 
 #[derive(Debug)]
@@ -41,6 +42,9 @@ enum StackFrame {
         pending_key: Option<String>,
     },
     Array {
+        elems: Vec<Value>,
+    },
+    Tuple {
         elems: Vec<Value>,
     },
     Map {
@@ -54,6 +58,7 @@ impl ValueSerializer {
         Self {
             stack: Vec::new(),
             result: None,
+            pending_tuple: None,
         }
     }
 
@@ -62,7 +67,7 @@ impl ValueSerializer {
     }
 
     fn emit(&mut self, value: Value) {
-        println!("emit: {:?} : {:?}", self.stack, value);
+        // println!("emit: {:?} : {:?}", self.stack, value);
 
         match self.stack.last_mut() {
             Some(StackFrame::Struct {
@@ -76,6 +81,9 @@ impl ValueSerializer {
             }
 
             Some(StackFrame::Array { elems }) => {
+                elems.push(value);
+            }
+            Some(StackFrame::Tuple { elems }) => {
                 elems.push(value);
             }
 
@@ -109,6 +117,30 @@ impl FormatSerializer for ValueSerializer {
             elems: BTreeMap::new(),
             pending_key: None,
         });
+
+        Ok(())
+    }
+
+    fn field_metadata(&mut self, field: &facet_reflect::FieldItem) -> Result<(), Self::Error> {
+        println!("field_metadata: {field:?}");
+        println!();
+
+        if let Some(field) = &field.field
+            && let Type::User(UserType::Struct(struct_type)) = &field.shape.get().ty
+            && struct_type.kind == StructKind::Tuple
+        {
+            self.pending_tuple = Some(struct_type.fields.len());
+        }
+
+        Ok(())
+    }
+
+    fn variant_metadata(
+        &mut self,
+        _variant: &'static facet_core::Variant,
+    ) -> Result<(), Self::Error> {
+        println!("variant_metadata: {_variant:?}");
+        println!();
 
         Ok(())
     }
@@ -154,14 +186,13 @@ impl FormatSerializer for ValueSerializer {
         match self.stack.last_mut() {
             Some(StackFrame::Struct { pending_key, .. }) => {
                 *pending_key = Some(key.to_owned());
-                Ok(())
             }
             Some(StackFrame::Map { pending_key, .. }) => {
                 *pending_key = Some(key.to_owned());
-                Ok(())
             }
             _ => panic!("field_key called outside of object"),
         }
+        Ok(())
     }
 
     fn end_struct(&mut self) -> Result<(), Self::Error> {
@@ -178,13 +209,16 @@ impl FormatSerializer for ValueSerializer {
         match self.stack.pop() {
             Some(StackFrame::Map { elems, .. }) => {
                 self.emit(Value::Map(elems));
-                Ok(())
             }
             _ => panic!("end_struct called without matching begin_struct"),
         }
+        Ok(())
     }
 
     fn begin_seq_with_len(&mut self, len: usize) -> Result<(), Self::Error> {
+        println!("begin_seq_with_len");
+        println!();
+
         self.stack.push(StackFrame::Array {
             elems: Vec::with_capacity(len),
         });
@@ -192,7 +226,14 @@ impl FormatSerializer for ValueSerializer {
     }
 
     fn begin_seq(&mut self) -> Result<(), Self::Error> {
-        self.stack.push(StackFrame::Array { elems: Vec::new() });
+        println!("begin_seq");
+        println!();
+
+        if let Some(fields) = self.pending_tuple.take() {
+            self.stack.push(StackFrame::Tuple { elems: Vec::new() });
+        } else {
+            self.stack.push(StackFrame::Array { elems: Vec::new() });
+        }
         Ok(())
     }
 
@@ -200,10 +241,13 @@ impl FormatSerializer for ValueSerializer {
         match self.stack.pop() {
             Some(StackFrame::Array { elems }) => {
                 self.emit(Value::Array(elems));
-                Ok(())
+            }
+            Some(StackFrame::Tuple { elems }) => {
+                self.emit(Value::Tuple(elems));
             }
             _ => panic!("end_seq called without matching begin_seq"),
         }
+        Ok(())
     }
 
     fn typed_scalar(
@@ -270,11 +314,16 @@ pub fn to_value<'facet, T: Facet<'facet>>(
 
 #[cfg(test)]
 mod test {
+    use pretty_assertions::assert_eq;
     use std::collections::HashMap;
 
     use facet::Facet;
 
-    use crate::{Number, Value, number::F32, serialize::to_value};
+    use crate::{
+        Number, Value,
+        number::{F32, F64},
+        serialize::to_value,
+    };
 
     #[derive(Facet, Debug)]
     struct SimpleStruct {
@@ -350,13 +399,13 @@ mod test {
     #[test]
     fn struct_() {
         let c = SimpleStruct {
-            s: String::from("hello"),
+            u: (),
+            opt: None,
+            b: false,
             f: 3.66,
             i: 4,
-            opt: None,
             c: '\n',
-            b: false,
-            u: (),
+            s: String::from("hello"),
             v: vec![1, 2, 3],
             t: (String::from("hello"), String::from("world")),
             h: {
@@ -374,18 +423,18 @@ mod test {
             Value::Struct(
                 String::from("SimpleStruct"),
                 [
-                    ("s", Value::String(String::from("hello"))),
-                    ("f", Value::Number(Number::F32(F32(3.66)))),
-                    ("i", Value::Number(Number::I32(4))),
-                    ("opt", Value::Null),
-                    ("c", Value::Char('\n')),
-                    ("b", Value::Bool(false)),
                     ("u", Value::Unit),
+                    ("opt", Value::Null),
+                    ("b", Value::Bool(false)),
+                    ("f", Value::Number(Number::F64(F64(3.66)))),
+                    ("i", Value::Number(Number::I32(4))),
+                    ("c", Value::Char('\n')),
+                    ("s", Value::String(String::from("hello"))),
                     (
                         "v",
                         Value::Array(
                             [1, 2, 3]
-                                .map(|v| Value::Number(Number::I32(v)))
+                                .map(|v| Value::Number(Number::U8(v)))
                                 .into_iter()
                                 .collect()
                         )

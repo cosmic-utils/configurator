@@ -19,5 +19,6 @@ workspace = true
 
 [dev-dependencies]
 json.workspace = true
+pretty_assertions.workspace = true
 schemars = "1"
 serde = { workspace = true, features = ["derive"] }

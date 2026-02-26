@@ -4242,6 +4242,7 @@ dependencies = [
  "facet-core",
  "facet-format",
  "facet-reflect",
+ "pretty_assertions",
  "schemars 1.2.1",
  "serde",
  "serde_json",
