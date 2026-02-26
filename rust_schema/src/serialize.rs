@@ -30,9 +30,17 @@ struct ValueSerializer {
     result: Option<Value>,
 }
 
+#[derive(Debug)]
 enum StackFrame {
     Struct {
         name: String,
+        elems: BTreeMap<String, Value>,
+        pending_key: Option<String>,
+    },
+    Array {
+        elems: Vec<Value>,
+    },
+    Map {
         elems: BTreeMap<String, Value>,
         pending_key: Option<String>,
     },
@@ -51,11 +59,11 @@ impl ValueSerializer {
     }
 
     fn emit(&mut self, value: Value) {
+        println!("emit: {:?} : {:?}", self.stack, value);
+
         match self.stack.last_mut() {
             Some(StackFrame::Struct {
-                name,
-                elems,
-                pending_key,
+                elems, pending_key, ..
             }) => {
                 let key = pending_key
                     .take()
@@ -63,6 +71,22 @@ impl ValueSerializer {
 
                 elems.insert(key, value);
             }
+
+            Some(StackFrame::Array { elems }) => {
+                elems.push(value);
+            }
+
+            Some(StackFrame::Map { elems, pending_key }) => match pending_key.take() {
+                Some(key) => {
+                    elems.insert(key, value);
+                }
+                None => {
+                    match value {
+                        Value::String(v) => *pending_key = Some(v),
+                        _ => panic!("key of map is not a string"),
+                    };
+                }
+            },
             None => {
                 self.result = Some(value);
             }
@@ -74,7 +98,8 @@ impl FormatSerializer for ValueSerializer {
     type Error = ToValueError;
 
     fn struct_metadata(&mut self, shape: &facet_core::Shape) -> Result<(), Self::Error> {
-        // dbg!(shape);
+        println!("struct_metadata: {shape:?}");
+        println!();
 
         self.stack.push(StackFrame::Struct {
             name: shape.type_identifier.to_owned(),
@@ -85,17 +110,54 @@ impl FormatSerializer for ValueSerializer {
         Ok(())
     }
 
+    fn field_metadata_with_value(
+        &mut self,
+        _field: &facet_reflect::FieldItem,
+        _value: Peek<'_, '_>,
+    ) -> Result<bool, Self::Error> {
+        println!("field_metadata_with_value: {_field:?}");
+        println!();
+
+        Ok(false)
+    }
+
+    fn map_encoding(&self) -> facet_format::MapEncoding {
+        facet_format::MapEncoding::Pairs
+    }
+
+    fn begin_map_with_len(&mut self, _len: usize) -> Result<(), Self::Error> {
+        println!("begin_map_with_len");
+        println!();
+
+        self.stack.push(StackFrame::Map {
+            elems: BTreeMap::new(),
+            pending_key: None,
+        });
+
+        Ok(())
+    }
+
     fn begin_struct(&mut self) -> Result<(), Self::Error> {
+        println!("begin_struct");
+        println!();
+
         Ok(())
     }
 
     fn field_key(&mut self, key: &str) -> Result<(), Self::Error> {
+        println!("field_key: {key}");
+        println!();
+
         match self.stack.last_mut() {
             Some(StackFrame::Struct { pending_key, .. }) => {
                 *pending_key = Some(key.to_owned());
                 Ok(())
             }
-            None => Err(ToValueError::new("field_key called outside of object")),
+            Some(StackFrame::Map { pending_key, .. }) => {
+                *pending_key = Some(key.to_owned());
+                Ok(())
+            }
+            _ => panic!("field_key called outside of object"),
         }
     }
 
@@ -105,18 +167,40 @@ impl FormatSerializer for ValueSerializer {
                 self.emit(Value::Struct(name, elems));
                 Ok(())
             }
-            _ => Err(ToValueError::new(
-                "end_struct called without matching begin_struct",
-            )),
+            _ => panic!("end_struct called without matching begin_struct"),
         }
     }
 
+    fn end_map(&mut self) -> Result<(), Self::Error> {
+        match self.stack.pop() {
+            Some(StackFrame::Map { elems, .. }) => {
+                self.emit(Value::Map(elems));
+                Ok(())
+            }
+            _ => panic!("end_struct called without matching begin_struct"),
+        }
+    }
+
+    fn begin_seq_with_len(&mut self, len: usize) -> Result<(), Self::Error> {
+        self.stack.push(StackFrame::Array {
+            elems: Vec::with_capacity(len),
+        });
+        Ok(())
+    }
+
     fn begin_seq(&mut self) -> Result<(), Self::Error> {
-        todo!()
+        self.stack.push(StackFrame::Array { elems: Vec::new() });
+        Ok(())
     }
 
     fn end_seq(&mut self) -> Result<(), Self::Error> {
-        todo!()
+        match self.stack.pop() {
+            Some(StackFrame::Array { elems }) => {
+                self.emit(Value::Array(elems));
+                Ok(())
+            }
+            _ => panic!("end_seq called without matching begin_seq"),
+        }
     }
 
     fn typed_scalar(
@@ -194,13 +278,13 @@ mod test {
         u: (),
         opt: Option<u8>,
         b: bool,
-        y: f64,
-        z: i32,
+        f: f64,
+        i: i32,
         c: char,
-        x: String,
+        s: String,
         v: Vec<u8>,
         t: (String, String),
-        m: HashMap<String, i32>,
+        h: HashMap<String, i32>,
     }
 
     #[derive(Facet, Debug)]
@@ -214,33 +298,33 @@ mod test {
     enum EnumSimple {
         Unit,
         Tuple(String, i32),
-        Struct { c: bool, s: String },
+        Struct { b: bool, s: String },
     }
 
     #[derive(Facet, Debug)]
     struct Complex {
-        x: String,
+        s: String,
     }
 
     impl Complex {
         fn new(c: &str) -> Self {
-            Self { x: c.into() }
+            Self { s: c.into() }
         }
     }
 
     #[derive(Facet, Debug)]
     struct ComplexNested {
-        x: Complex,
-        b: Option<Box<ComplexNested>>,
-        e: Option<Box<EnumNested>>,
+        c: Complex,
+        opt_c: Option<Box<ComplexNested>>,
+        opt_e: Option<Box<EnumNested>>,
     }
 
     impl ComplexNested {
         fn new(c: &str, o: Option<ComplexNested>, o2: Option<EnumNested>) -> Self {
             Self {
-                x: Complex::new(c),
-                b: o.map(Box::new),
-                e: o2.map(Box::new),
+                c: Complex::new(c),
+                opt_c: o.map(Box::new),
+                opt_e: o2.map(Box::new),
             }
         }
     }
@@ -263,16 +347,16 @@ mod test {
     #[test]
     fn struct_() {
         let c = SimpleStruct {
-            x: String::from("hello"),
-            y: 3.66,
-            z: 4,
+            s: String::from("hello"),
+            f: 3.66,
+            i: 4,
             opt: None,
             c: '\n',
             b: false,
             u: (),
             v: vec![1, 2, 3],
             t: (String::from("hello"), String::from("world")),
-            m: {
+            h: {
                 let mut h = HashMap::new();
                 h.insert("key1".into(), 6);
                 h.insert("key2".into(), 7);
@@ -322,7 +406,7 @@ mod test {
 
     fn enum_variant_struct() {
         let c = EnumSimple::Struct {
-            c: false,
+            b: false,
             s: "hello".into(),
         };
 
