@@ -192,7 +192,9 @@ impl FormatSerializer for ValueSerializer {
                 StructKind::Struct => Pending::Struct {
                     name: shape.type_identifier.to_owned(),
                 },
-                StructKind::Tuple => unreachable!(),
+                StructKind::Tuple => Pending::Tuple {
+                    field_count: struct_type.fields.len(),
+                },
             };
 
             self.pending = Some(pending);
@@ -781,9 +783,13 @@ mod test {
 
         assert_eq!(
             value,
-            Value::TupleStruct(String::from("NestedTuple"), vec![
-                Value::from(false), Value::Tuple(vec![Value::from(false), Value::from(false)])
-            ])
+            Value::TupleStruct(
+                String::from("NestedTuple"),
+                vec![
+                    Value::from(false),
+                    Value::Tuple(vec![Value::from(false), Value::from(false)])
+                ]
+            )
         );
     }
 
