@@ -75,3 +75,4 @@ facet = { path = "../facet/facet" }
 facet-core = { path = "../facet/facet-core" }
 facet-format = { path = "../facet/facet-format" }
 facet-reflect = { path = "../facet/facet-reflect" }
+facet-json = { path = "../facet/facet-json" }

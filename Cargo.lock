@@ -1499,6 +1499,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "facet-json"
+version = "0.43.2"
+dependencies = [
+ "facet",
+ "facet-core",
+ "facet-format",
+ "facet-reflect",
+ "memchr",
+]
+
+[[package]]
 name = "facet-macro-parse"
 version = "0.43.2"
 dependencies = [
@@ -4237,6 +4248,7 @@ dependencies = [
  "facet",
  "facet-core",
  "facet-format",
+ "facet-json",
  "facet-reflect",
  "pretty_assertions",
  "schemars 1.2.1",

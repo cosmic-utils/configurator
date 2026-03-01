@@ -17,6 +17,11 @@ pub fn schema_for<T: Facet<'static>>() -> RustSchemaRoot {
     }
 }
 
+pub fn to_schema<T: Facet<'static>>() -> String {
+    let schema = schema_for::<T>();
+    facet_json::to_string_pretty(&schema).expect("JSON Schema serialization should not fail")
+}
+
 struct SchemaContext {
     defs: BTreeMap<RustSchemaId, RustSchema>,
     in_progress: Vec<&'static str>,

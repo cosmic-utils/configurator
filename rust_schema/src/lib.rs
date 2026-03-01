@@ -13,16 +13,17 @@ mod test_common;
 mod number;
 mod value;
 
+use facet::Facet;
 pub use number::Number;
 pub use value::Value;
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
 pub struct RustSchemaRoot {
     pub schema: RustSchemaOrRef,
     pub definitions: BTreeMap<RustSchemaId, RustSchema>,
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
 pub struct RustSchema {
     pub description: Option<String>,
     pub kind: RustSchemaKind,
@@ -31,7 +32,8 @@ pub struct RustSchema {
 
 pub type RustSchemaId = String;
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
+#[repr(u8)]
 pub enum RustSchemaOrRef {
     Ref(RustSchemaId),
     Schema(Box<RustSchema>),
@@ -46,7 +48,8 @@ impl RustSchemaOrRef {
     }
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
+#[repr(u8)]
 pub enum RustSchemaKind {
     Unit,
     Boolean,
@@ -62,14 +65,16 @@ pub enum RustSchemaKind {
     Enum(String, Vec<(String, EnumVariantKind)>),
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
+#[repr(u8)]
 pub enum EnumVariantKind {
     Unit,
     Tuple(Vec<RustSchemaOrRef>),
     Struct(BTreeMap<String, RustSchemaOrRef>),
 }
 
-#[derive(Debug)]
+#[derive(Facet, Debug)]
+#[repr(u8)]
 pub enum NumberKind {
     U8,
     U16,
@@ -89,11 +94,13 @@ pub enum NumberKind {
 
 #[cfg(test)]
 mod test {
+    use std::fs;
+
     use facet::Facet;
 
     use crate::test_common::*;
 
-    use crate::gen_schema::schema_for;
+    use crate::gen_schema::{schema_for, to_schema};
 
     #[test]
     fn struct_() {
@@ -134,7 +141,7 @@ mod test {
 
     #[test]
     fn struct_nested() {
-        let schema = schema_for::<StructNested>();
-        dbg!(&schema);
+        let schema = to_schema::<StructNested>();
+        fs::write("struct_nested.json", schema).unwrap();
     }
 }
