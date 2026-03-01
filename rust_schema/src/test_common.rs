@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use facet::Facet;
 
@@ -14,6 +14,7 @@ pub struct SimpleStruct {
     pub v: Vec<u8>,
     pub t: (String, String),
     pub h: HashMap<String, i32>,
+    pub set: HashSet<i32>,
 }
 
 #[derive(Facet, Debug)]

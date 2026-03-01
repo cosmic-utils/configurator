@@ -97,11 +97,6 @@ mod test {
 
     #[test]
     fn schema() {
-        #[derive(Facet)]
-        struct A {
-            x: i32,
-        }
-
         let schema = schema_for::<SimpleStruct>();
 
         dbg!(&schema);

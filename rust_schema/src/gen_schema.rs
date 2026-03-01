@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use facet::{Def, Facet, Field, Shape, StructKind, StructType, Type, UserType};
 
 use crate::{
-    NumberKind, RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot,
+    NumberKind, RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot, Value,
 };
 
 pub fn schema_for<T: Facet<'static>>() -> RustSchemaRoot {
@@ -60,34 +60,35 @@ impl SchemaContext {
                     default,
                 })
             }
-            Def::Undefined => {
-                // Mark as in progress for cycle detection
-                self.in_progress.push(shape.type_identifier);
-
-                // Check if it's a struct or enum via Type
-                let schema = match &shape.ty {
-                    Type::User(UserType::Struct(st)) => {
-                        self.schema_for_struct(shape, st, description)
-                    }
-                    Type::User(UserType::Enum(en)) => todo!(),
-                    _ => {
-                        todo!()
-                    }
-                };
-
-                let ref_ = format!("#/$defs/{}", type_name);
-
-                self.defs.insert(ref_.clone(), schema);
-                RustSchemaOrRef::ref_(ref_)
-            }
-            Def::Map(map_def) => todo!(),
-            Def::Set(set_def) => todo!(),
+            Def::Undefined => match &shape.ty {
+                Type::User(UserType::Struct(st)) => {
+                    self.schema_for_struct(shape, st, description, default)
+                }
+                Type::User(UserType::Enum(en)) => todo!(),
+                _ => {
+                    todo!()
+                }
+            },
+            Def::Map(map_def) => RustSchemaOrRef::schema(RustSchema {
+                description,
+                kind: RustSchemaKind::Map(self.schema_for_shape(map_def.v)),
+                default,
+            }),
+            Def::Set(set_def) => RustSchemaOrRef::schema(RustSchema {
+                description,
+                kind: RustSchemaKind::Array(self.schema_for_shape(set_def.t)),
+                default,
+            }),
             Def::List(list_def) => RustSchemaOrRef::schema(RustSchema {
                 description,
                 kind: RustSchemaKind::Array(self.schema_for_shape(list_def.t)),
                 default,
             }),
-            Def::Array(array_def) => todo!(),
+            Def::Array(array_def) => RustSchemaOrRef::schema(RustSchema {
+                description,
+                kind: RustSchemaKind::Array(self.schema_for_shape(array_def.t)),
+                default,
+            }),
             Def::NdArray(nd_array_def) => todo!(),
             Def::Slice(slice_def) => todo!(),
             Def::Option(option_def) => RustSchemaOrRef::schema(RustSchema {
@@ -144,13 +145,13 @@ impl SchemaContext {
         shape: &Shape,
         struct_type: &StructType,
         description: Option<String>,
-    ) -> RustSchema {
+        default: Option<Value>,
+    ) -> RustSchemaOrRef {
         match struct_type.kind {
-            StructKind::Unit => RustSchema {
-                default: None,
-                description,
-                kind: RustSchemaKind::Unit,
-            },
+            // unit struct instead ?
+            StructKind::Unit => {
+                todo!()
+            }
             StructKind::Tuple => {
                 let items: Vec<RustSchemaOrRef> = struct_type
                     .fields
@@ -158,26 +159,35 @@ impl SchemaContext {
                     .map(|f| self.schema_for_shape(f.shape.get()))
                     .collect();
 
-                RustSchema {
-                    default: None,
+                RustSchemaOrRef::schema(RustSchema {
+                    default,
                     description,
                     kind: RustSchemaKind::Tuple(items),
-                }
+                })
             }
             StructKind::TupleStruct => {
+                self.in_progress.push(shape.type_identifier);
+
                 let items: Vec<RustSchemaOrRef> = struct_type
                     .fields
                     .iter()
                     .map(|f| self.schema_for_shape(f.shape.get()))
                     .collect();
 
-                RustSchema {
-                    default: None,
+                let schema = RustSchema {
+                    default,
                     description,
                     kind: RustSchemaKind::TupleStruct(shape.type_identifier.to_string(), items),
-                }
+                };
+
+                let ref_ = get_ref(shape);
+                self.defs.insert(ref_.clone(), schema);
+
+                RustSchemaOrRef::ref_(ref_)
             }
             StructKind::Struct => {
+                self.in_progress.push(shape.type_identifier);
+
                 let mut properties = BTreeMap::new();
                 let mut required = Vec::new();
 
@@ -203,12 +213,22 @@ impl SchemaContext {
 
                 self.in_progress.pop();
 
-                RustSchema {
-                    default: None,
+                let schema = RustSchema {
+                    default,
                     description,
                     kind: RustSchemaKind::Struct(shape.type_identifier.to_string(), properties),
-                }
+                };
+
+                let ref_ = get_ref(shape);
+                self.defs.insert(ref_.clone(), schema);
+
+                RustSchemaOrRef::ref_(ref_)
             }
         }
     }
+}
+
+fn get_ref(shape: &Shape) -> String {
+    let type_name = shape.type_identifier;
+    format!("#/$defs/{}", type_name)
 }

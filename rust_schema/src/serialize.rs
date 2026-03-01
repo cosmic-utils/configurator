@@ -543,6 +543,7 @@ mod test {
                 h.insert("key2".into(), 7);
                 h
             },
+            set: [1].into_iter().collect(),
         };
 
         let value = to_value(&c).unwrap();
@@ -580,6 +581,14 @@ mod test {
                         Value::Map(
                             [("key1", 6), ("key2", 7)]
                                 .map(|(k, v)| (k.to_owned(), Value::Number(Number::I32(v))))
+                                .into_iter()
+                                .collect()
+                        )
+                    ),
+                    (
+                        "set",
+                        Value::Array(
+                            [1].map(|v| Value::Number(Number::I32(v)))
                                 .into_iter()
                                 .collect()
                         )
