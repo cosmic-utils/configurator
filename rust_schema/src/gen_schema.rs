@@ -36,6 +36,7 @@ impl SchemaContext {
     }
 
     fn schema_for_shape(&mut self, shape: &'static Shape) -> RustSchemaOrRef {
+        dbg!(&shape);
         let type_name = shape.type_identifier;
         if self.in_progress.contains(&type_name) {
             return RustSchemaOrRef::Ref(format!("#/$defs/{}", type_name));

@@ -13,6 +13,8 @@ use facet::Facet;
 pub use number::Number;
 pub use value::Value;
 
+pub use gen_schema::{schema_for, to_schema};
+
 #[derive(Facet, Debug)]
 pub struct RustSchemaRoot {
     pub schema: RustSchemaOrRef,

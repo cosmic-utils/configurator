@@ -4231,6 +4231,8 @@ dependencies = [
  "facet-json",
  "facet-reflect",
  "pretty_assertions",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
