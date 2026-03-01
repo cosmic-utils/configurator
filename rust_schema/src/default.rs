@@ -2,8 +2,8 @@ use facet::Facet;
 use serde::{Deserialize, Serialize};
 
 #[derive(Facet, Debug, Default)]
-#[facet(default)]
 pub struct DefaultTraitStruct {
+    #[facet(default)]
     x: i32,
 }
 
@@ -14,8 +14,8 @@ pub struct DefaultCustomStruct {
 }
 
 #[derive(Facet, Debug, Default)]
-#[repr(u8)]
 #[facet(default)]
+#[repr(u8)]
 pub enum DefaultTraitEnum {
     #[default]
     A,
