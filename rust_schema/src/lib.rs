@@ -1,8 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
-mod gen_schema;
-// mod gen_schema2;
 mod default;
+mod gen_schema;
 mod serialize;
 #[cfg(test)]
 mod testing;
@@ -90,58 +89,4 @@ pub enum NumberKind {
     ISize,
     F32,
     F64,
-}
-
-#[cfg(test)]
-mod test {
-    use std::fs;
-
-    use facet::Facet;
-
-    use crate::test_common::*;
-
-    use crate::gen_schema::{schema_for, to_schema};
-
-    #[test]
-    fn struct_() {
-        let schema = schema_for::<SimpleStruct>();
-
-        dbg!(&schema);
-    }
-
-    #[test]
-    fn unit_struct() {
-        let schema = schema_for::<UnitStruct>();
-        dbg!(&schema);
-    }
-
-    #[test]
-    fn tuple_struct() {
-        let schema = schema_for::<TupleStruct>();
-        dbg!(&schema);
-    }
-
-    #[test]
-    fn tuple_struct2() {
-        let schema = schema_for::<TupleStruct2>();
-        dbg!(&schema);
-    }
-
-    #[test]
-    fn tuple_nested() {
-        let schema = schema_for::<NestedTuple>();
-        dbg!(&schema);
-    }
-
-    #[test]
-    fn enum_variant() {
-        let schema = schema_for::<EnumSimple>();
-        dbg!(&schema);
-    }
-
-    #[test]
-    fn struct_nested() {
-        let schema = to_schema::<StructNested>();
-        fs::write("struct_nested.json", schema).unwrap();
-    }
 }

@@ -36,15 +36,11 @@ impl SchemaContext {
     }
 
     fn schema_for_shape(&mut self, shape: &'static Shape) -> RustSchemaOrRef {
-        dbg!(&shape);
-
-        // Check for cycles - if we're already processing this type, emit a $ref
         let type_name = shape.type_identifier;
         if self.in_progress.contains(&type_name) {
             return RustSchemaOrRef::Ref(format!("#/$defs/{}", type_name));
         }
 
-        // Build description from doc comments
         let description = if shape.doc.is_empty() {
             None
         } else {
@@ -149,7 +145,7 @@ impl SchemaContext {
             "char" => Some(RustSchemaKind::Char),
 
             "()" => Some(RustSchemaKind::Unit),
-            // Unknown scalar - no type constraint
+            // Unknown scalar
             _ => None,
         }
     }
@@ -306,4 +302,58 @@ impl SchemaContext {
 fn get_ref(shape: &Shape) -> String {
     let type_name = shape.type_identifier;
     format!("#/$defs/{}", type_name)
+}
+
+#[cfg(test)]
+mod test {
+    use std::fs;
+
+    use facet::Facet;
+
+    use crate::test_common::*;
+
+    use crate::gen_schema::{schema_for, to_schema};
+
+    #[test]
+    fn struct_() {
+        let schema = schema_for::<SimpleStruct>();
+
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn unit_struct() {
+        let schema = schema_for::<UnitStruct>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn tuple_struct() {
+        let schema = schema_for::<TupleStruct>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn tuple_struct2() {
+        let schema = schema_for::<TupleStruct2>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn tuple_nested() {
+        let schema = schema_for::<NestedTuple>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn enum_variant() {
+        let schema = schema_for::<EnumSimple>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn struct_nested() {
+        let schema = to_schema::<StructNested>();
+        fs::write("struct_nested.json", schema).unwrap();
+    }
 }
