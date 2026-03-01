@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
 
-use facet::{Def, Facet, Field, Shape, StructKind, StructType, Type, UserType};
+use facet::{Def, EnumType, Facet, Field, Shape, StructKind, StructType, Type, UserType};
 
 use crate::{
-    NumberKind, RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot, Value,
+    EnumVariantKind, NumberKind, RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef,
+    RustSchemaRoot, Value,
 };
 
 pub fn schema_for<T: Facet<'static>>() -> RustSchemaRoot {
@@ -64,7 +65,9 @@ impl SchemaContext {
                 Type::User(UserType::Struct(st)) => {
                     self.schema_for_struct(shape, st, description, default)
                 }
-                Type::User(UserType::Enum(en)) => todo!(),
+                Type::User(UserType::Enum(en)) => {
+                    self.schema_for_enum(shape, en, description, default)
+                }
                 _ => {
                     todo!()
                 }
@@ -148,7 +151,6 @@ impl SchemaContext {
         default: Option<Value>,
     ) -> RustSchemaOrRef {
         match struct_type.kind {
-            // unit struct instead ?
             StructKind::Unit => {
                 self.in_progress.push(shape.type_identifier);
 
@@ -237,6 +239,56 @@ impl SchemaContext {
                 RustSchemaOrRef::ref_(ref_)
             }
         }
+    }
+
+    fn schema_for_enum(
+        &mut self,
+        shape: &Shape,
+        enum_type: &EnumType,
+        description: Option<String>,
+        default: Option<Value>,
+    ) -> RustSchemaOrRef {
+        self.in_progress.push(shape.type_identifier);
+
+        let variants = enum_type
+            .variants
+            .iter()
+            .map(|v| {
+                let variant_name = v.effective_name().to_string();
+
+                let kind = match v.data.kind {
+                    StructKind::Unit => EnumVariantKind::Unit,
+                    StructKind::TupleStruct => EnumVariantKind::Tuple(
+                        v.data
+                            .fields
+                            .iter()
+                            .map(|f| self.schema_for_shape(f.shape()))
+                            .collect(),
+                    ),
+                    StructKind::Struct => EnumVariantKind::Struct(
+                        v.data
+                            .fields
+                            .iter()
+                            .map(|f| (f.name.to_string(), self.schema_for_shape(f.shape())))
+                            .collect(),
+                    ),
+                    StructKind::Tuple => todo!(),
+                };
+
+                (variant_name, kind)
+            })
+            .collect();
+
+        let schema = RustSchema {
+            default,
+            description,
+            kind: RustSchemaKind::Enum(shape.type_identifier.to_string(), variants),
+        };
+
+        let ref_ = get_ref(shape);
+        self.defs.insert(ref_.clone(), schema);
+
+        RustSchemaOrRef::ref_(ref_)
     }
 }
 

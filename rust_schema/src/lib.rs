@@ -121,14 +121,14 @@ mod test {
     }
 
     #[test]
-    fn enum_variant() {
-        let schema = schema_for::<EnumSimple>();
+    fn tuple_nested() {
+        let schema = schema_for::<NestedTuple>();
         dbg!(&schema);
     }
 
     #[test]
-    fn tuple_nested() {
-        let schema = schema_for::<NestedTuple>();
+    fn enum_variant() {
+        let schema = schema_for::<EnumSimple>();
         dbg!(&schema);
     }
 
