@@ -150,7 +150,21 @@ impl SchemaContext {
         match struct_type.kind {
             // unit struct instead ?
             StructKind::Unit => {
-                todo!()
+                self.in_progress.push(shape.type_identifier);
+
+                let schema = RustSchema {
+                    default,
+                    description,
+                    kind: RustSchemaKind::Struct(
+                        shape.type_identifier.to_string(),
+                        BTreeMap::new(),
+                    ),
+                };
+
+                let ref_ = get_ref(shape);
+                self.defs.insert(ref_.clone(), schema);
+
+                RustSchemaOrRef::ref_(ref_)
             }
             StructKind::Tuple => {
                 let items: Vec<RustSchemaOrRef> = struct_type
@@ -210,8 +224,6 @@ impl SchemaContext {
 
                     properties.insert(field_name.to_string(), field_schema);
                 }
-
-                self.in_progress.pop();
 
                 let schema = RustSchema {
                     default,
