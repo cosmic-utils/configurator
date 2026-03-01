@@ -10,6 +10,7 @@ keywords.workspace = true
 facet = "0.43"
 facet-core = "0.43"
 facet-format = "0.43"
+facet-json = "0.43"
 facet-reflect = "0.43"
 
 [lints]
@@ -18,7 +19,6 @@ workspace = true
 
 
 [dev-dependencies]
-json.workspace = true
 pretty_assertions.workspace = true
-schemars = "1"
 serde = { workspace = true, features = ["derive"] }
+json.workspace = true

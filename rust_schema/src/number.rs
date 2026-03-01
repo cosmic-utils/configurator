@@ -1,7 +1,10 @@
 use core::cmp::Ordering;
 use std::fmt::Display;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+use facet::Facet;
+
+#[derive(Facet, Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(u8)]
 pub enum Number {
     U8(u8),
     U16(u16),
@@ -21,7 +24,7 @@ pub enum Number {
 
 macro_rules! float_ty {
     ($ty:ident($float:ty)) => {
-        #[derive(Copy, Clone, Debug)]
+        #[derive(Facet, Copy, Clone, Debug)]
         pub struct $ty(pub $float);
 
         impl $ty {

@@ -70,13 +70,14 @@ impl NodeContainer {
                 }
 
                 if let Some((name, vec)) = value.as_named_tuple()
-                    && let Some(node) = node_object.nodes.get_mut(name) {
-                        if vec.len() == 1 {
-                            node.apply_value(&vec[0], modified)?;
-                        } else {
-                            node.apply_value(value, modified)?;
-                        }
+                    && let Some(node) = node_object.nodes.get_mut(name)
+                {
+                    if vec.len() == 1 {
+                        node.apply_value(&vec[0], modified)?;
+                    } else {
+                        node.apply_value(value, modified)?;
                     }
+                }
 
                 if value.is_empty() {
                     for (key, n) in &mut node_object.nodes {

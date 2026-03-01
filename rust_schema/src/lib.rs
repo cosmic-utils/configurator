@@ -2,36 +2,59 @@ use std::collections::{BTreeMap, HashMap};
 
 mod gen_schema;
 mod serialize;
+
 #[cfg(test)]
-mod testing;
+mod test_common;
+
+#[cfg(test)]
+mod default;
 
 mod number;
 mod value;
 
+use facet::Facet;
 pub use number::Number;
 pub use value::Value;
 
-struct RustSchemaRoot {
-    schema: RustSchemaOrRef,
-    definitions: HashMap<RustSchemaId, RustSchema>,
+pub use gen_schema::{schema_for, to_schema};
+
+#[derive(Facet, Debug)]
+pub struct RustSchemaRoot {
+    pub schema: RustSchemaOrRef,
+    pub definitions: BTreeMap<RustSchemaId, RustSchema>,
 }
 
-struct RustSchema {
-    kind: RustSchemaKind,
-    default: Option<Value>,
+#[derive(Facet, Debug)]
+pub struct RustSchema {
+    pub description: Option<String>,
+    pub kind: RustSchemaKind,
+    pub default: Option<Value>,
 }
 
-type RustSchemaId = u64;
+pub type RustSchemaId = String;
 
-enum RustSchemaOrRef {
+#[derive(Facet, Debug)]
+#[repr(u8)]
+pub enum RustSchemaOrRef {
     Ref(RustSchemaId),
     Schema(Box<RustSchema>),
 }
 
-enum RustSchemaKind {
+impl RustSchemaOrRef {
+    pub fn schema(schema: RustSchema) -> Self {
+        Self::Schema(Box::new(schema))
+    }
+    pub fn ref_(ref_: RustSchemaId) -> Self {
+        Self::Ref(ref_)
+    }
+}
+
+#[derive(Facet, Debug)]
+#[repr(u8)]
+pub enum RustSchemaKind {
     Unit,
-    Bool,
-    Number,
+    Boolean,
+    Number(NumberKind),
     Char,
     String,
     Option(RustSchemaOrRef),
@@ -43,8 +66,29 @@ enum RustSchemaKind {
     Enum(String, Vec<(String, EnumVariantKind)>),
 }
 
-enum EnumVariantKind {
+#[derive(Facet, Debug)]
+#[repr(u8)]
+pub enum EnumVariantKind {
     Unit,
     Tuple(Vec<RustSchemaOrRef>),
     Struct(BTreeMap<String, RustSchemaOrRef>),
+}
+
+#[derive(Facet, Debug)]
+#[repr(u8)]
+pub enum NumberKind {
+    U8,
+    U16,
+    U32,
+    U64,
+    U128,
+    USize,
+    I8,
+    I16,
+    I32,
+    I64,
+    I128,
+    ISize,
+    F32,
+    F64,
 }

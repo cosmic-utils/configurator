@@ -68,3 +68,11 @@ git = "https://github.com/pop-os/libcosmic"
 rev = "ae1f15f37ee6d1fde579c6a6557e44b1a208f95e"
 default-features = false
 # branch = "master"
+
+
+[patch.crates-io]
+facet = { path = "../facet/facet" }
+facet-core = { path = "../facet/facet-core" }
+facet-format = { path = "../facet/facet-format" }
+facet-reflect = { path = "../facet/facet-reflect" }
+facet-json = { path = "../facet/facet-json" }

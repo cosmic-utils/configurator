@@ -98,8 +98,7 @@ impl ValueSerializer {
         self.stack
             .iter_mut()
             .rev()
-            .skip_while(|s| matches!(s, StackFrame::Ignore))
-            .next()
+            .find(|s| !matches!(s, StackFrame::Ignore))
     }
 
     fn emit(&mut self, value: Value) {
@@ -192,7 +191,9 @@ impl FormatSerializer for ValueSerializer {
                 StructKind::Struct => Pending::Struct {
                     name: shape.type_identifier.to_owned(),
                 },
-                StructKind::Tuple => unreachable!(),
+                StructKind::Tuple => Pending::Tuple {
+                    field_count: struct_type.fields.len(),
+                },
             };
 
             self.pending = Some(pending);
@@ -520,78 +521,8 @@ mod test {
         Number, Value,
         number::{F32, F64},
         serialize::{make_enum_struct, make_map, make_struct, to_value},
+        test_common::*,
     };
-
-    #[derive(Facet, Debug)]
-    struct SimpleStruct {
-        u: (),
-        opt: Option<u8>,
-        b: bool,
-        f: f64,
-        i: i32,
-        c: char,
-        s: String,
-        v: Vec<u8>,
-        t: (String, String),
-        h: HashMap<String, i32>,
-    }
-
-    #[derive(Facet, Debug)]
-    struct UnitStruct;
-
-    #[derive(Facet, Debug)]
-    struct TupleStruct(String, i32);
-
-    #[derive(Facet, Debug)]
-    #[repr(u8)]
-    enum EnumSimple {
-        Unit,
-        Tuple(String, i32),
-        Struct { b: bool, s: String },
-    }
-
-    #[derive(Facet, Debug)]
-    struct Complex {
-        s: String,
-    }
-
-    impl Complex {
-        fn new(c: &str) -> Self {
-            Self { s: c.into() }
-        }
-    }
-
-    #[derive(Facet, Debug)]
-    struct ComplexNested {
-        c: Complex,
-        opt_c: Option<Box<ComplexNested>>,
-        opt_e: Option<Box<EnumNested>>,
-    }
-
-    impl ComplexNested {
-        fn new(c: &str, opt_c: Option<ComplexNested>, opt_e: Option<EnumNested>) -> Self {
-            Self {
-                c: Complex::new(c),
-                opt_c: opt_c.map(Box::new),
-                opt_e: opt_e.map(Box::new),
-            }
-        }
-    }
-
-    #[derive(Facet, Debug)]
-    #[repr(u8)]
-    enum EnumNested {
-        Unit,
-        Tuple(String, (Complex, i32)),
-        Struct { c: Complex, s: String },
-    }
-
-    #[derive(Facet, Debug)]
-    struct StructNested {
-        v: Vec<ComplexNested>,
-        t: (String, ComplexNested),
-        m: HashMap<String, ComplexNested>,
-    }
 
     #[test]
     fn struct_() {
@@ -611,6 +542,7 @@ mod test {
                 h.insert("key2".into(), 7);
                 h
             },
+            set: [1].into_iter().collect(),
         };
 
         let value = to_value(&c).unwrap();
@@ -652,6 +584,14 @@ mod test {
                                 .collect()
                         )
                     ),
+                    (
+                        "set",
+                        Value::Array(
+                            [1].map(|v| Value::Number(Number::I32(v)))
+                                .into_iter()
+                                .collect()
+                        )
+                    ),
                 ]
                 .map(|(k, v)| (k.to_owned(), v))
                 .into_iter()
@@ -670,7 +610,6 @@ mod test {
     }
 
     #[test]
-    #[ignore = "facet limitation ig"]
     fn tuple_struct() {
         let c = TupleStruct("hello".into(), 3);
 
@@ -690,11 +629,6 @@ mod test {
 
     #[test]
     fn tuple_struct2() {
-        #[derive(Facet, Debug)]
-        struct TupleStruct2 {
-            t: TupleStruct,
-        }
-
         let c = TupleStruct2 {
             t: TupleStruct("hello".into(), 3),
         };
@@ -772,18 +706,19 @@ mod test {
 
     #[test]
     fn tuple_nested() {
-        #[derive(Facet)]
-        struct NestedTuple(bool, (bool, bool));
-
         let c = NestedTuple(false, (false, false));
 
         let value = to_value(&c).unwrap();
 
         assert_eq!(
             value,
-            Value::TupleStruct(String::from("NestedTuple"), vec![
-                Value::from(false), Value::Tuple(vec![Value::from(false), Value::from(false)])
-            ])
+            Value::TupleStruct(
+                String::from("NestedTuple"),
+                vec![
+                    Value::from(false),
+                    Value::Tuple(vec![Value::from(false), Value::from(false)])
+                ]
+            )
         );
     }
 
@@ -922,7 +857,7 @@ fn make_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Value {
     Value::Struct(
         name.to_owned(),
         fields
-            .into_iter()
+            .iter()
             .map(|(k, v)| (k.to_string(), v.clone()))
             .collect(),
     )
@@ -932,7 +867,7 @@ fn make_enum_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Val
     Value::EnumVariantStruct(
         name.to_owned(),
         fields
-            .into_iter()
+            .iter()
             .map(|(k, v)| (k.to_string(), v.clone()))
             .collect(),
     )
@@ -941,7 +876,7 @@ fn make_enum_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Val
 fn make_map(fields: &[(&'static str, Value)]) -> Value {
     Value::Map(
         fields
-            .into_iter()
+            .iter()
             .map(|(k, v)| (k.to_string(), v.clone()))
             .collect(),
     )

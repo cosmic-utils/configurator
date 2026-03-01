@@ -800,7 +800,7 @@ dependencies = [
  "ron",
  "ron_value",
  "rust-embed",
- "schemars 0.8.22",
+ "schemars",
  "serde",
  "serde_json",
  "serial_test",
@@ -817,7 +817,7 @@ version = "0.1.0"
 dependencies = [
  "bon",
  "configurator_utils",
- "schemars 0.8.22",
+ "schemars",
  "serde_json",
 ]
 
@@ -1463,8 +1463,6 @@ dependencies = [
 [[package]]
 name = "facet"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e338357cf598728b41e45744d024bdc063338214992361766928a1421bd7541d"
 dependencies = [
  "autocfg",
  "facet-core",
@@ -1474,8 +1472,6 @@ dependencies = [
 [[package]]
 name = "facet-core"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a63e0ade4c53b40220614b8fc2a0a0ce21975941b553081521a195c848b2e9c2"
 dependencies = [
  "autocfg",
  "const-fnv1a-hash",
@@ -1486,8 +1482,6 @@ dependencies = [
 [[package]]
 name = "facet-dessert"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "637aa74d6510e43019c8bb764fce5e999d7cdc1d068a9b993bb2f2325fb533af"
 dependencies = [
  "facet-core",
  "facet-reflect",
@@ -1496,8 +1490,6 @@ dependencies = [
 [[package]]
 name = "facet-format"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ae2f526d1c4797fffe1e41ccb53104473f947b1f146d0e91a7290658078e22b"
 dependencies = [
  "facet-core",
  "facet-dessert",
@@ -1507,10 +1499,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "facet-json"
+version = "0.43.2"
+dependencies = [
+ "facet",
+ "facet-core",
+ "facet-format",
+ "facet-reflect",
+ "memchr",
+]
+
+[[package]]
 name = "facet-macro-parse"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83ea29147986d0e184600cec533c41d6065c3c3d4b5b5745a8403494ca216b09"
 dependencies = [
  "facet-macro-types",
  "proc-macro2",
@@ -1520,8 +1521,6 @@ dependencies = [
 [[package]]
 name = "facet-macro-types"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31b0035cf41c0d4eeee82effc9161512d216d1378dd89c4d8721258429e38597"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1531,8 +1530,6 @@ dependencies = [
 [[package]]
 name = "facet-macros"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77a784f2fa36d3165b95639af790249dee0d8efdef7d53f9417cace91697e2e3"
 dependencies = [
  "facet-macros-impl",
 ]
@@ -1540,8 +1537,6 @@ dependencies = [
 [[package]]
 name = "facet-macros-impl"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf8f45c6380398bf74e59b97a20012de571502c609e580d84579d1140e491c1c"
 dependencies = [
  "facet-macro-parse",
  "facet-macro-types",
@@ -1554,8 +1549,6 @@ dependencies = [
 [[package]]
 name = "facet-path"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfbb5bdb426428005af0658b46e0c8d73c42b73c59a2a9e47cb52fa2f4dbc8b8"
 dependencies = [
  "facet-core",
 ]
@@ -1563,17 +1556,17 @@ dependencies = [
 [[package]]
 name = "facet-reflect"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4418c9fceaac9adcd055cc3732954d79b5d67ef04fb855dd219f2b314ba26cff"
 dependencies = [
  "facet-core",
+ "facet-path",
+ "hashbrown 0.16.1",
+ "regex",
+ "smallvec 2.0.0-alpha.12",
 ]
 
 [[package]]
 name = "facet-solver"
 version = "0.43.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e658ff4822b1ece03ab0cfeee867d41e7483b593be63345468806994d6fcd942"
 dependencies = [
  "facet-core",
  "facet-reflect",
@@ -1659,7 +1652,7 @@ dependencies = [
  "intl_pluralrules",
  "rustc-hash 2.1.1",
  "self_cell",
- "smallvec",
+ "smallvec 1.15.1",
  "unic-langid",
 ]
 
@@ -2094,7 +2087,7 @@ dependencies = [
  "bytemuck",
  "core_maths",
  "read-fonts 0.37.0",
- "smallvec",
+ "smallvec 1.15.1",
 ]
 
 [[package]]
@@ -2119,6 +2112,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
 dependencies = [
  "allocator-api2",
+ "equivalent",
+ "foldhash 0.2.0",
 ]
 
 [[package]]
@@ -2503,7 +2498,7 @@ dependencies = [
  "icu_normalizer_data",
  "icu_properties",
  "icu_provider",
- "smallvec",
+ "smallvec 1.15.1",
  "zerovec",
 ]
 
@@ -2580,7 +2575,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b0875f23caa03898994f6ddc501886a45c7d3d62d04d2d90788d47be1b1e4de"
 dependencies = [
  "idna_adapter",
- "smallvec",
+ "smallvec 1.15.1",
  "utf8_iter",
 ]
 
@@ -2836,7 +2831,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1618d4ebd923e97d67e7cd363d80aef35fe961005cbbbb3d2dad8bdd1bc63440"
 dependencies = [
  "arrayvec",
- "smallvec",
+ "smallvec 1.15.1",
 ]
 
 [[package]]
@@ -2847,7 +2842,7 @@ checksum = "c62026ae44756f8a599ba21140f350303d4f08dcdcc71b5ad9c9bb8128c13c62"
 dependencies = [
  "arrayvec",
  "euclid",
- "smallvec",
+ "smallvec 1.15.1",
 ]
 
 [[package]]
@@ -3652,7 +3647,7 @@ dependencies = [
  "instant",
  "libc",
  "redox_syscall 0.2.16",
- "smallvec",
+ "smallvec 1.15.1",
  "winapi",
 ]
 
@@ -3665,7 +3660,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "redox_syscall 0.5.18",
- "smallvec",
+ "smallvec 1.15.1",
  "windows-link",
 ]
 
@@ -4102,23 +4097,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "ref-cast"
-version = "1.0.25"
+name = "regex"
+version = "1.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f354300ae66f76f1c85c5f84693f0ce81d747e2c3f21a45fef496d89c960bf7d"
+checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
 dependencies = [
- "ref-cast-impl",
-]
-
-[[package]]
-name = "ref-cast-impl"
-version = "1.0.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7186006dcb21920990093f30e3dea63b7d6e977bf1256be20c3563a5db070da"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.116",
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
 ]
 
 [[package]]
@@ -4241,9 +4228,9 @@ dependencies = [
  "facet",
  "facet-core",
  "facet-format",
+ "facet-json",
  "facet-reflect",
  "pretty_assertions",
- "schemars 1.2.1",
  "serde",
  "serde_json",
 ]
@@ -4309,7 +4296,7 @@ checksum = "cfb9cf8877777222e4a3bc7eb247e398b56baba500c38c1c46842431adc8b55c"
 dependencies = [
  "bitflags 2.11.0",
  "bytemuck",
- "smallvec",
+ "smallvec 1.15.1",
  "ttf-parser 0.21.1",
  "unicode-bidi-mirroring",
  "unicode-ccc",
@@ -4343,20 +4330,7 @@ checksum = "3fbf2ae1b8bc8e02df939598064d22402220cd5bbcca1c76f7d6a310974d5615"
 dependencies = [
  "dyn-clone",
  "indexmap 1.9.3",
- "schemars_derive 0.8.22",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "schemars"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2b42f36aa1cd011945615b92222f6bf73c599a102a300334cd7f8dbeec726cc"
-dependencies = [
- "dyn-clone",
- "ref-cast",
- "schemars_derive 1.2.1",
+ "schemars_derive",
  "serde",
  "serde_json",
 ]
@@ -4366,18 +4340,6 @@ name = "schemars_derive"
 version = "0.8.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32e265784ad618884abaea0600a9adf15393368d840e0222d101a072f3f7534d"
-dependencies = [
- "proc-macro2",
- "quote",
- "serde_derive_internals",
- "syn 2.0.116",
-]
-
-[[package]]
-name = "schemars_derive"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d115b50f4aaeea07e79c1912f645c7513d81715d0420f8bc77a18c6260b307f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4617,6 +4579,12 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+
+[[package]]
+name = "smallvec"
+version = "2.0.0-alpha.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef784004ca8777809dcdad6ac37629f0a97caee4c685fcea805278d81dd8b857"
 
 [[package]]
 name = "smithay-client-toolkit"
@@ -5087,7 +5055,7 @@ dependencies = [
  "once_cell",
  "regex-automata",
  "sharded-slab",
- "smallvec",
+ "smallvec 1.15.1",
  "thread_local",
  "tracing",
  "tracing-core",
@@ -5466,7 +5434,7 @@ dependencies = [
  "downcast-rs",
  "rustix 1.1.3",
  "scoped-tls",
- "smallvec",
+ "smallvec 1.15.1",
  "wayland-sys",
 ]
 
@@ -5647,7 +5615,7 @@ dependencies = [
  "parking_lot 0.12.5",
  "profiling",
  "raw-window-handle",
- "smallvec",
+ "smallvec 1.15.1",
  "static_assertions",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -5676,7 +5644,7 @@ dependencies = [
  "profiling",
  "raw-window-handle",
  "rustc-hash 1.1.0",
- "smallvec",
+ "smallvec 1.15.1",
  "thiserror 1.0.69",
  "wgpu-hal",
  "wgpu-types",
@@ -5719,7 +5687,7 @@ dependencies = [
  "raw-window-handle",
  "renderdoc-sys",
  "rustc-hash 1.1.0",
- "smallvec",
+ "smallvec 1.15.1",
  "thiserror 1.0.69",
  "wasm-bindgen",
  "web-sys",

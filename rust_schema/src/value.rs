@@ -1,8 +1,11 @@
 use std::collections::BTreeMap;
 
+use facet::Facet;
+
 use crate::number::Number;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Facet, Clone, Debug, PartialEq, Eq)]
+#[repr(u8)]
 pub enum Value {
     Unit,
     Null,
