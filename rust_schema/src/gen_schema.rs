@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use facet::{Def, Facet, Field, Shape, StructKind, Type, UserType};
+use facet::{Def, Facet, Field, Shape, StructKind, StructType, Type, UserType};
 
 use crate::{
     NumberKind, RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot,
@@ -67,7 +67,7 @@ impl SchemaContext {
                 // Check if it's a struct or enum via Type
                 let schema = match &shape.ty {
                     Type::User(UserType::Struct(st)) => {
-                        self.schema_for_struct(shape, st.fields, st.kind, description)
+                        self.schema_for_struct(shape, st, description)
                     }
                     Type::User(UserType::Enum(en)) => todo!(),
                     _ => {
@@ -82,11 +82,19 @@ impl SchemaContext {
             }
             Def::Map(map_def) => todo!(),
             Def::Set(set_def) => todo!(),
-            Def::List(list_def) => todo!(),
+            Def::List(list_def) => RustSchemaOrRef::schema(RustSchema {
+                description,
+                kind: RustSchemaKind::Array(self.schema_for_shape(list_def.t)),
+                default,
+            }),
             Def::Array(array_def) => todo!(),
             Def::NdArray(nd_array_def) => todo!(),
             Def::Slice(slice_def) => todo!(),
-            Def::Option(option_def) => todo!(),
+            Def::Option(option_def) => RustSchemaOrRef::schema(RustSchema {
+                description,
+                kind: RustSchemaKind::Option(self.schema_for_shape(option_def.t)),
+                default,
+            }),
             Def::Result(result_def) => todo!(),
             Def::Pointer(pointer_def) => todo!(),
             Def::DynamicValue(dynamic_value_def) => todo!(),
@@ -125,6 +133,7 @@ impl SchemaContext {
             // Char
             "char" => Some(RustSchemaKind::Char),
 
+            "()" => Some(RustSchemaKind::Unit),
             // Unknown scalar - no type constraint
             _ => None,
         }
@@ -132,43 +141,47 @@ impl SchemaContext {
 
     fn schema_for_struct(
         &mut self,
-        shape: &'static Shape,
-        fields: &'static [Field],
-        kind: StructKind,
+        shape: &Shape,
+        struct_type: &StructType,
         description: Option<String>,
     ) -> RustSchema {
-        match kind {
-            StructKind::Unit => {
-                // Unit struct serializes as null or empty object
-                JsonSchema {
-                    type_: Some(SchemaType::Null.into()),
-                    description,
-                    ..JsonSchema::new()
-                }
-            }
-            StructKind::TupleStruct if fields.len() == 1 => {
-                // Newtype - serialize as the inner type
-                self.schema_for_shape(fields[0].shape.get())
-            }
-            StructKind::TupleStruct | StructKind::Tuple => {
-                // Tuple struct as array - collect items for prefixItems
-                let _items: Vec<JsonSchema> = fields
+        match struct_type.kind {
+            StructKind::Unit => RustSchema {
+                default: None,
+                description,
+                kind: RustSchemaKind::Unit,
+            },
+            StructKind::Tuple => {
+                let items: Vec<RustSchemaOrRef> = struct_type
+                    .fields
                     .iter()
                     .map(|f| self.schema_for_shape(f.shape.get()))
                     .collect();
 
-                // TODO: Use prefixItems for proper tuple schema (JSON Schema 2020-12)
-                JsonSchema {
-                    type_: Some(SchemaType::Array.into()),
+                RustSchema {
+                    default: None,
                     description,
-                    ..JsonSchema::new()
+                    kind: RustSchemaKind::Tuple(items),
+                }
+            }
+            StructKind::TupleStruct => {
+                let items: Vec<RustSchemaOrRef> = struct_type
+                    .fields
+                    .iter()
+                    .map(|f| self.schema_for_shape(f.shape.get()))
+                    .collect();
+
+                RustSchema {
+                    default: None,
+                    description,
+                    kind: RustSchemaKind::TupleStruct(shape.type_identifier.to_string(), items),
                 }
             }
             StructKind::Struct => {
                 let mut properties = BTreeMap::new();
                 let mut required = Vec::new();
 
-                for field in fields {
+                for field in struct_type.fields {
                     // Skip fields marked with skip
                     if field.flags.contains(facet_core::FieldFlags::SKIP) {
                         continue;
@@ -190,18 +203,10 @@ impl SchemaContext {
 
                 self.in_progress.pop();
 
-                JsonSchema {
-                    type_: Some(SchemaType::Object.into()),
-                    properties: Some(properties),
-                    required: if required.is_empty() {
-                        None
-                    } else {
-                        Some(required)
-                    },
-                    additional_properties: Some(AdditionalProperties::Bool(false)),
+                RustSchema {
+                    default: None,
                     description,
-                    title: Some(shape.type_identifier.to_string()),
-                    ..JsonSchema::new()
+                    kind: RustSchemaKind::Struct(shape.type_identifier.to_string(), properties),
                 }
             }
         }

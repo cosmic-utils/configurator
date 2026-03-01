@@ -2,9 +2,13 @@ use std::collections::{BTreeMap, HashMap};
 
 mod gen_schema;
 // mod gen_schema2;
+mod default;
 mod serialize;
 #[cfg(test)]
 mod testing;
+
+#[cfg(test)]
+mod test_common;
 
 mod number;
 mod value;
@@ -87,6 +91,8 @@ pub enum NumberKind {
 mod test {
     use facet::Facet;
 
+    use crate::test_common::*;
+
     use crate::gen_schema::schema_for;
 
     #[test]
@@ -96,7 +102,7 @@ mod test {
             x: i32,
         }
 
-        let schema = schema_for::<A>();
+        let schema = schema_for::<SimpleStruct>();
 
         dbg!(&schema);
     }

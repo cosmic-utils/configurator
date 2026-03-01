@@ -522,78 +522,8 @@ mod test {
         Number, Value,
         number::{F32, F64},
         serialize::{make_enum_struct, make_map, make_struct, to_value},
+        test_common::*,
     };
-
-    #[derive(Facet, Debug)]
-    struct SimpleStruct {
-        u: (),
-        opt: Option<u8>,
-        b: bool,
-        f: f64,
-        i: i32,
-        c: char,
-        s: String,
-        v: Vec<u8>,
-        t: (String, String),
-        h: HashMap<String, i32>,
-    }
-
-    #[derive(Facet, Debug)]
-    struct UnitStruct;
-
-    #[derive(Facet, Debug)]
-    struct TupleStruct(String, i32);
-
-    #[derive(Facet, Debug)]
-    #[repr(u8)]
-    enum EnumSimple {
-        Unit,
-        Tuple(String, i32),
-        Struct { b: bool, s: String },
-    }
-
-    #[derive(Facet, Debug)]
-    struct Complex {
-        s: String,
-    }
-
-    impl Complex {
-        fn new(c: &str) -> Self {
-            Self { s: c.into() }
-        }
-    }
-
-    #[derive(Facet, Debug)]
-    struct ComplexNested {
-        c: Complex,
-        opt_c: Option<Box<ComplexNested>>,
-        opt_e: Option<Box<EnumNested>>,
-    }
-
-    impl ComplexNested {
-        fn new(c: &str, opt_c: Option<ComplexNested>, opt_e: Option<EnumNested>) -> Self {
-            Self {
-                c: Complex::new(c),
-                opt_c: opt_c.map(Box::new),
-                opt_e: opt_e.map(Box::new),
-            }
-        }
-    }
-
-    #[derive(Facet, Debug)]
-    #[repr(u8)]
-    enum EnumNested {
-        Unit,
-        Tuple(String, (Complex, i32)),
-        Struct { c: Complex, s: String },
-    }
-
-    #[derive(Facet, Debug)]
-    struct StructNested {
-        v: Vec<ComplexNested>,
-        t: (String, ComplexNested),
-        m: HashMap<String, ComplexNested>,
-    }
 
     #[test]
     fn struct_() {
@@ -672,7 +602,6 @@ mod test {
     }
 
     #[test]
-    #[ignore = "facet limitation ig"]
     fn tuple_struct() {
         let c = TupleStruct("hello".into(), 3);
 
