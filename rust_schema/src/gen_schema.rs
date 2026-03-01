@@ -100,7 +100,13 @@ impl SchemaContext {
                 default,
             }),
             Def::Result(result_def) => todo!(),
-            Def::Pointer(pointer_def) => todo!(),
+            Def::Pointer(pointer_def) => {
+                if let Some(inner) = shape.inner {
+                    self.schema_for_shape(inner)
+                } else {
+                    todo!()
+                }
+            }
             Def::DynamicValue(dynamic_value_def) => todo!(),
             _ => todo!(),
         }
