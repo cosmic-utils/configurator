@@ -37,12 +37,14 @@ fn default_trait_enum() {
     dbg!(&DefaultTraitEnum::SHAPE);
 }
 
-// #[test]
-// fn json() {
-//     let t: DefaultTrait = facet_json::from_str("{}").unwrap();
-//     let t2: DefaultTrait = json::from_str("{}").unwrap();
-//     dbg!(&t, &t2);
-// }
+#[test]
+fn json() {
+    let t: DefaultTraitStruct = facet_json::from_str("{}").unwrap();
+    dbg!(&t);
+
+    // let t2: DefaultTrait = json::from_str("{}").unwrap();
+    // dbg!(&t, &t2);
+}
 
 // #[derive(Facet, Debug, Default)]
 // struct A {
@@ -54,3 +56,54 @@ fn default_trait_enum() {
 //     let t: A = facet_json::from_str("{}").unwrap();
 //     dbg!(&t);
 // }
+
+#[test]
+fn serde2() {
+    #[derive(Serialize, Deserialize, Debug)]
+    struct Nested {
+        x: i32,
+        y: i32,
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[serde(default)]
+    struct A {
+        x: i32,
+        y: i32,
+        z: Nested,
+    }
+
+    impl Default for A {
+        fn default() -> Self {
+            Self {
+                x: 6,
+                y: 3,
+                z: Nested { x: 1, y: 4 },
+            }
+        }
+    }
+
+    let a: A = json::from_str("{\"x\":1}").unwrap();
+
+    dbg!(&a);
+}
+
+#[test]
+fn serde() {
+    #[derive(Serialize, Deserialize, Debug)]
+    #[serde(default)]
+    struct A {
+        x: i32,
+        y: i32,
+    }
+
+    impl Default for A {
+        fn default() -> Self {
+            Self { x: 2, y: 3 }
+        }
+    }
+
+    let a: A = json::from_str("{\"x\":1}").unwrap();
+
+    dbg!(&a);
+}
