@@ -6,6 +6,9 @@ mod serialize;
 #[cfg(test)]
 mod test_common;
 
+#[cfg(test)]
+mod default;
+
 mod number;
 mod value;
 
