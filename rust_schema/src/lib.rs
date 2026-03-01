@@ -96,9 +96,45 @@ mod test {
     use crate::gen_schema::schema_for;
 
     #[test]
-    fn schema() {
+    fn struct_() {
         let schema = schema_for::<SimpleStruct>();
 
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn unit_struct() {
+        let schema = schema_for::<UnitStruct>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn tuple_struct() {
+        let schema = schema_for::<TupleStruct>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn tuple_struct2() {
+        let schema = schema_for::<TupleStruct2>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn enum_variant() {
+        let schema = schema_for::<EnumSimple>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn tuple_nested() {
+        let schema = schema_for::<NestedTuple>();
+        dbg!(&schema);
+    }
+
+    #[test]
+    fn struct_nested() {
+        let schema = schema_for::<StructNested>();
         dbg!(&schema);
     }
 }

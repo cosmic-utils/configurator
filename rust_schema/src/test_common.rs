@@ -43,6 +43,14 @@ impl Complex {
 }
 
 #[derive(Facet, Debug)]
+pub struct TupleStruct2 {
+    pub t: TupleStruct,
+}
+
+#[derive(Facet)]
+pub struct NestedTuple(pub bool, pub (bool, bool));
+
+#[derive(Facet, Debug)]
 pub struct ComplexNested {
     pub c: Complex,
     pub opt_c: Option<Box<ComplexNested>>,

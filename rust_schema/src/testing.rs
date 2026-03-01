@@ -45,13 +45,10 @@ fn schema() {
     fs::write("schema2.json", str.as_bytes()).unwrap();
 }
 
-
 #[test]
 fn shape() {
-
     #[derive(Facet)]
     struct T();
-
 
     dbg!(T::SHAPE);
 }

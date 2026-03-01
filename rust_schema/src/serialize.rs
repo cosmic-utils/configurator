@@ -98,8 +98,7 @@ impl ValueSerializer {
         self.stack
             .iter_mut()
             .rev()
-            .skip_while(|s| matches!(s, StackFrame::Ignore))
-            .next()
+            .find(|s| !matches!(s, StackFrame::Ignore))
     }
 
     fn emit(&mut self, value: Value) {
@@ -630,11 +629,6 @@ mod test {
 
     #[test]
     fn tuple_struct2() {
-        #[derive(Facet, Debug)]
-        struct TupleStruct2 {
-            t: TupleStruct,
-        }
-
         let c = TupleStruct2 {
             t: TupleStruct("hello".into(), 3),
         };
@@ -712,9 +706,6 @@ mod test {
 
     #[test]
     fn tuple_nested() {
-        #[derive(Facet)]
-        struct NestedTuple(bool, (bool, bool));
-
         let c = NestedTuple(false, (false, false));
 
         let value = to_value(&c).unwrap();
@@ -866,7 +857,7 @@ fn make_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Value {
     Value::Struct(
         name.to_owned(),
         fields
-            .into_iter()
+            .iter()
             .map(|(k, v)| (k.to_string(), v.clone()))
             .collect(),
     )
@@ -876,7 +867,7 @@ fn make_enum_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Val
     Value::EnumVariantStruct(
         name.to_owned(),
         fields
-            .into_iter()
+            .iter()
             .map(|(k, v)| (k.to_string(), v.clone()))
             .collect(),
     )
@@ -885,7 +876,7 @@ fn make_enum_struct(name: &'static str, fields: &[(&'static str, Value)]) -> Val
 fn make_map(fields: &[(&'static str, Value)]) -> Value {
     Value::Map(
         fields
-            .into_iter()
+            .iter()
             .map(|(k, v)| (k.to_string(), v.clone()))
             .collect(),
     )
