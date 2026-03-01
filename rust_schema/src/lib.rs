@@ -1,10 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
-mod default;
 mod gen_schema;
 mod serialize;
-#[cfg(test)]
-mod testing;
 
 #[cfg(test)]
 mod test_common;
