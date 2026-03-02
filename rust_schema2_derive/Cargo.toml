@@ -1,0 +1,26 @@
+[package]
+name = "rust_schema2_derive"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+
+[lib]
+proc-macro = true
+
+
+[lints]
+workspace = true
+
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["extra-traits"] }
+serde_derive_internals = "0.29"
+
+[dev-dependencies]
+syn = { version = "2", features = ["extra-traits"] }
+pretty_assertions = "1"

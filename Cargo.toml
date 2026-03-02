@@ -3,7 +3,10 @@ members = [
     "configurator",
     "configurator_schema",
     "configurator_utils",
-    "ron_value", "rust_schema",
+    "ron_value",
+    "rust_schema",
+    "rust_schema2",
+    "rust_schema2_derive",
     "zconf/zconf2",
     # "zconf/figment_schemars_bridge",
     # "zconf/zconf",
@@ -27,6 +30,8 @@ unused_imports = "allow"
 configurator_schema = { path = "configurator_schema" }
 configurator_utils = { path = "configurator_utils" }
 figment_schemars_bridge = { path = "figment_schemars_bridge" }
+rust_schema2 = { path = "rust_schema2" }
+rust_schema2_derive = { path = "rust_schema2_derive" }
 ron_value = { path = "ron_value" }
 # zconf = { path = "zconf/zconf" }
 zconf2 = { path = "zconf/zconf2" }
