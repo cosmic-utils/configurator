@@ -6,7 +6,7 @@ members = [
     "ron_value",
     "rust_schema",
     "rust_schema2",
-    "rust_schema2_derive",
+    "rust_schema2_derive", "testing",
     "zconf/zconf2",
     # "zconf/figment_schemars_bridge",
     # "zconf/zconf",
