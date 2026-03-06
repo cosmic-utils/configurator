@@ -29,10 +29,13 @@ pub fn expr_for_container(cont: &Container) -> TokenStream {
 }
 
 fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
-
-    
-
     quote! {
+        let fields = std::collections::BTreeMap::new();
 
+        rust_schema2::RustSchema {
+            description: None,
+            default: None,
+            kind: rust_schema2::RustSchemaKind::Struct("name".into(), fields),
+        }
     }
 }

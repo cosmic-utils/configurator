@@ -1,4 +1,4 @@
-use rust_schema2::RustSchema;
+use rust_schema2::{RustSchema, schema_for};
 
 #[test]
 fn testing() {
@@ -13,6 +13,9 @@ fn testing() {
         x: i32,
     }
 
-    
-    
+    let schema = schema_for::<A>();
+
+    let json = json::to_string_pretty(&schema).unwrap();
+
+    println!("{json}");
 }

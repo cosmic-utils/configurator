@@ -57,7 +57,7 @@ fn derive_rust_schema(input: syn::DeriveInput) -> syn::Result<TokenStream> {
                     #schema_id
                 }
 
-                fn schema(#GENERATOR: &mut schemars::SchemaGenerator) -> rust_schema2::RustSchema {
+                fn schema(#GENERATOR: &mut rust_schema2::SchemaGenerator) -> rust_schema2::RustSchema {
                     #schema_expr
                 }
 
