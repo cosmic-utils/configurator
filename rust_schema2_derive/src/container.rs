@@ -28,4 +28,8 @@ impl<'a> Container<'a> {
     pub fn generics(&self) -> &syn::Generics {
         &self.cont.generics
     }
+
+    pub fn data(&self) -> &serde_ast::Data<'_> {
+        &self.cont.data
+    }
 }
