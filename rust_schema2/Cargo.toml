@@ -1,0 +1,16 @@
+[package]
+name = "rust_schema2"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+keywords.workspace = true
+
+[dependencies]
+rust_schema2_derive.workspace = true
+json.workspace = true
+serde = { workspace = true, features = ["derive"] }
+
+
+[lints]
+workspace = true
