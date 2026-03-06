@@ -1,7 +1,7 @@
 use serde_derive_internals::{Ctxt, Derive, ast as serde_ast, attr};
 use std::fmt::{self, Debug};
 
-pub struct ContainerDebug<'a>(pub serde_ast::Container<'a>);
+pub struct ContainerDebug<'a>(pub &'a serde_ast::Container<'a>);
 
 impl<'a> Debug for ContainerDebug<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

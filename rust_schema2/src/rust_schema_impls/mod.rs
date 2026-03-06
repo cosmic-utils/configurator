@@ -1,11 +1,9 @@
 macro_rules! forward_impl {
     (($($impl:tt)+) => $target:ty) => {
         impl $($impl)+ {
-            fn is_inline() -> bool {
-                <$target as $crate::RustSchemaTrait>::is_inline()
-            }
+            
 
-            fn schema_id() -> String {
+            fn schema_id() -> Option<String> {
                 <$target as $crate::RustSchemaTrait>::schema_id()
             }
 

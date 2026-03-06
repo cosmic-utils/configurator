@@ -5,7 +5,6 @@ use std::{borrow::Cow, collections::BTreeMap};
 pub use rust_schema2_derive::*;
 pub use schema::*;
 
-
 mod rust_schema_impls;
 
 pub struct SchemaGenerator {
@@ -22,11 +21,7 @@ impl SchemaGenerator {
 
     #[must_use]
     pub fn schema_for<T: RustSchemaTrait>(&mut self) -> RustSchemaOrRef {
-        if T::is_inline() {
-            RustSchemaOrRef::schema(T::schema(self))
-        } else {
-            let id = T::schema_id();
-
+        if let Some(id) = T::schema_id() {
             if !self.definitions.contains_key(&id) {
                 self.definitions.insert(id.clone(), None);
                 let schema = T::schema(self);
@@ -34,6 +29,8 @@ impl SchemaGenerator {
             }
 
             RustSchemaOrRef::ref_(id)
+        } else {
+            RustSchemaOrRef::schema(T::schema(self))
         }
     }
 
@@ -51,12 +48,7 @@ impl SchemaGenerator {
 
 pub trait RustSchemaTrait {
     #[must_use]
-    fn is_inline() -> bool {
-        true
-    }
-
-    #[must_use]
-    fn schema_id() -> RustSchemaId;
+    fn schema_id() -> Option<RustSchemaId>;
 
     #[must_use]
     fn schema(generator: &mut SchemaGenerator) -> RustSchema;
