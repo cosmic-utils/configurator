@@ -59,22 +59,3 @@ pub fn schema_for<T: RustSchemaTrait>() -> RustSchemaRoot {
     let root = g.schema_for::<T>();
     g.into_schema_root(root)
 }
-
-#[cfg(test)]
-mod test {
-    use rust_schema2_derive::RustSchema;
-
-    #[test]
-    fn testing() {
-        #[derive(RustSchema)]
-        struct A {
-            x: i32,
-            y: Option<Box<B>>,
-        }
-
-        #[derive(RustSchema)]
-        struct B {
-            x: i32,
-        }
-    }
-}

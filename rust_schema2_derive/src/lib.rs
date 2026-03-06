@@ -51,13 +51,13 @@ fn derive_rust_schema(input: syn::DeriveInput) -> syn::Result<TokenStream> {
         const _: () = {
 
             #[automatically_derived]
-            impl #impl_generics rustschema2::RustSchemaTrait for #type_name #ty_generics #where_clause {
+            impl #impl_generics rust_schema2::RustSchemaTrait for #type_name #ty_generics #where_clause {
 
                 fn schema_id() -> Option<String> {
                     #schema_id
                 }
 
-                fn schema(#GENERATOR: &mut schemars::SchemaGenerator) -> rustschema2::RustSchema {
+                fn schema(#GENERATOR: &mut schemars::SchemaGenerator) -> rust_schema2::RustSchema {
                     #schema_expr
                 }
 

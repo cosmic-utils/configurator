@@ -18,7 +18,7 @@ impl ToTokens for SchemaExpr {
     }
 }
 
-pub fn expr_for_container(cont: &Container) -> SchemaExpr {
+pub fn expr_for_container(cont: &Container) -> TokenStream {
     match cont.data() {
         Data::Struct(Style::Unit, _) => todo!(),
         Data::Struct(Style::Newtype, fields) => todo!(),
@@ -28,7 +28,7 @@ pub fn expr_for_container(cont: &Container) -> SchemaExpr {
     }
 }
 
-fn expr_for_struct(cont: &Container, fields: &[Field]) -> SchemaExpr {
+fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
     
 
