@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt, quote};
 use serde_derive_internals::ast::{Data, Field, Style};
 
-use crate::Container;
+use crate::{Container, GENERATOR};
 
 pub struct SchemaExpr {
     pub creator: TokenStream,
@@ -29,13 +29,30 @@ pub fn expr_for_container(cont: &Container) -> TokenStream {
 }
 
 fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
+    let fields: Vec<TokenStream> = fields
+        .iter()
+        .map(|field| {
+            let ty = &field.ty;
+
+            let name = field.attrs.name().deserialize_name();
+
+            quote! {
+                fields.insert(String::from(#name), #GENERATOR.schema_for::<#ty>());
+            }
+        })
+        .collect();
+
+    let name = cont.name();
+
     quote! {
-        let fields = std::collections::BTreeMap::new();
+        let mut fields = std::collections::BTreeMap::new();
+
+        #(#fields)*
 
         rust_schema2::RustSchema {
             description: None,
             default: None,
-            kind: rust_schema2::RustSchemaKind::Struct("name".into(), fields),
+            kind: rust_schema2::RustSchemaKind::Struct(#name.into(), fields),
         }
     }
 }

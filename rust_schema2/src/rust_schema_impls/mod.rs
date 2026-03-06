@@ -1,7 +1,7 @@
 macro_rules! forward_impl {
     (($($impl:tt)+) => $target:ty) => {
         impl $($impl)+ {
-            
+
 
             fn schema_id() -> Option<String> {
                 <$target as $crate::RustSchemaTrait>::schema_id()
@@ -14,4 +14,6 @@ macro_rules! forward_impl {
     }
 }
 
+mod core;
+mod primitives;
 mod wrappers;

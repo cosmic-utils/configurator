@@ -48,7 +48,9 @@ impl SchemaGenerator {
 
 pub trait RustSchemaTrait {
     #[must_use]
-    fn schema_id() -> Option<RustSchemaId>;
+    fn schema_id() -> Option<RustSchemaId> {
+        None
+    }
 
     #[must_use]
     fn schema(generator: &mut SchemaGenerator) -> RustSchema;
