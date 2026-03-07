@@ -2,11 +2,11 @@ use cosmic::{
     cosmic_config::{self, CosmicConfigEntry, cosmic_config_derive::CosmicConfigEntry},
     iced::Subscription,
 };
-use schemars::JsonSchema;
+use rust_schema2::RustSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct Complex {
     x: String,
@@ -22,7 +22,7 @@ impl Default for Complex {
     }
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Rec {
     x: String,
@@ -44,7 +44,7 @@ impl Default for Rec {
     }
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, PartialEq)]
 pub enum EnumComplex {
     A,
     B(i32),
@@ -92,31 +92,31 @@ impl Default for TestVeryComplex {
     }
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestBool {
     x: bool,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestString {
     x: String,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestNumber {
     x: i32,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestFloat {
     x: f32,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, PartialEq)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, PartialEq)]
 pub enum EnumSimple {
     #[default]
     A,
@@ -124,55 +124,55 @@ pub enum EnumSimple {
     C,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestEnumSimple {
     x: EnumSimple,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestEnumComplex {
     pub x: EnumComplex,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestComplex {
     x: Complex,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestOption {
     x: Option<String>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestOptionComplex {
     x: Option<Complex>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestTuple {
     x: (Option<Complex>, i32, String),
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestVec {
     x: Vec<Complex>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestHashMap {
     x: HashMap<String, Complex>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, CosmicConfigEntry)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, CosmicConfigEntry)]
 #[serde(default)]
 pub struct TestVeryComplex {
     x: HashMap<String, Complex>,

@@ -3,7 +3,7 @@
 
 use std::{collections::HashMap, fmt::Debug};
 
-use schemars::JsonSchema;
+use rust_schema2::RustSchema;
 use serde::{Deserialize, Serialize, de};
 
 use crate::{
@@ -11,11 +11,11 @@ use crate::{
     test_common::{Complex, EnumComplex},
 };
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct NewStruct(u32);
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
     x: NewStruct,

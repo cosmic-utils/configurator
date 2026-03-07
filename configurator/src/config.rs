@@ -1,9 +1,10 @@
-use schemars::JsonSchema;
+
+use rust_schema2::RustSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::app::APPID;
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
     pub last_used_page: Option<String>,
@@ -35,9 +36,9 @@ mod test {
     pub fn gen_schema() {
         let path = Path::new("../res/config_schema.json");
 
-        let schema = configurator_schema::gen_schema::<Config>()
+        let schema = configurator_schema::SchemaGenerator::new()
             .source_home_path(".config/configurator/configurator.json")
-            .call()
+            .generate::<Config>()
             .unwrap();
 
         fs::write(path, &schema).unwrap();

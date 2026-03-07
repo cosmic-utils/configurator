@@ -1,15 +1,13 @@
 [package]
 name = "configurator_schema"
 version = "0.1.0"
-description = "This crate is intended to be consumed by client wanting to create a compatible json-schema for configurator"
+description = "This crate is intended to be consumed by client wanting to create a compatible schema for configurator"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 keywords.workspace = true
 
 [dependencies]
-schemars = { workspace = true }
 json = { workspace = true }
 configurator_utils.workspace = true
-bon.workspace = true
-# anyhow = "1"
+rust_schema2.workspace = true
