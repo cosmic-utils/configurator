@@ -29,7 +29,7 @@ impl SchemaGenerator {
         self
     }
 
-    pub fn write_to(mut self, path: impl Into<String>) -> Self {
+    pub fn write_path(mut self, path: impl Into<String>) -> Self {
         self.write_path = Some(path.into());
         self
     }
