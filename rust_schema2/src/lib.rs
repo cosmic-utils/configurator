@@ -5,7 +5,10 @@ use std::{borrow::Cow, collections::BTreeMap};
 pub use rust_schema2_derive::*;
 pub use schema::*;
 
+mod number;
 mod rust_schema_impls;
+mod serialize_value;
+mod value;
 
 pub struct SchemaGenerator {
     definitions: BTreeMap<RustSchemaId, Option<RustSchema>>,
