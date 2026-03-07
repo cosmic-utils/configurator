@@ -39,7 +39,17 @@ fn expr_for_enum(cont: &Container, variants: &[Variant]) -> TokenStream {
         .iter()
         .map(|variant| {
             let kind = match variant.style {
-                Style::Struct => todo!(),
+                Style::Struct => {
+                    let fields: Vec<TokenStream> = variant
+                        .fields
+                        .iter()
+                        .map(|field| expr_for_struct_field(field))
+                        .collect();
+
+                    quote! {
+                        rust_schema2::EnumVariantKind::Struct([#(#fields),*].into_iter().collect())
+                    }
+                }
                 Style::Tuple => {
                     let fields: Vec<TokenStream> = variant
                         .fields
@@ -171,36 +181,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
     let fields: Vec<TokenStream> = fields
         .iter()
-        .map(|field| {
-            let ty = &field.ty;
-
-            let name = get_name(field.attrs.name());
-
-            let description = get_description(&field.original.attrs);
-
-            let field_default = match field.attrs.default() {
-                SerdeDefault::None => {
-                    quote!(None)
-                }
-                SerdeDefault::Default => {
-                    quote!(Some(rust_schema2::to_value(#ty::default())))
-                }
-                SerdeDefault::Path(path) => {
-                    quote!(Some(rust_schema2::to_value(#path())))
-                }
-            };
-
-            quote! {
-                (
-                    String::from(#name),
-                    rust_schema2::StructField {
-                        description: #description,
-                        default: #field_default,
-                        schema: #GENERATOR.schema_for::<#ty>()
-                    }
-                )
-            }
-        })
+        .map(|field| expr_for_struct_field(field))
         .collect();
 
     let name = cont.name();
@@ -219,5 +200,36 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
                 }
             ),
         }
+    }
+}
+
+fn expr_for_struct_field(field: &Field) -> TokenStream {
+    let ty = &field.ty;
+
+    let name = get_name(field.attrs.name());
+
+    let description = get_description(&field.original.attrs);
+
+    let field_default = match field.attrs.default() {
+        SerdeDefault::None => {
+            quote!(None)
+        }
+        SerdeDefault::Default => {
+            quote!(Some(rust_schema2::to_value(#ty::default())))
+        }
+        SerdeDefault::Path(path) => {
+            quote!(Some(rust_schema2::to_value(#path())))
+        }
+    };
+
+    quote! {
+        (
+            String::from(#name),
+            rust_schema2::StructField {
+                description: #description,
+                default: #field_default,
+                schema: #GENERATOR.schema_for::<#ty>()
+            }
+        )
     }
 }

@@ -15,6 +15,12 @@ fn enum1() {
         Unit,
         NewType(String),
         Tuple(String, i32),
+        Struct {
+            /// Doc on field variant
+            #[serde(default)]
+            x: i32,
+            y: String,
+        },
     }
 
     test!(A);
