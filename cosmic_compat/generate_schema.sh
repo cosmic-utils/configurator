@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
-
-git clone https://github.com/wiiznokes/cosmic-panel.git --branch schema
+# rm -rf cosmic-panel
+# git clone https://github.com/wiiznokes/cosmic-panel.git --branch schema3
 cd cosmic-panel
-cargo test --package cosmic-panel-config --features schema gen_schema
+cargo run --bin gen_schema
 
