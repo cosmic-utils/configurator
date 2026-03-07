@@ -5,10 +5,11 @@ use serde::{Deserialize, Serialize};
 #[test]
 fn testing() {
     /// Bonsoir
-    #[derive(RustSchema, JsonSchema, Serialize)]
+    #[derive(RustSchema, JsonSchema, Serialize, Deserialize, Debug)]
     #[serde(default)]
     struct A {
         /// Bonjour
+        #[serde(default)]
         x: i32,
         y: Option<Box<B>>,
     }
@@ -22,7 +23,7 @@ fn testing() {
         }
     }
 
-    #[derive(RustSchema, JsonSchema, Serialize)]
+    #[derive(RustSchema, JsonSchema, Serialize, Deserialize, Debug)]
     #[serde(default)]
     struct B {
         x: i32,
@@ -48,6 +49,10 @@ fn testing() {
 
     println!("");
     println!("{json}");
+
+    let a: A = json::from_str("{\"y\":null}").unwrap();
+
+    dbg!(&a);
 }
 
 // #[test]

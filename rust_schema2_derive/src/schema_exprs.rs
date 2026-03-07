@@ -29,13 +29,15 @@ pub fn expr_for_container(cont: &Container) -> TokenStream {
 }
 
 fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
-    let set_container_default = match cont.cont.attrs.default() {
-        serde_derive_internals::attr::Default::None => None,
+    let struct_default = match cont.cont.attrs.default() {
+        serde_derive_internals::attr::Default::None => {
+            quote!(None)
+        }
         serde_derive_internals::attr::Default::Default => {
-            Some(quote!(let #STRUCT_DEFAULT = Self::default();))
+            quote!(Some(rust_schema2::to_value(Self::default())))
         }
         serde_derive_internals::attr::Default::Path(path) => {
-            Some(quote!(let #STRUCT_DEFAULT = #path();))
+            quote!(Some(rust_schema2::to_value(#path())))
         }
     };
 
@@ -71,7 +73,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
                 rust_schema2::Struct {
                     name: #name.into(),
                     description: None,
-                    default: None,
+                    default: #struct_default,
                     fields
                 }
             ),
