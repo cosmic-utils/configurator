@@ -13,6 +13,7 @@ serde = { workspace = true, features = ["derive"] }
 [dev-dependencies]
 schemars.workspace = true
 json.workspace = true
+snapbox = { version = "1", features = ["json"] }
 
 
 [lints]

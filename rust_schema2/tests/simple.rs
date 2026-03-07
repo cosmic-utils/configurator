@@ -2,13 +2,22 @@ use rust_schema2::{RustSchema, schema_for};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+mod common;
+
+#[test]
+fn struct_with_normal_field() {
+    #[derive(RustSchema, Serialize, Deserialize, Debug)]
+    struct A {
+        x: i32,
+    }
+
+    test!(A);
+}
+
 #[test]
 fn testing() {
     /// Bonsoir
     /// Second line
-    /// 
-    /// ### Hello
-    /// [`B`]
     #[derive(RustSchema, JsonSchema, Serialize, Deserialize, Debug)]
     #[serde(default)]
     struct A {
@@ -58,107 +67,3 @@ fn testing() {
 
     dbg!(&a);
 }
-
-// #[test]
-// fn testing() {
-//     /// Bonsoir
-//     #[derive(JsonSchema, Serialize, Deserialize, Debug)]
-//     #[serde(default)]
-//     struct A(i32, Option<Box<B>>);
-
-//     impl Default for A {
-//         fn default() -> Self {
-//             Self(3, Some(Box::new(B { x: 11 })))
-//         }
-//     }
-
-//     #[derive(JsonSchema, Serialize, Deserialize, Debug)]
-//     #[serde(default)]
-//     struct B {
-//         #[serde(default = "a2")]
-//         x: i32,
-//     }
-
-//     fn a2 () -> i32 {
-//         22
-//     }
-
-//     impl Default for B {
-//         fn default() -> Self {
-//             Self {
-//                 x: Default::default(),
-//             }
-//         }
-//     }
-
-//     let schema = schemars::schema_for!(A);
-
-//     let json = json::to_string_pretty(&schema).unwrap();
-
-//     println!("");
-//     println!("{json}");
-
-//     let default = json::to_string_pretty(&A::default()).unwrap();
-
-//     println!("{default}");
-
-//     let a: A = json::from_str("[3, {}]").unwrap();
-
-//     dbg!(&a);
-// }
-
-// #[test]
-// fn testing() {
-//     /// Bonsoir
-//     #[derive(JsonSchema, Serialize, Deserialize, Debug)]
-//     enum A {
-//         Simple,
-//         Complex {
-//             /// Hello
-//             #[serde(default = "a2")]
-//             x: i32,
-//         },
-
-//         Tuple(i32, String),
-//     }
-
-//     impl Default for A {
-//         fn default() -> Self {
-//             Self::Complex { x: 3 }
-//         }
-//     }
-
-//     #[derive(JsonSchema, Serialize, Deserialize, Debug)]
-//     #[serde(default)]
-//     struct B {
-//         #[serde(default = "a2")]
-//         x: i32,
-//     }
-
-//     fn a2() -> i32 {
-//         22
-//     }
-
-//     impl Default for B {
-//         fn default() -> Self {
-//             Self {
-//                 x: Default::default(),
-//             }
-//         }
-//     }
-
-//     let schema = schemars::schema_for!(A);
-
-//     let json = json::to_string_pretty(&schema).unwrap();
-
-//     println!("");
-//     println!("{json}");
-
-//     let default = json::to_string_pretty(&A::default()).unwrap();
-
-//     println!("{default}");
-
-//     let a: A = json::from_str("{\"Complex\": {}}").unwrap();
-
-//     dbg!(&a);
-// }
