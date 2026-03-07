@@ -122,21 +122,20 @@ impl NodeNumber {
 
     pub fn try_parse_from_str(&self, str: &str) -> anyhow::Result<NumberValue> {
         let v = match self.kind {
-            NumberValueLight::U8 if let Ok(v) = str.parse::<u8>() => NumberValue::U8(v),
-            NumberValueLight::U16 if let Ok(v) = str.parse::<u16>() => NumberValue::U16(v),
-            NumberValueLight::U32 if let Ok(v) = str.parse::<u32>() => NumberValue::U32(v),
-            NumberValueLight::U64 if let Ok(v) = str.parse::<u64>() => NumberValue::U64(v),
-            NumberValueLight::U128 if let Ok(v) = str.parse::<u128>() => NumberValue::U128(v),
-            NumberValueLight::USize if let Ok(v) = str.parse::<usize>() => NumberValue::USize(v),
-            NumberValueLight::I8 if let Ok(v) = str.parse::<i8>() => NumberValue::I8(v),
-            NumberValueLight::I16 if let Ok(v) = str.parse::<i16>() => NumberValue::I16(v),
-            NumberValueLight::I32 if let Ok(v) = str.parse::<i32>() => NumberValue::I32(v),
-            NumberValueLight::I64 if let Ok(v) = str.parse::<i64>() => NumberValue::I64(v),
-            NumberValueLight::I128 if let Ok(v) = str.parse::<i128>() => NumberValue::I128(v),
-            NumberValueLight::ISize if let Ok(v) = str.parse::<isize>() => NumberValue::ISize(v),
-            NumberValueLight::F32 if let Ok(v) = str.parse::<f32>() => NumberValue::F32(v),
-            NumberValueLight::F64 if let Ok(v) = str.parse::<f64>() => NumberValue::F64(v),
-            _ => bail!("can't parse {} to {:?}", str, self.kind),
+            NumberValueLight::U8 => NumberValue::U8(str.parse::<u8>()?),
+            NumberValueLight::U16 => NumberValue::U16(str.parse::<u16>()?),
+            NumberValueLight::U32 => NumberValue::U32(str.parse::<u32>()?),
+            NumberValueLight::U64 => NumberValue::U64(str.parse::<u64>()?),
+            NumberValueLight::U128 => NumberValue::U128(str.parse::<u128>()?),
+            NumberValueLight::USize => NumberValue::USize(str.parse::<usize>()?),
+            NumberValueLight::I8 => NumberValue::I8(str.parse::<i8>()?),
+            NumberValueLight::I16 => NumberValue::I16(str.parse::<i16>()?),
+            NumberValueLight::I32 => NumberValue::I32(str.parse::<i32>()?),
+            NumberValueLight::I64 => NumberValue::I64(str.parse::<i64>()?),
+            NumberValueLight::I128 => NumberValue::I128(str.parse::<i128>()?),
+            NumberValueLight::ISize => NumberValue::ISize(str.parse::<isize>()?),
+            NumberValueLight::F32 => NumberValue::F32(str.parse::<f32>()?),
+            NumberValueLight::F64 => NumberValue::F64(str.parse::<f64>()?),
         };
 
         Ok(v)

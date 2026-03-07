@@ -4,7 +4,7 @@ members = [
     "configurator_schema",
     "configurator_utils",
     "ron_value",
-    "rust_schema",
+    # "rust_schema",
     "rust_schema2",
     "rust_schema2_derive", "testing",
     "zconf/zconf2",
@@ -75,9 +75,9 @@ default-features = false
 # branch = "master"
 
 
-[patch.crates-io]
-facet = { path = "../facet/facet" }
-facet-core = { path = "../facet/facet-core" }
-facet-format = { path = "../facet/facet-format" }
-facet-reflect = { path = "../facet/facet-reflect" }
-facet-json = { path = "../facet/facet-json" }
+# [patch.crates-io]
+# facet = { path = "../facet/facet" }
+# facet-core = { path = "../facet/facet-core" }
+# facet-format = { path = "../facet/facet-format" }
+# facet-reflect = { path = "../facet/facet-reflect" }
+# facet-json = { path = "../facet/facet-json" }
