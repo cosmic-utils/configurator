@@ -1,8 +1,14 @@
 use std::collections::BTreeMap;
 
-use crate::number::Number;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+mod number;
+mod ser;
+
+pub use number::*;
+pub use ser::*;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Value {
     Unit,
     Null,

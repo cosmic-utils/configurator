@@ -1,7 +1,7 @@
-use crate::{NumberKind, RustSchema, RustSchemaKind, RustSchemaTrait};
+use crate::{NumberKind, RustSchema, RustSchemaKind, RustSchemaTrait, SchemaGenerator};
 
 impl RustSchemaTrait for i32 {
-    fn schema(generator: &mut crate::SchemaGenerator) -> RustSchema {
+    fn schema(generator: &mut SchemaGenerator) -> RustSchema {
         RustSchema {
             description: None,
             kind: RustSchemaKind::Number(NumberKind::I32),

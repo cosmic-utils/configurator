@@ -3,11 +3,10 @@ use std::fmt::Display;
 
 use serde::Serialize;
 
-use crate::number::{F32, F64, Number};
-use crate::value::Value;
+use super::*;
 
 #[derive(Debug)]
-pub enum Error {}
+enum Error {}
 
 pub fn to_value<T: Serialize>(value: T) -> Value {
     value.serialize(Serializer).unwrap()
@@ -54,7 +53,7 @@ struct SerializeMap {
     next_key: Option<String>,
 }
 
-pub struct SerializeStruct {
+struct SerializeStruct {
     name: &'static str,
     map: BTreeMap<String, Value>,
 }

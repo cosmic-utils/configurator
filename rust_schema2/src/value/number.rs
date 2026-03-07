@@ -1,8 +1,9 @@
 use core::cmp::Ordering;
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Number {
     U8(u8),
     U16(u16),
@@ -22,7 +23,7 @@ pub enum Number {
 
 macro_rules! float_ty {
     ($ty:ident($float:ty)) => {
-        #[derive(Copy, Clone, Debug)]
+        #[derive(Serialize, Deserialize, Copy, Clone, Debug)]
         pub struct $ty(pub $float);
 
         impl $ty {

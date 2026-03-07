@@ -84,4 +84,3 @@ pub struct StructNested {
     pub t: (String, ComplexNested),
     pub m: HashMap<String, ComplexNested>,
 }
-

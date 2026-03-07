@@ -10,7 +10,7 @@ impl<'a> Container<'a> {
     pub fn new(input: &'a syn::DeriveInput) -> Self {
         let ctxt = Ctxt::new();
 
-        let cont = serde_ast::Container::from_ast(&ctxt, &input, Derive::Deserialize).unwrap();
+        let cont = serde_ast::Container::from_ast(&ctxt, input, Derive::Deserialize).unwrap();
 
         ctxt.check().unwrap();
 
@@ -26,7 +26,7 @@ impl<'a> Container<'a> {
     }
 
     pub fn generics(&self) -> &syn::Generics {
-        &self.cont.generics
+        self.cont.generics
     }
 
     pub fn data(&self) -> &serde_ast::Data<'_> {

@@ -1,8 +1,7 @@
-use std::collections::BTreeMap;
-use json::Value;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
-
+use crate::value::Value;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RustSchemaRoot {
