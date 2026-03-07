@@ -2,7 +2,10 @@ use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use serde_derive_internals::{Ctxt, Derive, ast as serde_ast, attr};
+use serde_derive_internals::{
+    Ctxt, Derive, ast as serde_ast,
+    attr::{self, Name},
+};
 use syn::{Attribute, Expr, ExprLit, Lit};
 
 pub struct Container<'a> {
@@ -20,9 +23,13 @@ impl<'a> Container<'a> {
         Self { cont }
     }
 
-    pub fn name(&self) -> Cow<'_, str> {
-        self.cont.attrs.name().deserialize_name().into()
+    pub fn name(&self) -> String {
+        get_name(self.cont.attrs.name())
     }
+}
+
+pub fn get_name(name: &Name) -> String {
+    name.deserialize_name().into()
 }
 
 pub fn get_description(attrs: &[Attribute]) -> TokenStream {

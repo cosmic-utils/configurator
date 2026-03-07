@@ -1,9 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt, quote};
-use serde_derive_internals::ast::{Data, Field, Style};
+use serde_derive_internals::ast::{Data, Field, Style, Variant};
 
 use serde_derive_internals::attr::Default as SerdeDefault;
 
+use crate::container::get_name;
 use crate::{Container, GENERATOR, container::get_description, idents::STRUCT_DEFAULT};
 
 pub struct SchemaExpr {
@@ -26,7 +27,54 @@ pub fn expr_for_container(cont: &Container) -> TokenStream {
         Data::Struct(Style::Newtype, fields) => expr_for_tuple_struct(cont, fields),
         Data::Struct(Style::Tuple, fields) => expr_for_tuple_struct(cont, fields),
         Data::Struct(Style::Struct, fields) => expr_for_struct(cont, fields),
-        Data::Enum(variants) => todo!(),
+        Data::Enum(variants) => expr_for_enum(cont, variants),
+    }
+}
+
+fn expr_for_enum(cont: &Container, variants: &[Variant]) -> TokenStream {
+    let name = cont.name();
+    let description = get_description(&cont.cont.original.attrs);
+
+    let variants: Vec<TokenStream> = variants
+        .iter()
+        .map(|variant| {
+            let kind = match variant.style {
+                Style::Struct => todo!(),
+                Style::Tuple => todo!(),
+                Style::Newtype => todo!(),
+                Style::Unit => quote! {
+                    rust_schema2::EnumVariantKind::Unit
+                },
+            };
+
+            let name = get_name(variant.attrs.name());
+            let description = get_description(&variant.original.attrs);
+
+            quote! {
+                variants.push(rust_schema2::EnumVariant {
+                    name: String::from(#name),
+                    description: #description,
+                    kind: #kind
+                });
+            }
+        })
+        .collect();
+
+    quote! {
+
+        let mut variants = Vec::new();
+
+        #(#variants)*
+
+        rust_schema2::RustSchema {
+            kind: rust_schema2::RustSchemaKind::Enum(
+                rust_schema2::Enum {
+                    name: String::from(#name),
+                    description: #description,
+                    variants
+                }
+            ),
+        }
     }
 }
 
@@ -38,7 +86,7 @@ fn expr_for_unit_struct(cont: &Container) -> TokenStream {
         rust_schema2::RustSchema {
             kind: rust_schema2::RustSchemaKind::Struct(
                 rust_schema2::Struct {
-                    name: #name.into(),
+                    name: String::from(#name),
                     description: #description,
                     default: None,
                     fields: std::collections::BTreeMap::new()
@@ -77,7 +125,6 @@ fn expr_for_tuple_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
     quote! {
 
-
         let mut fields = Vec::new();
 
         #(#fields)*
@@ -85,7 +132,7 @@ fn expr_for_tuple_struct(cont: &Container, fields: &[Field]) -> TokenStream {
         rust_schema2::RustSchema {
             kind: rust_schema2::RustSchemaKind::TupleStruct(
                 rust_schema2::TupleStruct {
-                    name: #name.into(),
+                    name: String::from(#name),
                     description: #description,
                     default: #struct_default,
                     fields
@@ -113,7 +160,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
         .map(|field| {
             let ty = &field.ty;
 
-            let name = field.attrs.name().deserialize_name();
+            let name = get_name(field.attrs.name());
 
             let description = get_description(&field.original.attrs);
 
@@ -154,7 +201,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
         rust_schema2::RustSchema {
             kind: rust_schema2::RustSchemaKind::Struct(
                 rust_schema2::Struct {
-                    name: #name.into(),
+                    name: String::from(#name),
                     description: #description,
                     default: #struct_default,
                     fields
