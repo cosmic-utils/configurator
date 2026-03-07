@@ -15,5 +15,7 @@ macro_rules! forward_impl {
 }
 
 mod core;
+mod maps;
 mod primitives;
+mod sequences;
 mod wrappers;
