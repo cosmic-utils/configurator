@@ -18,4 +18,5 @@ mod core;
 mod maps;
 mod primitives;
 mod sequences;
+mod tuples;
 mod wrappers;

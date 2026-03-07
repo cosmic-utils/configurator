@@ -1,4 +1,3 @@
-
 use rust_schema2::RustSchema;
 use serde::{Deserialize, Serialize};
 
