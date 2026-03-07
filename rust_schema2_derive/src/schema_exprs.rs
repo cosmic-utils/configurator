@@ -73,27 +73,23 @@ fn expr_for_enum(cont: &Container, variants: &[Variant]) -> TokenStream {
             let description = get_description(&variant.original.attrs);
 
             quote! {
-                variants.push(rust_schema2::EnumVariant {
+                rust_schema2::EnumVariant {
                     name: String::from(#name),
                     description: #description,
                     kind: #kind
-                });
+                }
             }
         })
         .collect();
 
     quote! {
 
-        let mut variants = Vec::new();
-
-        #(#variants)*
-
         rust_schema2::RustSchema {
             kind: rust_schema2::RustSchemaKind::Enum(
                 rust_schema2::Enum {
                     name: String::from(#name),
                     description: #description,
-                    variants
+                    variants: vec![#(#variants),*]
                 }
             ),
         }
@@ -195,14 +191,14 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
             };
 
             quote! {
-                fields.insert(
+                (
                     String::from(#name),
                     rust_schema2::StructField {
                         description: #description,
                         default: #field_default,
                         schema: #GENERATOR.schema_for::<#ty>()
                     }
-                );
+                )
             }
         })
         .collect();
@@ -212,9 +208,6 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
     let description = get_description(&cont.cont.original.attrs);
 
     quote! {
-        let mut fields = std::collections::BTreeMap::new();
-
-        #(#fields)*
 
         rust_schema2::RustSchema {
             kind: rust_schema2::RustSchemaKind::Struct(
@@ -222,7 +215,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
                     name: String::from(#name),
                     description: #description,
                     default: #struct_default,
-                    fields
+                    fields: [#(#fields),*].into_iter().collect()
                 }
             ),
         }
