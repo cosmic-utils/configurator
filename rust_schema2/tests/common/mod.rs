@@ -29,7 +29,7 @@ macro_rules! test {
 }
 
 pub fn assert_snapshot(name: &str, value: &str) {
-    let file = format!("rust_schema2/tests/snapshots/{}.json", name);
+    let file = format!("tests/snapshots/{}.json", name);
 
     let data = snapbox::Data::read_from(Path::new(&file), Some(DataFormat::Json)).raw();
 

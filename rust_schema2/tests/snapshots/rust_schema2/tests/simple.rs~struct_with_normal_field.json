@@ -1,0 +1,29 @@
+{
+  "definitions": {
+    "A": {
+      "kind": {
+        "Struct": {
+          "default": null,
+          "description": null,
+          "fields": {
+            "x": {
+              "default": null,
+              "description": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "I32"
+                  }
+                }
+              }
+            }
+          },
+          "name": "A"
+        }
+      }
+    }
+  },
+  "schema": {
+    "Ref": "A"
+  }
+}
