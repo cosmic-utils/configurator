@@ -4,20 +4,20 @@ use std::collections::HashMap;
 
 use cosmic::iced_futures::backend::default;
 
-use schemars::{JsonSchema, schema_for};
+use rust_schema2::{RustSchemaTrait, schema_for};
 use serde::{Deserialize, Serialize};
 
 /// 1. Generate a node from schema
 /// 2. Apply the default impl to it
 /// 3. assert that the serialization equal the default val if is_default_complete is true
-fn test_schema<S: JsonSchema + Serialize>(config1: &S, is_default_complete: bool) {
+fn test_schema<S: RustSchemaTrait + Serialize>(config1: &S, is_default_complete: bool) {
     setup_log_for_test();
 
-    let schema = schema_for!(S);
+    let schema = schema_for::<S>();
 
     dbg!(&schema);
 
-    let mut tree = NodeContainer::from_json_schema(&schema);
+    let mut tree = NodeContainer::from_rust_schema(&schema);
 
     dbg!(&tree);
 

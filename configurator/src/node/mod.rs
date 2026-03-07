@@ -3,13 +3,13 @@ use std::{borrow::Cow, collections::BTreeMap, fmt::Display, rc::Rc};
 use derive_more::derive::Unwrap;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
-use schemars::schema::SchemaObject;
 
 use crate::generic_value::Value;
 
 mod apply_value;
 pub mod data_path;
-pub mod from_json_schema;
+// pub mod from_json_schema;
+pub mod from_rust_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
 #[cfg(test)]

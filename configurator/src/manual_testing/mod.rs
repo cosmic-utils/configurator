@@ -29,7 +29,7 @@ pub fn print_node_container<C: RustSchemaTrait>(name: &str) {
     let content = get_schema::<C>(name);
 
     let json_value = json::Value::from_str(&content).unwrap();
-    let tree = NodeContainer::from_json_schema(&json::from_value(json_value).unwrap());
+    let tree = NodeContainer::from_rust_schema(&json::from_value(json_value).unwrap());
 
     println!("{:#?}", tree);
 }
