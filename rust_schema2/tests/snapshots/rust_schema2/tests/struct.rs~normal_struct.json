@@ -1,0 +1,54 @@
+{
+  "definitions": {
+    "A": {
+      "kind": {
+        "Struct": {
+          "default": {
+            "Struct": [
+              "A",
+              {
+                "x": {
+                  "Number": {
+                    "I32": 1
+                  }
+                },
+                "y": {
+                  "String": "hello"
+                }
+              }
+            ]
+          },
+          "description": "Doc on Struct",
+          "fields": {
+            "x": {
+              "default": null,
+              "description": "Doc on field",
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "I32"
+                  }
+                }
+              }
+            },
+            "y": {
+              "default": {
+                "String": ""
+              },
+              "description": null,
+              "schema": {
+                "Schema": {
+                  "kind": "String"
+                }
+              }
+            }
+          },
+          "name": "A"
+        }
+      }
+    }
+  },
+  "schema": {
+    "Ref": "A"
+  }
+}

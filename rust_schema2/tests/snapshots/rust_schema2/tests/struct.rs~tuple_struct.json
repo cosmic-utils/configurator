@@ -1,0 +1,44 @@
+{
+  "definitions": {
+    "A": {
+      "kind": {
+        "TupleStruct": {
+          "default": {
+            "TupleStruct": [
+              "A",
+              [
+                {
+                  "Number": {
+                    "I32": 1
+                  }
+                },
+                {
+                  "String": "hello"
+                }
+              ]
+            ]
+          },
+          "description": "Doc on Struct",
+          "fields": [
+            {
+              "Schema": {
+                "kind": {
+                  "Number": "I32"
+                }
+              }
+            },
+            {
+              "Schema": {
+                "kind": "String"
+              }
+            }
+          ],
+          "name": "A"
+        }
+      }
+    }
+  },
+  "schema": {
+    "Ref": "A"
+  }
+}
