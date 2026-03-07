@@ -47,7 +47,14 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
             let name = field.attrs.name().deserialize_name();
 
             quote! {
-                fields.insert(String::from(#name), #GENERATOR.schema_for::<#ty>());
+                fields.insert(
+                    String::from(#name),
+                    rust_schema2::StructField {
+                        description: None,
+                        default: None,
+                        schema: #GENERATOR.schema_for::<#ty>()
+                    }
+                );
             }
         })
         .collect();
@@ -59,10 +66,15 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
         #(#fields)*
 
-        // rust_schema2::RustSchema {
-        //     description: None,
-        //     default: None,
-        //     kind: rust_schema2::RustSchemaKind::Struct(#name.into(), fields),
-        // }
+        rust_schema2::RustSchema {
+            kind: rust_schema2::RustSchemaKind::Struct(
+                rust_schema2::Struct {
+                    name: #name.into(),
+                    description: None,
+                    default: None,
+                    fields
+                }
+            ),
+        }
     }
 }
