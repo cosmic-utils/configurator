@@ -13,7 +13,8 @@ fn enum1() {
     enum A {
         /// Doc on variant
         Unit,
-        
+        NewType(String),
+        Tuple(String, i32),
     }
 
     test!(A);

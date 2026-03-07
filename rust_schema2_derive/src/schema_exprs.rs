@@ -40,8 +40,30 @@ fn expr_for_enum(cont: &Container, variants: &[Variant]) -> TokenStream {
         .map(|variant| {
             let kind = match variant.style {
                 Style::Struct => todo!(),
-                Style::Tuple => todo!(),
-                Style::Newtype => todo!(),
+                Style::Tuple => {
+                    let fields: Vec<TokenStream> = variant
+                        .fields
+                        .iter()
+                        .map(|field| {
+                            let ty = &field.ty;
+                            quote! {
+                                #GENERATOR.schema_for::<#ty>()
+                            }
+                        })
+                        .collect();
+
+                    quote! {
+                        rust_schema2::EnumVariantKind::Tuple(vec![#(#fields),*])
+                    }
+                }
+                Style::Newtype => {
+                    let field = &variant.fields[0];
+                    let ty = &field.ty;
+
+                    quote! {
+                        rust_schema2::EnumVariantKind::Tuple(vec![#GENERATOR.schema_for::<#ty>()])
+                    }
+                }
                 Style::Unit => quote! {
                     rust_schema2::EnumVariantKind::Unit
                 },
@@ -115,19 +137,15 @@ fn expr_for_tuple_struct(cont: &Container, fields: &[Field]) -> TokenStream {
     let fields: Vec<TokenStream> = fields
         .iter()
         .map(|field| {
-            let ty: &&syn::Type = &field.ty;
+            let ty = &field.ty;
 
             quote! {
-                fields.push(#GENERATOR.schema_for::<#ty>());
+                #GENERATOR.schema_for::<#ty>()
             }
         })
         .collect();
 
     quote! {
-
-        let mut fields = Vec::new();
-
-        #(#fields)*
 
         rust_schema2::RustSchema {
             kind: rust_schema2::RustSchemaKind::TupleStruct(
@@ -135,7 +153,7 @@ fn expr_for_tuple_struct(cont: &Container, fields: &[Field]) -> TokenStream {
                     name: String::from(#name),
                     description: #description,
                     default: #struct_default,
-                    fields
+                    fields: vec![#(#fields),*]
                 }
             ),
         }
