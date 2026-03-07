@@ -1,13 +1,13 @@
 use std::collections::{BTreeSet, BinaryHeap, HashSet, LinkedList, VecDeque};
 
-use crate::{NumberKind, RustSchema, RustSchemaKind, RustSchemaTrait, SchemaGenerator};
+use crate::{Array, NumberKind, RustSchema, RustSchemaKind, RustSchemaTrait, SchemaGenerator};
 
 macro_rules! seq_impl {
     ($type:ty) => {
         impl<T: RustSchemaTrait> RustSchemaTrait for $type {
             fn schema(generator: &mut SchemaGenerator) -> RustSchema {
                 RustSchema {
-                    kind: RustSchemaKind::Array(generator.schema_for::<T>()),
+                    kind: RustSchemaKind::Array(Array::any_size(generator.schema_for::<T>())),
                 }
             }
         }
@@ -19,7 +19,7 @@ macro_rules! set_impl {
         impl<T: RustSchemaTrait> RustSchemaTrait for $type {
             fn schema(generator: &mut SchemaGenerator) -> RustSchema {
                 RustSchema {
-                    kind: RustSchemaKind::Array(generator.schema_for::<T>()),
+                    kind: RustSchemaKind::Array(Array::any_size(generator.schema_for::<T>())),
                 }
             }
         }

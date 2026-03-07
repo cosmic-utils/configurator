@@ -2,6 +2,8 @@ pub use configurator_utils::ConfigFormat;
 use json::Value;
 use rust_schema2::{RustSchemaTrait, schema_for};
 
+pub use rust_schema2;
+
 #[derive(Clone, Debug, Default)]
 pub struct SchemaGenerator {
     source_paths: Vec<String>,

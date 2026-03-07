@@ -39,13 +39,39 @@ pub enum RustSchemaKind {
     Char,
     String,
     Option(RustSchemaOrRef),
-    Array(RustSchemaOrRef),
+    Array(Array),
     Tuple(Vec<RustSchemaOrRef>),
     Map(RustSchemaOrRef),
 
     Struct(Struct),
     TupleStruct(TupleStruct),
     Enum(Enum),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Array {
+    pub min: Option<u64>,
+    pub max: Option<u64>,
+    /// Optional in case the expected size is 0
+    pub kind: Option<RustSchemaOrRef>,
+}
+
+impl Array {
+    pub fn any_size(kind: RustSchemaOrRef) -> Self {
+        Self {
+            min: None,
+            max: None,
+            kind: Some(kind),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            min: Some(0),
+            max: Some(0),
+            kind: None,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
