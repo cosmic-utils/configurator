@@ -1,0 +1,17 @@
+{
+  "definitions": {
+    "A": {
+      "kind": {
+        "Struct": {
+          "default": null,
+          "description": "Doc on Struct",
+          "fields": {},
+          "name": "A"
+        }
+      }
+    }
+  },
+  "schema": {
+    "Ref": "A"
+  }
+}

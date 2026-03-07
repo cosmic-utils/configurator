@@ -10,6 +10,7 @@ impl<'a> Debug for ContainerDebug<'a> {
             .field("ident", &c.ident)
             .field("attrs", &DebugContainerAttrs(&c.attrs))
             .field("data", &DebugData(&c.data))
+            .field("original", &c.original)
             .finish()
     }
 }

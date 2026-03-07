@@ -1,11 +1,9 @@
-use crate::{RustSchema, RustSchemaKind, RustSchemaTrait};
+use crate::{RustSchema, RustSchemaKind, RustSchemaTrait, SchemaGenerator};
 
 impl<T: RustSchemaTrait> RustSchemaTrait for Option<T> {
-    fn schema(generator: &mut crate::SchemaGenerator) -> RustSchema {
+    fn schema(generator: &mut SchemaGenerator) -> RustSchema {
         RustSchema {
-            description: None,
             kind: RustSchemaKind::Option(generator.schema_for::<T>()),
-            default: None,
         }
     }
 }

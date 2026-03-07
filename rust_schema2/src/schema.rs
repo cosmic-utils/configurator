@@ -1,8 +1,7 @@
-use std::collections::BTreeMap;
-use json::Value;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
-
+use crate::value::Value;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RustSchemaRoot {
@@ -12,9 +11,7 @@ pub struct RustSchemaRoot {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RustSchema {
-    pub description: Option<String>,
     pub kind: RustSchemaKind,
-    pub default: Option<Value>,
 }
 
 pub type RustSchemaId = String;
@@ -45,16 +42,54 @@ pub enum RustSchemaKind {
     Array(RustSchemaOrRef),
     Tuple(Vec<RustSchemaOrRef>),
     Map(RustSchemaOrRef),
-    Struct(String, BTreeMap<String, RustSchemaOrRef>),
-    TupleStruct(String, Vec<RustSchemaOrRef>),
-    Enum(String, Vec<(String, EnumVariantKind)>),
+
+    Struct(Struct),
+    TupleStruct(TupleStruct),
+    Enum(Enum),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Struct {
+    pub name: String,
+    pub description: Option<String>,
+    pub default: Option<Value>,
+    pub fields: BTreeMap<String, StructField>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StructField {
+    pub description: Option<String>,
+    pub default: Option<Value>,
+    pub schema: RustSchemaOrRef,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TupleStruct {
+    pub name: String,
+    pub description: Option<String>,
+    pub default: Option<Value>,
+    pub fields: Vec<RustSchemaOrRef>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Enum {
+    pub name: String,
+    pub description: Option<String>,
+    pub variants: Vec<EnumVariant>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct EnumVariant {
+    pub name: String,
+    pub description: Option<String>,
+    pub kind: EnumVariantKind,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum EnumVariantKind {
     Unit,
     Tuple(Vec<RustSchemaOrRef>),
-    Struct(BTreeMap<String, RustSchemaOrRef>),
+    Struct(BTreeMap<String, StructField>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
