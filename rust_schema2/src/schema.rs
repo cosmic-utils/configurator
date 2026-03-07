@@ -51,8 +51,8 @@ pub enum RustSchemaKind {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Struct {
     pub name: String,
-    pub default: Option<Value>,
     pub description: Option<String>,
+    pub default: Option<Value>,
     pub fields: BTreeMap<String, StructField>,
 }
 
@@ -66,8 +66,8 @@ pub struct StructField {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TupleStruct {
     pub name: String,
-    pub default: Option<Value>,
     pub description: Option<String>,
+    pub default: Option<Value>,
     pub fields: Vec<TupleStructField>,
 }
 

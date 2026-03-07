@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 #[test]
 fn testing() {
     /// Bonsoir
+    /// Second line
+    /// 
+    /// ### Hello
+    /// [`B`]
     #[derive(RustSchema, JsonSchema, Serialize, Deserialize, Debug)]
     #[serde(default)]
     struct A {

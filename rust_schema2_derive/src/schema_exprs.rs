@@ -63,6 +63,8 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
     let name = cont.name();
 
+    let description = cont.doc();
+
     quote! {
         let mut fields = std::collections::BTreeMap::new();
 
@@ -72,7 +74,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
             kind: rust_schema2::RustSchemaKind::Struct(
                 rust_schema2::Struct {
                     name: #name.into(),
-                    description: None,
+                    description: #description.map(|d| d.to_owned()),
                     default: #struct_default,
                     fields
                 }
