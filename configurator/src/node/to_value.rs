@@ -13,7 +13,7 @@ impl NodeContainer {
         }
 
         match &self.node {
-            Node::Null => Some(Value::Option(None)),
+            Node::Unit => Some(Value::Option(None)),
             Node::Bool(node_bool) => node_bool.value.map(Value::Bool),
             Node::String(node_string) => node_string
                 .value

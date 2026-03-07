@@ -20,7 +20,7 @@ impl NodeContainer {
         self.modified = modified;
 
         match &mut self.node {
-            Node::Null => {
+            Node::Unit => {
                 // nothing to do ?
             }
             Node::Bool(node_bool) => {
@@ -128,7 +128,7 @@ impl NodeContainer {
         debug!("\n{value:#?}\n{self:#?}\n");
 
         match &self.node {
-            Node::Null => value.is_null(),
+            Node::Unit => value.is_null(),
             Node::Bool(node_bool) => value.as_bool().is_some(),
             Node::String(node_string) => value.as_str().is_some(),
             Node::Number(node_number) => value.as_number().is_some(),
@@ -179,7 +179,7 @@ impl NodeContainer {
     // todo: remove ALL values. Pass in each node container.
     pub fn remove_value_rec(&mut self) {
         match &mut self.node {
-            Node::Null => {}
+            Node::Unit => {}
             Node::Bool(node_bool) => {
                 node_bool.value.take();
             }

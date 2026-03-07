@@ -17,7 +17,7 @@ fn test_schema<S: RustSchemaTrait + Serialize>(config1: &S, is_default_complete:
 
     dbg!(&schema);
 
-    let mut tree = NodeContainer::from_rust_schema(&schema);
+    let mut tree = NodeContainer::from_rust_schema(&schema).unwrap();
 
     dbg!(&tree);
 
