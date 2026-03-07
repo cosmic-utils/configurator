@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt, quote};
 use serde_derive_internals::ast::{Data, Field, Style};
 
-use crate::{Container, GENERATOR};
+use crate::{Container, GENERATOR, idents::STRUCT_DEFAULT};
 
 pub struct SchemaExpr {
     pub creator: TokenStream,
@@ -29,6 +29,16 @@ pub fn expr_for_container(cont: &Container) -> TokenStream {
 }
 
 fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
+    let set_container_default = match cont.cont.attrs.default() {
+        serde_derive_internals::attr::Default::None => None,
+        serde_derive_internals::attr::Default::Default => {
+            Some(quote!(let #STRUCT_DEFAULT = Self::default();))
+        }
+        serde_derive_internals::attr::Default::Path(path) => {
+            Some(quote!(let #STRUCT_DEFAULT = #path();))
+        }
+    };
+
     let fields: Vec<TokenStream> = fields
         .iter()
         .map(|field| {
@@ -49,10 +59,10 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
         #(#fields)*
 
-        rust_schema2::RustSchema {
-            description: None,
-            default: None,
-            kind: rust_schema2::RustSchemaKind::Struct(#name.into(), fields),
-        }
+        // rust_schema2::RustSchema {
+        //     description: None,
+        //     default: None,
+        //     kind: rust_schema2::RustSchemaKind::Struct(#name.into(), fields),
+        // }
     }
 }

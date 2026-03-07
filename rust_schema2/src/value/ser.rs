@@ -427,10 +427,16 @@ mod tests {
             x: i32,
         }
 
+        // let v = A {
+        //     x: 1,
+        //     y: Some(Box::new(B { x: 2 })),
+        // };
+
         let v = A {
             x: 1,
-            y: Some(Box::new(B { x: 2 })),
+            y: None,
         };
+
 
         let v = to_value(&v);
 

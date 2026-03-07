@@ -2,6 +2,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::TokenStreamExt;
 
 pub const GENERATOR: ConstIdent = ConstIdent("generator");
+pub const STRUCT_DEFAULT: ConstIdent = ConstIdent("struct_default");
 
 pub struct ConstIdent(&'static str);
 
