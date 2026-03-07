@@ -68,13 +68,7 @@ pub struct TupleStruct {
     pub name: String,
     pub description: Option<String>,
     pub default: Option<Value>,
-    pub fields: Vec<TupleStructField>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TupleStructField {
-    pub default: Option<Value>,
-    pub schema: RustSchemaOrRef,
+    pub fields: Vec<RustSchemaOrRef>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

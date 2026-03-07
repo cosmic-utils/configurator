@@ -22,11 +22,76 @@ impl ToTokens for SchemaExpr {
 
 pub fn expr_for_container(cont: &Container) -> TokenStream {
     match &cont.cont.data {
-        Data::Struct(Style::Unit, _) => todo!(),
-        Data::Struct(Style::Newtype, fields) => todo!(),
-        Data::Struct(Style::Tuple, fields) => todo!(),
+        Data::Struct(Style::Unit, _) => expr_for_unit_struct(cont),
+        Data::Struct(Style::Newtype, fields) => expr_for_tuple_struct(cont, fields),
+        Data::Struct(Style::Tuple, fields) => expr_for_tuple_struct(cont, fields),
         Data::Struct(Style::Struct, fields) => expr_for_struct(cont, fields),
         Data::Enum(variants) => todo!(),
+    }
+}
+
+fn expr_for_unit_struct(cont: &Container) -> TokenStream {
+    let name = cont.name();
+    let description = get_description(&cont.cont.original.attrs);
+
+    quote! {
+        rust_schema2::RustSchema {
+            kind: rust_schema2::RustSchemaKind::Struct(
+                rust_schema2::Struct {
+                    name: #name.into(),
+                    description: #description,
+                    default: None,
+                    fields: std::collections::BTreeMap::new()
+                }
+            ),
+        }
+    }
+}
+
+fn expr_for_tuple_struct(cont: &Container, fields: &[Field]) -> TokenStream {
+    let name = cont.name();
+    let description = get_description(&cont.cont.original.attrs);
+
+    let struct_default = match cont.cont.attrs.default() {
+        SerdeDefault::None => {
+            quote!(None)
+        }
+        SerdeDefault::Default => {
+            quote!(Some(rust_schema2::to_value(Self::default())))
+        }
+        SerdeDefault::Path(path) => {
+            quote!(Some(rust_schema2::to_value(#path())))
+        }
+    };
+
+    let fields: Vec<TokenStream> = fields
+        .iter()
+        .map(|field| {
+            let ty: &&syn::Type = &field.ty;
+
+            quote! {
+                fields.push(#GENERATOR.schema_for::<#ty>());
+            }
+        })
+        .collect();
+
+    quote! {
+
+
+        let mut fields = Vec::new();
+
+        #(#fields)*
+
+        rust_schema2::RustSchema {
+            kind: rust_schema2::RustSchemaKind::TupleStruct(
+                rust_schema2::TupleStruct {
+                    name: #name.into(),
+                    description: #description,
+                    default: #struct_default,
+                    fields
+                }
+            ),
+        }
     }
 }
 
