@@ -8,8 +8,11 @@ keywords.workspace = true
 
 [dependencies]
 rust_schema2_derive.workspace = true
-json.workspace = true
 serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+schemars.workspace = true
+json.workspace = true
 
 
 [lints]

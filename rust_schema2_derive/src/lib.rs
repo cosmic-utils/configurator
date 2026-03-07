@@ -35,7 +35,7 @@ fn derive_rust_schema(input: syn::DeriveInput) -> syn::Result<TokenStream> {
 
     let (impl_generics, ty_generics, where_clause) = cont.generics().split_for_impl();
 
-    dbg!(ContainerDebug(&cont.cont));
+    // dbg!(ContainerDebug(&cont.cont));
 
     let name = cont.name();
 

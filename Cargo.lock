@@ -4240,6 +4240,7 @@ name = "rust_schema2"
 version = "0.1.0"
 dependencies = [
  "rust_schema2_derive",
+ "schemars",
  "serde",
  "serde_json",
 ]
