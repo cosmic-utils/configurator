@@ -23,25 +23,9 @@ impl<'a> Container<'a> {
     pub fn name(&self) -> Cow<'_, str> {
         self.cont.attrs.name().deserialize_name().into()
     }
-
-    pub fn ident(&self) -> &syn::Ident {
-        &self.cont.ident
-    }
-
-    pub fn generics(&self) -> &syn::Generics {
-        self.cont.generics
-    }
-
-    pub fn data(&self) -> &serde_ast::Data<'_> {
-        &self.cont.data
-    }
-
-    pub fn doc(&self) -> TokenStream {
-        get_doc(&self.cont.original.attrs)
-    }
 }
 
-fn get_doc(attrs: &[Attribute]) -> TokenStream {
+pub fn get_description(attrs: &[Attribute]) -> TokenStream {
     let mut lines = Vec::new();
 
     for (i, line) in attrs
@@ -68,12 +52,12 @@ fn get_doc(attrs: &[Attribute]) -> TokenStream {
 
     if lines.is_empty() {
         quote! {
-            None::<&'static str>
+            None::<String>
         }
     } else {
         let joined = lines.join("\n");
         quote! {
-            Some(#joined)
+            Some(String::from(#joined))
         }
     }
 }

@@ -2,7 +2,9 @@ use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt, quote};
 use serde_derive_internals::ast::{Data, Field, Style};
 
-use crate::{Container, GENERATOR, idents::STRUCT_DEFAULT};
+use serde_derive_internals::attr::Default as SerdeDefault;
+
+use crate::{Container, GENERATOR, container::get_description, idents::STRUCT_DEFAULT};
 
 pub struct SchemaExpr {
     pub creator: TokenStream,
@@ -19,7 +21,7 @@ impl ToTokens for SchemaExpr {
 }
 
 pub fn expr_for_container(cont: &Container) -> TokenStream {
-    match cont.data() {
+    match &cont.cont.data {
         Data::Struct(Style::Unit, _) => todo!(),
         Data::Struct(Style::Newtype, fields) => todo!(),
         Data::Struct(Style::Tuple, fields) => todo!(),
@@ -30,13 +32,13 @@ pub fn expr_for_container(cont: &Container) -> TokenStream {
 
 fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
     let struct_default = match cont.cont.attrs.default() {
-        serde_derive_internals::attr::Default::None => {
+        SerdeDefault::None => {
             quote!(None)
         }
-        serde_derive_internals::attr::Default::Default => {
+        SerdeDefault::Default => {
             quote!(Some(rust_schema2::to_value(Self::default())))
         }
-        serde_derive_internals::attr::Default::Path(path) => {
+        SerdeDefault::Path(path) => {
             quote!(Some(rust_schema2::to_value(#path())))
         }
     };
@@ -48,12 +50,26 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
             let name = field.attrs.name().deserialize_name();
 
+            let description = get_description(&field.original.attrs);
+
+            let field_default = match field.attrs.default() {
+                SerdeDefault::None => {
+                    quote!(None)
+                }
+                SerdeDefault::Default => {
+                    quote!(Some(rust_schema2::to_value(#ty::default())))
+                }
+                SerdeDefault::Path(path) => {
+                    quote!(Some(rust_schema2::to_value(#path())))
+                }
+            };
+
             quote! {
                 fields.insert(
                     String::from(#name),
                     rust_schema2::StructField {
-                        description: None,
-                        default: None,
+                        description: #description,
+                        default: #field_default,
                         schema: #GENERATOR.schema_for::<#ty>()
                     }
                 );
@@ -63,7 +79,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
 
     let name = cont.name();
 
-    let description = cont.doc();
+    let description = get_description(&cont.cont.original.attrs);
 
     quote! {
         let mut fields = std::collections::BTreeMap::new();
@@ -74,7 +90,7 @@ fn expr_for_struct(cont: &Container, fields: &[Field]) -> TokenStream {
             kind: rust_schema2::RustSchemaKind::Struct(
                 rust_schema2::Struct {
                     name: #name.into(),
-                    description: #description.map(|d| d.to_owned()),
+                    description: #description,
                     default: #struct_default,
                     fields
                 }
