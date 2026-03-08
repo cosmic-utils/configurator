@@ -58,11 +58,33 @@ pub(crate) fn schema_object_to_node(
                 schema_object_to_node("option", def, schema)?,
             ])))
         }
-        RustSchemaKind::Array(array) => todo!(),
+        RustSchemaKind::Array(array) => NodeContainer::from_node(Node::Array(NodeArray {
+            values: None,
+            template: NodeArrayTemplate::All(Box::new(schema_object_to_node(
+                "array",
+                def,
+                array.kind.as_ref().unwrap(),
+            )?)),
+            min: None,
+            max: None,
+        })),
         RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
         RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
         RustSchemaKind::Struct(_) => todo!(),
-        RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
+        RustSchemaKind::TupleStruct(tuple_struct) => {
+            let template = tuple_struct
+                .fields
+                .iter()
+                .map(|s| schema_object_to_node("tuple struct", def, s))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            NodeContainer::from_node(Node::Array(NodeArray {
+                values: None,
+                template: NodeArrayTemplate::FirstN(template),
+                min: None,
+                max: None,
+            }))
+        }
         RustSchemaKind::Enum(enum_) => {
             let variants = enum_
                 .variants
