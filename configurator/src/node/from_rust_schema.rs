@@ -68,9 +68,39 @@ pub(crate) fn schema_object_to_node(
             min: None,
             max: None,
         })),
-        RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
-        RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
-        RustSchemaKind::Struct(_) => todo!(),
+        RustSchemaKind::Tuple(schemas) => {
+            let template = schemas
+                .iter()
+                .map(|s| schema_object_to_node("tuple", def, s))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            NodeContainer::from_node(Node::Array(NodeArray {
+                values: None,
+                template: NodeArrayTemplate::FirstN(template),
+                min: None,
+                max: None,
+            }))
+        }
+        RustSchemaKind::Map(schemas) => NodeContainer::from_node(Node::Object(NodeObject {
+            nodes: IndexMap::new(),
+            template: Some(Box::new(schema_object_to_node("map", def, schemas)?)),
+        })),
+        RustSchemaKind::Struct(struct_) => {
+            let nodes = struct_
+                .fields
+                .iter()
+                .map(|(k, v)| {
+                    let value = schema_object_to_node("struct", def, &v.schema)?;
+
+                    Ok((k.to_owned(), value))
+                })
+                .collect::<Result<IndexMap<String, NodeContainer>, anyhow::Error>>()?;
+            NodeContainer::from_node(Node::Object(NodeObject {
+                nodes,
+                template: None,
+            }))
+            .set_description(struct_.description.clone())
+        }
         RustSchemaKind::TupleStruct(tuple_struct) => {
             let template = tuple_struct
                 .fields
