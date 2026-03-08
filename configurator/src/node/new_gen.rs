@@ -150,11 +150,6 @@ pub fn get_node(root: RustSchemaRoot, data_path: &[DataPathType]) -> anyhow::Res
     Ok(NodeContainer { node })
 }
 
-// on doit pouvoir
-// - appliquer un value
-// - determiner si des fields sont manquant, dans les enfants
-// - extraire une modification
-
 pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result<Value> {
     fn inner(
         root: &RustSchemaRoot,
@@ -226,14 +221,19 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                             {
                                 new_map.0.insert(
                                     field_name.to_owned(),
-                                    inner(root, schema, field_value, is_default)?,
+                                    inner(
+                                        root,
+                                        get_schema(root, &field.schema)?,
+                                        field_value,
+                                        is_default,
+                                    )?,
                                 );
                             } else {
                                 new_map.0.insert(
                                     field_name.to_owned(),
                                     inner(
                                         root,
-                                        schema,
+                                        get_schema(root, &field.schema)?,
                                         &rust_schema_value_to_value(field_default),
                                         true,
                                     )?,
@@ -243,7 +243,12 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                             if let Some(field_value) = map.0.get(field_name) {
                                 new_map.0.insert(
                                     field_name.to_owned(),
-                                    inner(root, schema, field_value, is_default)?,
+                                    inner(
+                                        root,
+                                        get_schema(root, &field.schema)?,
+                                        field_value,
+                                        is_default,
+                                    )?,
                                 );
                             } else {
                                 // missing value for field
@@ -276,7 +281,7 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
 
                                 inner(root, schema, value, is_default)
                             })
-                            .collect()?,
+                            .collect::<Result<Vec<_>, _>>()?,
                     )
                 } else {
                     not_compatible_error!("TupleStruct", value)
