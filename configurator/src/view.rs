@@ -21,7 +21,7 @@ use crate::{
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
         self, Node, NodeContainer, NodeNumber, NodeString, NodeStruct,
-        data_path::{DataPath, DataPathType, data_path_plus_one},
+        data_path::{DataPath, DataPathType, data_path_push},
     },
     page::Page,
 };
@@ -120,16 +120,9 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 fn node_list<'a>(
     name: DataPathType,
     description: Option<&'a str>,
-    data_path: &'a [DataPathType],
+    data_path: &[DataPathType],
     inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
-    fn append_data_path(data_path: &[DataPathType], field: &DataPathType) -> Vec<DataPathType> {
-        let mut new_vec = Vec::with_capacity(data_path.len() + 1);
-        new_vec.extend_from_slice(data_path);
-        new_vec.push(field.clone());
-        new_vec
-    }
-
     let name_cloned = name.clone();
 
     mouse_area(
@@ -305,11 +298,13 @@ fn view_struct<'a>(
             section()
                 .title("Values")
                 .extend(node_struct.fields.iter().map(|(name, field)| {
+                    let data_path = data_path_push(data_path, name);
+
                     node_list(
                         DataPathType::Name(name.clone()),
                         field.description.as_deref(),
-                        data_path,
-                        page.get_node(&data_path_plus_one(data_path, name)),
+                        &data_path,
+                        page.get_node(&data_path),
                     )
                 })),
         )

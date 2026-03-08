@@ -66,7 +66,7 @@ pub fn data_path_alloc_one(data_path: &[DataPathType]) -> Vec<DataPathType> {
     new_vec
 }
 
-pub fn data_path_plus_one(
+pub fn data_path_push(
     data_path: &[DataPathType],
     more: impl Into<DataPathType>,
 ) -> Vec<DataPathType> {

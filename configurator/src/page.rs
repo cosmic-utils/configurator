@@ -148,6 +148,10 @@ impl Page {
         self.nodes.get(data_path).unwrap()
     }
 
+    pub fn get_node_mut(&mut self, data_path: &[DataPathType]) -> &mut NodeContainer {
+        self.nodes.get_mut(data_path).unwrap()
+    }
+
     // need &str for appid: https://github.com/tokio-rs/tracing/issues/1181
     #[instrument(skip(content))]
     fn from_str(appid: &str, content: &str) -> anyhow::Result<Self> {
@@ -335,7 +339,22 @@ impl Page {
                 self.reload_node().unwrap();
             }
 
-            PageMsg::ChangeMsg(data_path, change_msg) => {}
+            PageMsg::ChangeMsg(data_path, change_msg) => match change_msg {
+                ChangeMsg::ApplyDefault => todo!(),
+                ChangeMsg::ChangeBool(_) => todo!(),
+                ChangeMsg::ChangeString(value) => {
+                    let node = self.get_node_mut(&data_path);
+                    let node_string = node.node.unwrap_string_mut();
+                    node_string.temp = value.clone();
+                    self.modifs.insert(data_path, Value::String(value));
+                }
+                ChangeMsg::ChangeNumber(_) => todo!(),
+                ChangeMsg::ChangeEnum(_) => todo!(),
+                ChangeMsg::Remove(data_path_type) => todo!(),
+                ChangeMsg::AddNewNodeToObject(_) => todo!(),
+                ChangeMsg::AddNewNodeToArray => todo!(),
+                ChangeMsg::RenameKey { prev, new } => todo!(),
+            },
 
             /*
             PageMsg::ChangeMsg(data_path, change_msg) => {
