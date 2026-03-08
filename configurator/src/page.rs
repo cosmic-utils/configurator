@@ -288,14 +288,14 @@ impl Page {
         match message {
             PageMsg::SelectDataPath(pos) => {
                 self.data_path.change_to(pos);
+                self.node = node::get_node(&self.schema, &self.data_path.current()).unwrap();
             }
             PageMsg::OpenDataPath(data_path_type) => {
                 self.data_path.open(data_path_type);
+                self.node = node::get_node(&self.schema, &self.data_path.current()).unwrap();
             }
 
-            PageMsg::ChangeMsg(data_path, change_msg) => {
-                
-            }
+            PageMsg::ChangeMsg(data_path, change_msg) => {}
 
             /*
             PageMsg::ChangeMsg(data_path, change_msg) => {
