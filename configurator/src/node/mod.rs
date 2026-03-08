@@ -436,11 +436,18 @@ impl Missing {
         &'a self,
         data_path: Box<dyn Iterator<Item = &'a DataPathType> + 'a>,
     ) -> bool {
+        if self.is_missing {
+            return true;
+        }
+
         let mut missing = self;
 
         for data in data_path {
             match missing.childs.get(data) {
-                Some(m) => missing = m,
+                Some(m) if m.is_missing => return true,
+                Some(m) => {
+                    missing = m;
+                }
                 None => return false,
             }
         }
