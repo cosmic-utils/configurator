@@ -1,13 +1,14 @@
 use std::collections::BTreeMap;
 
 use anyhow::{anyhow, bail};
+use indexmap::IndexMap;
 use rust_schema2::{RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot};
 
 use crate::{
     generic_value::Value,
     node::{
         Node, NodeArray, NodeArrayTemplate, NodeBool, NodeContainer, NodeEnum, NodeNumber,
-        NodeString, NodeValue, NumberValueLight,
+        NodeObject, NodeString, NodeValue, NumberValueLight,
     },
 };
 
@@ -62,31 +63,48 @@ pub(crate) fn schema_object_to_node(
         RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
         RustSchemaKind::Struct(_) => todo!(),
         RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
-        RustSchemaKind::Enum(enum_) => NodeContainer::from_node(Node::Enum(NodeEnum::new(
-            enum_
+        RustSchemaKind::Enum(enum_) => {
+            let variants = enum_
                 .variants
                 .iter()
-                .map(|variant| match &variant.kind {
-                    rust_schema2::EnumVariantKind::Unit => NodeContainer::from_node(Node::Value(
-                        NodeValue::new(Value::String(variant.name.clone())),
-                    )),
-                    rust_schema2::EnumVariantKind::Tuple(schemas) => {
-                        NodeContainer::from_node(Node::Array(NodeArray {
-                            values: None,
-                            template: NodeArrayTemplate::FirstN(
-                                schemas
-                                    .iter()
-                                    .map(|s| schema_object_to_node("tuple variant", def, s))
-                                    .collect()?,
-                            ),
-                            min: None,
-                            max: None,
-                        }))
+                .map(|variant| -> anyhow::Result<NodeContainer> {
+                    match &variant.kind {
+                        rust_schema2::EnumVariantKind::Unit => Ok(NodeContainer::from_node(
+                            Node::Value(NodeValue::new(Value::String(variant.name.clone()))),
+                        )),
+                        rust_schema2::EnumVariantKind::Tuple(schemas) => {
+                            let template = schemas
+                                .iter()
+                                .map(|s| schema_object_to_node("tuple variant", def, s))
+                                .collect::<Result<Vec<_>, _>>()?;
+                            Ok(NodeContainer::from_node(Node::Array(NodeArray {
+                                values: None,
+                                template: NodeArrayTemplate::FirstN(template),
+                                min: None,
+                                max: None,
+                            })))
+                        }
+                        rust_schema2::EnumVariantKind::Struct(btree_map) => {
+                            let nodes = btree_map
+                                .iter()
+                                .map(|(k, v)| {
+                                    let value =
+                                        schema_object_to_node("struct variant", def, &v.schema)?;
+
+                                    Ok((k.to_owned(), value))
+                                })
+                                .collect::<Result<IndexMap<String, NodeContainer>, anyhow::Error>>(
+                                )?;
+                            Ok(NodeContainer::from_node(Node::Object(NodeObject {
+                                nodes,
+                                template: None,
+                            })))
+                        }
                     }
-                    rust_schema2::EnumVariantKind::Struct(btree_map) => todo!(),
                 })
-                .collect()?,
-        )))
+                .collect::<Result<Vec<_>, _>>()?;
+            NodeContainer::from_node(Node::Enum(NodeEnum::new(variants)))
+        }
         .set_description(enum_.description.clone()),
     };
 
