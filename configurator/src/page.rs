@@ -256,9 +256,11 @@ impl Page {
         // debug!("tree = {:#?}", self.tree);
         debug!("full_config = {:#?}", self.full_config);
 
-        let generated_config = node::get_value(&self.schema, &self.full_config)?;
+        let (full_value, missing) = node::get_value(&self.schema, &self.full_config)?;
 
-        debug!("generated config = {:#?}", generated_config);
+        debug!("full_value = {:#?}", full_value);
+
+        debug!("missing = {:#?}", missing);
 
         // self.tree.remove_value_rec();
 

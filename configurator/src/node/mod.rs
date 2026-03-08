@@ -244,24 +244,25 @@ pub fn apply_value(
     }
 }
 
+#[derive(Debug)]
 pub struct Missing {
     is_missing: bool,
     childs: HashMap<DataPathType, Missing>,
 }
 
 impl Missing {
+    fn new() -> Self {
+        Self {
+            is_missing: false,
+            childs: HashMap::new(),
+        }
+    }
     pub fn add_missing(&mut self, data_path: Vec<DataPathType>) {
         let mut missing = self;
 
         for data in data_path {
             if !missing.childs.contains_key(&data) {
-                missing.childs.insert(
-                    data.clone(),
-                    Missing {
-                        is_missing: false,
-                        childs: HashMap::new(),
-                    },
-                );
+                missing.childs.insert(data.clone(), Missing::new());
             }
 
             missing = missing.childs.get_mut(&data).unwrap();
@@ -287,19 +288,15 @@ impl Missing {
     }
 }
 
-pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result<Value> {
+pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result<(Value, Missing)> {
     fn inner(
         root: &RustSchemaRoot,
         schema: &RustSchema,
         value: &Value,
         is_default: bool,
+        data_path: &mut Vec<DataPathType>,
+        missing: &mut Missing,
     ) -> anyhow::Result<Value> {
-        macro_rules! imcomplete {
-            ($value:expr, $schema:expr) => {
-                bail!("imcomplete value: {:?} {:?}", $value, $schema,)
-            };
-        }
-
         macro_rules! not_compatible_error {
             ($expected:expr, $found:expr, $schema:expr) => {
                 bail!(
@@ -355,14 +352,18 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                             schema,
                             &rust_schema_value_to_value(struct_default),
                             true,
+                            data_path,
+                            missing,
                         )?
                     } else {
-                        imcomplete!(value, schema)
+                        missing.add_missing(data_path.clone());
+                        Value::Empty
                     }
                 } else if let Some((name, map)) = value.as_struct() {
                     let mut new_map = Map::new();
 
                     for (field_name, field) in &struct_.fields {
+                        data_path.push(DataPathType::Name(field_name.to_owned()));
                         if let Some(field_default) = &field.default {
                             if let Some(field_value) = map.0.get(field_name)
                                 && !is_default
@@ -374,6 +375,8 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                                         get_schema(root, &field.schema)?,
                                         field_value,
                                         is_default,
+                                        data_path,
+                                        missing,
                                     )?,
                                 );
                             } else {
@@ -384,6 +387,8 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                                         get_schema(root, &field.schema)?,
                                         &rust_schema_value_to_value(field_default),
                                         true,
+                                        data_path,
+                                        missing,
                                     )?,
                                 );
                             }
@@ -396,12 +401,16 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                                         get_schema(root, &field.schema)?,
                                         field_value,
                                         is_default,
+                                        data_path,
+                                        missing,
                                     )?,
                                 );
                             } else {
-                                imcomplete!(value, schema)
+                                missing.add_missing(data_path.clone());
                             }
                         }
+
+                        data_path.pop();
                     }
 
                     Value::Struct(name.to_owned(), new_map)
@@ -414,25 +423,37 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
             RustSchemaKind::TupleStruct(tuple_struct) => {
                 if value.is_empty() {
                     if let Some(default) = &tuple_struct.default {
-                        // struct_default can't be empty
-                        return inner(root, schema, &rust_schema_value_to_value(default), true);
+                        // default can't be empty
+                        return inner(
+                            root,
+                            schema,
+                            &rust_schema_value_to_value(default),
+                            true,
+                            data_path,
+                            missing,
+                        );
                     }
                 }
 
                 if let Some((name, values)) = value.as_named_tuple() {
-                    Value::NamedTuple(
-                        tuple_struct.name.to_owned(),
-                        tuple_struct
-                            .fields
-                            .iter()
-                            .zip(values.iter())
-                            .map(|(schema, value)| {
-                                let schema = get_schema(&root, &root.schema)?;
+                    let mut final_values = Vec::new();
 
-                                inner(root, schema, value, is_default)
-                            })
-                            .collect::<Result<Vec<_>, _>>()?,
-                    )
+                    for (pos, field) in tuple_struct.fields.iter().enumerate() {
+                        let schema = get_schema(&root, &root.schema)?;
+
+                        data_path.push(DataPathType::Indice(pos));
+
+                        if let Some(value) = values.get(pos) {
+                            final_values
+                                .push(inner(root, schema, value, is_default, data_path, missing)?);
+                        } else {
+                            missing.add_missing(data_path.clone());
+                        };
+
+                        data_path.pop();
+                    }
+
+                    Value::NamedTuple(tuple_struct.name.to_owned(), final_values)
                 } else {
                     not_compatible_error!("TupleStruct", value, schema)
                 }
@@ -444,8 +465,17 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
     }
 
     let schema = get_schema(&root, &root.schema)?;
-
-    inner(root, schema, initial_value, false)
+    let mut missing = Missing::new();
+    let mut data_path = Vec::new();
+    let value = inner(
+        root,
+        schema,
+        initial_value,
+        false,
+        &mut data_path,
+        &mut missing,
+    )?;
+    Ok((value, missing))
 }
 
 fn get_schema<'a>(
