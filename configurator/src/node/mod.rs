@@ -34,6 +34,7 @@ pub enum Node {
     Unit,
     String(NodeString),
     Number(NodeNumber),
+    Array(NodeArray),
     Struct(NodeStruct),
     TupleStruct(NodeTupleStruct),
 }
@@ -91,6 +92,13 @@ pub struct NodeTupleStruct {
     pub name: String,
     pub description: Option<String>,
     pub fields: Vec<()>,
+}
+
+#[derive(Debug)]
+pub struct NodeArray {
+    pub min: Option<u64>,
+    pub max: Option<u64>,
+    pub len: Option<usize>,
 }
 
 pub fn fill_nodes(
@@ -152,7 +160,17 @@ pub fn fill_nodes(
                 );
             }
             RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Array(array) => todo!(),
+            RustSchemaKind::Array(array) => {
+                insert_if_not_there!(
+                    nodes,
+                    data_path,
+                    Node::Array(NodeArray {
+                        min: array.min.clone(),
+                        max: array.max.clone(),
+                        len: None,
+                    })
+                );
+            }
             RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
             RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
             RustSchemaKind::Struct(struct_) => {
@@ -236,6 +254,9 @@ pub fn apply_value(
             }
         }
         Node::Struct(node_struct) => {}
+        Node::Array(node_array) => {
+            
+        }
         Node::TupleStruct(node_tuple_struct) => todo!(),
     }
 }

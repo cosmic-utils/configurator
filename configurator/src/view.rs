@@ -88,6 +88,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         // Node::Array(node_array) => view_array(data_path, node, node_array),
         Node::Struct(node_struct) => view_struct(page, data_path, node, node_struct),
         Node::TupleStruct(_) => todo!(),
+        Node::Array(_) => todo!(),
     };
 
     column()
@@ -658,6 +659,7 @@ fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
         // Node::Value(node_value) => value_to_str(&node_value.value),
         Node::Struct(node_struct) => Some(Cow::Borrowed(node_struct.name.as_str())),
         Node::TupleStruct(_) => todo!(),
+        Node::Array(_) => todo!(),
     }
 }
 
