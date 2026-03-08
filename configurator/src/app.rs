@@ -68,7 +68,9 @@ impl cosmic::Application for App {
     }
 
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
-        let config: ConfigManager<Config> = ConfigManager::new(QUALIFIER, ORG, APP).unwrap();
+        // let config: ConfigManager<Config> = ConfigManager::new(QUALIFIER, ORG, APP).unwrap();
+        let mut config: ConfigManager<Config> = ConfigManager::from_path("app_config.json").unwrap();
+        config.update(|_| {});
 
         let mut nav_model = SingleSelectModel::default();
 

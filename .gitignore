@@ -4,6 +4,7 @@
 /configurator/test_schemas
 /configurator/test_configs
 /configurator/tests
+/configurator/app_config.json
 /.vscode
 /vendor
 /flatpak-builder-tools
