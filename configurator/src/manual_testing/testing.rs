@@ -25,11 +25,20 @@ impl Default for B {
     }
 }
 
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
+struct T;
+
 
 #[test]
 #[ignore]
 fn print_json() {
     super::print_json::<A>();
+}
+
+#[test]
+#[ignore]
+fn from_ron() {
+    super::from_ron::<T>("()");
 }
 
 #[test]

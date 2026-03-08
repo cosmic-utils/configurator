@@ -219,7 +219,7 @@ impl Page {
         };
 
         if let Err(err) = page.reload() {
-            error!("{err}");
+            error!("reload error: {err}");
         }
 
         Ok(page)
@@ -248,6 +248,10 @@ impl Page {
 
         // debug!("tree = {:#?}", self.tree);
         debug!("full_config = {:#?}", self.full_config);
+
+        let generated_config = node::get_value(&self.schema, &self.full_config)?;
+
+        debug!("generated config = {:#?}", generated_config);
 
         // self.tree.remove_value_rec();
 
@@ -279,7 +283,7 @@ pub enum Action {
 
 impl Page {
     pub fn update(&mut self, message: PageMsg, page_id: Entity) -> Action {
-        let mut action = Action::None;
+        let action = Action::None;
 
         match message {
             PageMsg::SelectDataPath(pos) => {
@@ -288,6 +292,11 @@ impl Page {
             PageMsg::OpenDataPath(data_path_type) => {
                 self.data_path.open(data_path_type);
             }
+
+            PageMsg::ChangeMsg(data_path, change_msg) => {
+                
+            }
+
             /*
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 let node = self.tree.get_at_mut(data_path.iter()).unwrap();

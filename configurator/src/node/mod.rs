@@ -65,7 +65,10 @@ pub struct NodeTupleStruct {
     pub fields: Vec<()>,
 }
 
-pub fn get_node(root: &RustSchemaRoot, data_path: &[DataPathType]) -> anyhow::Result<NodeContainer> {
+pub fn get_node(
+    root: &RustSchemaRoot,
+    data_path: &[DataPathType],
+) -> anyhow::Result<NodeContainer> {
     let mut schema = get_schema(root, &root.schema)?;
 
     macro_rules! not_compatible_error {
@@ -166,9 +169,20 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
         value: &Value,
         is_default: bool,
     ) -> anyhow::Result<Value> {
+        macro_rules! imcomplete {
+            ($value:expr, $schema:expr) => {
+                bail!("imcomplete value: {:?} {:?}", $value, $schema,)
+            };
+        }
+
         macro_rules! not_compatible_error {
-            ($expected:expr, $found:expr) => {
-                bail!("imcompatible value: expected $expected, found {:?}", $found)
+            ($expected:expr, $found:expr, $schema:expr) => {
+                bail!(
+                    "imcompatible value: expected {}, found {:?}. Schema: {:?}",
+                    $expected,
+                    $found,
+                    $schema,
+                )
             };
         }
 
@@ -177,14 +191,14 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                 if value.is_unit() {
                     value.clone()
                 } else {
-                    not_compatible_error!("Unit", value)
+                    not_compatible_error!("Unit", value, schema)
                 }
             }
             RustSchemaKind::Boolean => {
                 if value.as_bool().is_some() {
                     value.clone()
                 } else {
-                    not_compatible_error!("Boolean", value)
+                    not_compatible_error!("Boolean", value, schema)
                 }
             }
             RustSchemaKind::Number(number_kind) => {
@@ -192,7 +206,7 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                 if value.as_number().is_some() {
                     value.clone()
                 } else {
-                    not_compatible_error!("Number", value)
+                    not_compatible_error!("Number", value, schema)
                 }
             }
             RustSchemaKind::Char => todo!(),
@@ -200,7 +214,7 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                 if value.as_str().is_some() {
                     value.clone()
                 } else {
-                    not_compatible_error!("String", value)
+                    not_compatible_error!("String", value, schema)
                 }
             }
             RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
@@ -211,16 +225,16 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                 if value.is_empty() {
                     if let Some(struct_default) = &struct_.default {
                         // struct_default can't be empty
-                        return inner(
+                        inner(
                             root,
                             schema,
                             &rust_schema_value_to_value(struct_default),
                             true,
-                        );
+                        )?
+                    } else {
+                        imcomplete!(value, schema)
                     }
-                }
-
-                if let Some((name, map)) = value.as_struct() {
+                } else if let Some((name, map)) = value.as_struct() {
                     let mut new_map = Map::new();
 
                     for (field_name, field) in &struct_.fields {
@@ -260,14 +274,16 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                                     )?,
                                 );
                             } else {
-                                // missing value for field
+                                imcomplete!(value, schema)
                             }
                         }
                     }
 
                     Value::Struct(name.to_owned(), new_map)
+                } else if let Some(name) = value.as_unit_struct() {
+                    value.clone()
                 } else {
-                    not_compatible_error!("String", value)
+                    not_compatible_error!("Struct", value, schema)
                 }
             }
             RustSchemaKind::TupleStruct(tuple_struct) => {
@@ -293,7 +309,7 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                             .collect::<Result<Vec<_>, _>>()?,
                     )
                 } else {
-                    not_compatible_error!("TupleStruct", value)
+                    not_compatible_error!("TupleStruct", value, schema)
                 }
             }
             RustSchemaKind::Enum(_) => todo!(),
@@ -341,7 +357,7 @@ fn rust_schema_value_to_value(value: &rust_schema2::Value) -> Value {
         rust_schema2::Value::Array(values) => todo!(),
         rust_schema2::Value::Tuple(values) => todo!(),
         rust_schema2::Value::Map(btree_map) => todo!(),
-        rust_schema2::Value::UnitStruct(_) => todo!(),
+        rust_schema2::Value::UnitStruct(name) => Value::UnitStruct(name.to_owned()),
         rust_schema2::Value::Struct(name, btree_map) => Value::Struct(
             Some(name.to_owned()),
             btree_map
