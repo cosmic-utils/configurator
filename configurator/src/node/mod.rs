@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::BTreeMap, fmt::Display, rc::Rc};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, HashMap, HashSet},
+    fmt::Display,
+    rc::Rc,
+};
 
 use derive_more::derive::Unwrap;
 use indexmap::IndexMap;
@@ -160,6 +165,46 @@ pub fn get_node(
     };
 
     Ok(NodeContainer { node })
+}
+
+pub struct Missing {
+    is_missing: bool,
+    childs: HashMap<DataPathType, Missing>,
+}
+
+impl Missing {
+    pub fn add_missing(&mut self, data_path: Vec<DataPathType>) {
+        let mut missing = self;
+
+        for data in data_path {
+            if !missing.childs.contains_key(&data) {
+                missing.childs.insert(
+                    data.clone(),
+                    Missing {
+                        is_missing: false,
+                        childs: HashMap::new(),
+                    },
+                );
+            }
+
+            missing = missing.childs.get_mut(&data).unwrap();
+        }
+
+        missing.is_missing = true
+    }
+
+    pub fn is_a_child_missing(&self, data_path: &[DataPathType]) -> bool {
+        let mut missing = self;
+
+        for data in data_path {
+            match missing.childs.get(data) {
+                Some(m) => missing = m,
+                None => return false,
+            }
+        }
+
+        missing.is_missing
+    }
 }
 
 pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result<Value> {

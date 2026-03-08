@@ -4,7 +4,7 @@ use derive_more::derive::Unwrap;
 
 use crate::node::{Node, NodeContainer};
 
-#[derive(Debug, Clone, Unwrap, PartialEq, Eq)]
+#[derive(Debug, Clone, Unwrap, PartialEq, Eq, Hash)]
 #[unwrap(ref)]
 pub enum DataPathType {
     Name(String),

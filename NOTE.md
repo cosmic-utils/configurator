@@ -88,3 +88,6 @@ struct A {
 struct B {
     x: i32
 }
+
+
+

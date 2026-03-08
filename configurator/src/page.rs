@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::{self, File},
     io::Read,
     iter::{self},
@@ -18,7 +19,10 @@ use crate::{
     config::Config,
     generic_value::Value,
     message::{ChangeMsg, PageMsg},
-    node::{self, Node, NodeContainer, NumberValue, data_path::DataPath},
+    node::{
+        self, Node, NodeContainer, NumberValue,
+        data_path::{DataPath, DataPathType},
+    },
     providers,
 };
 
@@ -41,6 +45,8 @@ pub struct Page {
     pub schema: RustSchemaRoot,
     pub node: NodeContainer,
     pub data_path: DataPath,
+
+    pub modif: HashMap<Vec<DataPathType>, Value>,
 }
 
 pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
@@ -216,6 +222,7 @@ impl Page {
             write_path,
             format,
             schema,
+            modif: HashMap::new(),
         };
 
         if let Err(err) = page.reload() {
@@ -258,6 +265,14 @@ impl Page {
         // self.tree.apply_value(&self.full_config, true)?;
 
         // self.data_path.sanitize_path(&self.tree);
+
+        Ok(())
+    }
+
+    pub fn refresh_node(&mut self) -> anyhow::Result<()> {
+        self.node = node::get_node(&self.schema, &self.data_path.current()).unwrap();
+
+        let generated_config = node::get_value(&self.schema, &self.full_config)?;
 
         Ok(())
     }
