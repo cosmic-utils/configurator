@@ -120,7 +120,7 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 fn node_list<'a>(
     name: DataPathType,
     description: Option<&'a str>,
-    data_path: &[DataPathType],
+    data_path: Vec<DataPathType>,
     inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
     let name_cloned = name.clone();
@@ -151,7 +151,7 @@ fn node_list<'a>(
                 Node::String(node_string) => Some(
                     text_input("value", &node_string.temp)
                         .on_input(move |value| {
-                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeString(value))
+                            PageMsg::ChangeMsg(data_path.clone(), ChangeMsg::ChangeString(value))
                         })
                         .into(),
                 ),
@@ -299,12 +299,13 @@ fn view_struct<'a>(
                 .title("Values")
                 .extend(node_struct.fields.iter().map(|(name, field)| {
                     let data_path = data_path_push(data_path, name);
+                    let inner_node = page.get_node(&data_path);
 
                     node_list(
                         DataPathType::Name(name.clone()),
                         field.description.as_deref(),
-                        &data_path,
-                        page.get_node(&data_path),
+                        data_path,
+                        inner_node,
                     )
                 })),
         )
