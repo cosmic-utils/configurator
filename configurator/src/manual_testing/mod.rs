@@ -6,6 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
 
 use crate::node::NodeContainer;
 
+mod testing;
 mod testing1;
 mod testing2;
 
@@ -62,6 +63,12 @@ pub fn print_ron<C: Default + Serialize>() {
 
 pub fn from_ron<C: Debug + DeserializeOwned>(ron: &str) {
     let e: C = ron::from_str(ron).unwrap();
+
+    println!("{:?}", e);
+}
+
+pub fn from_json<C: Debug + DeserializeOwned>(json: &str) {
+    let e: C = json::from_str(json).unwrap();
 
     println!("{:?}", e);
 }

@@ -11,6 +11,7 @@ pub use ser::*;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Value {
     Unit,
+    // todo: use option
     Null,
     Bool(bool),
     Number(Number),

@@ -79,6 +79,10 @@ impl Value {
         self == &Value::Empty
     }
 
+    pub fn is_unit(&self) -> bool {
+        self == &Value::Unit
+    }
+
     pub fn as_list(&self) -> Option<&Vec<Value>> {
         if let Value::List(v) = self {
             Some(v)

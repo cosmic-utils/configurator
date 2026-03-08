@@ -12,6 +12,7 @@ pub mod data_path;
 pub mod from_rust_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
+mod new_gen;
 #[cfg(test)]
 mod tests;
 mod to_value;

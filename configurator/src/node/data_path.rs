@@ -9,7 +9,6 @@ use crate::node::{Node, NodeContainer};
 pub enum DataPathType {
     Name(String),
     Indice(usize),
-    // todo: more complex type ? (Figment)
 }
 
 impl Display for DataPathType {
@@ -17,6 +16,22 @@ impl Display for DataPathType {
         match self {
             DataPathType::Name(name) => write!(f, "{}", name),
             DataPathType::Indice(pos) => write!(f, "{}", pos),
+        }
+    }
+}
+
+impl DataPathType {
+    pub fn as_name(&self) -> Option<&str> {
+        match self {
+            DataPathType::Name(name) => Some(name.as_str()),
+            DataPathType::Indice(_) => None,
+        }
+    }
+
+    pub fn as_indice(&self) -> Option<usize> {
+        match self {
+            DataPathType::Name(_) => None,
+            DataPathType::Indice(indice) => Some(*indice),
         }
     }
 }

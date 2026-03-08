@@ -9,6 +9,15 @@ pub struct RustSchemaRoot {
     pub definitions: BTreeMap<RustSchemaId, RustSchema>,
 }
 
+impl RustSchemaRoot {
+    pub fn get_schema<'a>(&'a self, schema: &'a RustSchemaOrRef) -> Option<&'a RustSchema> {
+        match schema {
+            RustSchemaOrRef::Ref(ref_) => self.definitions.get(ref_),
+            RustSchemaOrRef::Schema(rust_schema) => Some(rust_schema),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RustSchema {
     pub kind: RustSchemaKind,
