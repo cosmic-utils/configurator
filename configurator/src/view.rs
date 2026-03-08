@@ -21,7 +21,7 @@ use crate::{
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
         Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
-        NodeValue, NumberValue,
+        NodeStruct, NodeValue, NumberValue,
         data_path::{DataPath, DataPathType},
     },
     page::Page,
@@ -87,6 +87,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         Node::Value(node_value) => view_value(data_path, node, node_value),
         Node::Unit => text("null").into(),
         Node::Array(node_array) => view_array(data_path, node, node_array),
+        Node::Struct(node_struct) => view_struct(data_path, node, node_struct),
     };
 
     column()
@@ -118,6 +119,7 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 
 fn node_list<'a>(
     name: DataPathType,
+    description: Option<&'a str>,
     inner_node: &'a NodeContainer,
     data_path: &'a [DataPathType],
 ) -> Element<'a, PageMsg> {
@@ -133,7 +135,11 @@ fn node_list<'a>(
     mouse_area(
         row()
             .align_y(Alignment::Center)
-            .push(text(format!("{}", name)))
+            .push(
+                column()
+                    .push(text(format!("{}", name)))
+                    .push_maybe(description.map(|d| text::caption(d))),
+            )
             .push_maybe(
                 if inner_node.removable
                     && let DataPathType::Name(name) = &name
@@ -250,12 +256,60 @@ fn view_object<'a>(
             section()
                 .title("Values")
                 .extend(node_object.nodes.iter().map(|(name, inner_node)| {
-                    node_list(DataPathType::Name(name.clone()), inner_node, data_path)
+                    node_list(
+                        DataPathType::Name(name.clone()),
+                        None,
+                        inner_node,
+                        data_path,
+                    )
                 })),
         )
         .push_maybe(node_object.template.as_ref().map(|_| {
             icon_button!("add24").on_press(PageMsg::DialogAddNewNodeToObject(data_path.to_vec()))
         }))
+        .push_maybe(node.default.as_ref().map(|default| {
+            section().title("Default").add(
+                row()
+                    .push(horizontal_space())
+                    .push(
+                        // xxx: the on_press need to be lazy
+                        button::text("reset to default").on_press(PageMsg::ChangeMsg(
+                            data_path.to_vec(),
+                            ChangeMsg::ApplyDefault,
+                        )),
+                    )
+                    .push(this_will_remove_all_children()),
+            )
+        }))
+        .spacing(SPACING)
+        .into()
+}
+
+fn view_struct<'a>(
+    data_path: &'a [DataPathType],
+    node: &'a NodeContainer,
+    node_struct: &'a NodeStruct,
+) -> Element<'a, PageMsg> {
+    column()
+        .push(section().title("Name").add(text(&node_struct.name)))
+        .push_maybe(
+            node_struct
+                .description
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
+        .push(
+            section()
+                .title("Values")
+                .extend(node_struct.fields.iter().map(|(name, field)| {
+                    node_list(
+                        DataPathType::Name(name.clone()),
+                        field.description.as_deref(),
+                        &field.node,
+                        data_path,
+                    )
+                })),
+        )
         .push_maybe(node.default.as_ref().map(|default| {
             section().title("Default").add(
                 row()
@@ -294,7 +348,7 @@ fn view_array<'a>(
                     .iter()
                     .enumerate()
                     .map(|(pos, inner_node)| {
-                        node_list(DataPathType::Indice(pos), inner_node, data_path)
+                        node_list(DataPathType::Indice(pos), None, inner_node, data_path)
                     }),
             ),
         )
@@ -611,6 +665,7 @@ fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
         Node::Enum(node_enum) => None,
         Node::Array(node_array) => None,
         Node::Value(node_value) => value_to_str(&node_value.value),
+        Node::Struct(node_struct) => Some(Cow::Borrowed(node_struct.name.as_str())),
     }
 }
 

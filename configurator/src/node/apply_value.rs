@@ -6,7 +6,7 @@ use indexmap::map::MutableKeys;
 
 use crate::{
     generic_value::Value,
-    node::{NodeArrayTemplate, NumberValue},
+    node::{NodeArrayTemplate, NodeStruct, NumberValue},
     utils::json_value_eq_value,
 };
 
@@ -117,6 +117,37 @@ impl NodeContainer {
                     node_array.values = Some(nodes);
                 }
             }
+
+            Node::Struct(node_struct) => {
+                if let Some((_, map)) = value.as_struct() {
+                    // for known object field ?
+                    for (key, n) in &mut node_struct.fields {
+                        if let Some(value) = map.0.get(key) {
+                            n.node.apply_value(value, modified)?;
+                        } else if let Some(default) = &n.node.default {
+                            n.node.apply_value(&default.clone(), false)?;
+                        }
+                    }
+                }
+
+                if let Some((name, vec)) = value.as_named_tuple()
+                    && let Some(node) = node_struct.fields.get_mut(name)
+                {
+                    if vec.len() == 1 {
+                        node.node.apply_value(&vec[0], modified)?;
+                    } else {
+                        node.node.apply_value(value, modified)?;
+                    }
+                }
+
+                if value.is_empty() {
+                    for (key, n) in &mut node_struct.fields {
+                        if let Some(default) = &n.node.default {
+                            n.node.apply_value(&default.clone(), false)?;
+                        }
+                    }
+                }
+            }
         };
 
         Ok(())
@@ -126,7 +157,9 @@ impl NodeContainer {
     fn is_matching(&self, value: &Value) -> bool {
         debug!("\n{value:#?}\n{self:#?}\n");
 
-        if let Value::Option(opt) = value && let Some(opt) = opt {
+        if let Value::Option(opt) = value
+            && let Some(opt) = opt
+        {
             return self.is_matching(opt);
         }
 
@@ -160,7 +193,7 @@ impl NodeContainer {
                 NodeArrayTemplate::All(node_container) => {
                     // todo: check the type
                     value.as_list().is_some()
-                },
+                }
                 NodeArrayTemplate::FirstN(node_containers) => {
                     let vec = value
                         .as_tuple()
@@ -178,6 +211,15 @@ impl NodeContainer {
                 }
             },
             Node::Value(node_value) => &node_value.value == value,
+            Node::Struct(node_struct) => match value {
+                Value::Struct(_, map) => node_struct.fields.iter().all(|(key, node)| {
+                    map.0
+                        .get(key)
+                        .map(|value| node.node.is_matching(value))
+                        .unwrap_or(false)
+                }),
+                _ => false,
+            },
         }
     }
 
@@ -209,6 +251,12 @@ impl NodeContainer {
                 node_array.values.take();
             }
             Node::Value(node_value) => {}
+            Node::Struct(node_struct) => {
+                node_struct
+                    .fields
+                    .values_mut()
+                    .for_each(|node| node.node.remove_value_rec());
+            }
         };
         self.modified = false;
     }

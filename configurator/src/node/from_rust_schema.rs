@@ -7,8 +7,8 @@ use rust_schema2::{RustSchema, RustSchemaId, RustSchemaKind, RustSchemaOrRef, Ru
 use crate::{
     generic_value::Value,
     node::{
-        Node, NodeArray, NodeArrayTemplate, NodeBool, NodeContainer, NodeEnum, NodeNumber,
-        NodeObject, NodeString, NodeValue, NumberValueLight,
+        self, Node, NodeArray, NodeArrayTemplate, NodeBool, NodeContainer, NodeEnum, NodeNumber,
+        NodeObject, NodeString, NodeStruct, NodeValue, NumberValueLight,
     },
 };
 
@@ -86,20 +86,27 @@ pub(crate) fn schema_object_to_node(
             template: Some(Box::new(schema_object_to_node("map", def, schemas)?)),
         })),
         RustSchemaKind::Struct(struct_) => {
-            let nodes = struct_
+            let fields = struct_
                 .fields
                 .iter()
                 .map(|(k, v)| {
-                    let value = schema_object_to_node("struct", def, &v.schema)?;
+                    let node = schema_object_to_node("struct", def, &v.schema)?;
 
-                    Ok((k.to_owned(), value))
+                    Ok((
+                        k.to_owned(),
+                        node::StructField {
+                            description: v.description.to_owned(),
+                            node,
+                        },
+                    ))
                 })
-                .collect::<Result<IndexMap<String, NodeContainer>, anyhow::Error>>()?;
-            NodeContainer::from_node(Node::Object(NodeObject {
-                nodes,
-                template: None,
+                .collect::<Result<IndexMap<String, node::StructField>, anyhow::Error>>()?;
+            NodeContainer::from_node(Node::Struct(NodeStruct {
+                name: struct_.name.to_owned(),
+                description: struct_.description.to_owned(),
+                fields,
             }))
-            .set_description(struct_.description.clone())
+            .set_description(struct_.description.to_owned())
         }
         RustSchemaKind::TupleStruct(tuple_struct) => {
             let template = tuple_struct

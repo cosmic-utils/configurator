@@ -49,18 +49,33 @@ impl NodeContainer {
 
 #[derive(Debug, Clone, Unwrap)]
 #[unwrap(ref_mut)]
+#[non_exhaustive]
 pub enum Node {
     Unit,
     Bool(NodeBool),
     String(NodeString),
     Number(NodeNumber),
     // Option(NodeOption),
+    Struct(NodeStruct),
     Object(NodeObject),
     Enum(NodeEnum),
     Array(NodeArray),
     /// represent a final value
     /// currently only string is supported
     Value(NodeValue),
+}
+
+#[derive(Debug, Clone)]
+pub struct NodeStruct {
+    pub name: String,
+    pub description: Option<String>,
+    pub fields: IndexMap<String, StructField>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StructField {
+    pub description: Option<String>,
+    pub node: NodeContainer,
 }
 
 #[derive(Debug, Clone)]
@@ -213,6 +228,7 @@ impl NodeContainer {
                 .as_ref()
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
             Node::Value(node_value) => true,
+            Node::Struct(node_struct) => node_struct.fields.values().all(|n| n.node.is_valid()),
         }
     }
 }

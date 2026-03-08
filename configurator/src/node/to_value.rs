@@ -59,6 +59,16 @@ impl NodeContainer {
                     }
                 }),
             Node::Value(node_value) => Some(node_value.value.clone()),
+            Node::Struct(node_struct) => {
+                let mut map = Map::new();
+
+                for (key, node) in &node_struct.fields {
+                    if let Some(value) = node.node.to_value() {
+                        map.0.insert(key.to_owned(), value);
+                    }
+                }
+                Some(Value::Struct(Some(node_struct.name.to_owned()), map))
+            }
         }
     }
 }

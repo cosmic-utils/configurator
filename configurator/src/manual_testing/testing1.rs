@@ -11,15 +11,19 @@ use crate::{
     test_common::{Complex, EnumComplex},
 };
 
+/// Doc on struct NewStruct
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct NewStruct(u32);
 
+/// Doc on upper
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
+    /// Doc on field x
     x: NewStruct,
     y: Complex,
+    /// Doc on field x
     u: (),
     u2: UnitS,
 }
