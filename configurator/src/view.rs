@@ -75,7 +75,8 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
     let data_path = page.data_path.current();
 
-    let node = &page.node;
+
+    let node = page.get_node(data_path);
 
     let content = match &node.node {
         // Node::Bool(node_bool) => view_bool(data_path, node, node_bool),
@@ -222,15 +223,14 @@ fn node_list<'a>(
                 Some(no_value_defined_warning_icon())
             } else {
                 None
-            })
-            // .push_maybe(if inner_node.removable {
-            //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
-            //         data_path.to_vec(),
-            //         ChangeMsg::Remove(name_cloned.clone()),
-            //     )))
-            // } else {
-            //     None
-            // })
+            }), // .push_maybe(if inner_node.removable {
+                //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+                //         data_path.to_vec(),
+                //         ChangeMsg::Remove(name_cloned.clone()),
+                //     )))
+                // } else {
+                //     None
+                // })
     )
     .on_press(PageMsg::OpenDataPath(name_cloned))
     .into()
@@ -301,7 +301,7 @@ fn view_struct<'a>(
                     node_list(
                         DataPathType::Name(name.clone()),
                         field.description.as_deref(),
-                        !field.is_incomplete,
+                        true,
                         data_path,
                     )
                 })),
@@ -582,16 +582,13 @@ fn view_number<'a>(
                     .push(text("Current value"))
                     .push(horizontal_space())
                     .push(
-                        text_input("value", &node_number.value_string).on_input(move |value| {
+                        text_input("value", &node_number.temp).on_input(move |value| {
                             PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeNumber(value))
                         }),
                     )
                     .push_maybe(if node_number.value.is_none() {
                         Some(no_value_defined_warning_icon())
-                    } else if node_number
-                        .try_parse_from_str(&node_number.value_string)
-                        .is_err()
-                    {
+                    } else if node_number.try_parse_from_str(&node_number.temp).is_err() {
                         Some(
                             tooltip(
                                 icon!("report24"),

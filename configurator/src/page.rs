@@ -43,7 +43,7 @@ pub struct Page {
     pub full_config: Value,
 
     pub schema: RustSchemaRoot,
-    pub node: NodeContainer,
+    pub nodes: HashMap<Vec<DataPathType>, NodeContainer>,
     pub data_path: DataPath,
 
     pub modifs: HashMap<Vec<DataPathType>, Value>,
@@ -144,6 +144,10 @@ fn appid_from_schema_path(schema_path: &Path) -> Option<String> {
 }
 
 impl Page {
+    pub fn get_node(&self, data_path: &[DataPathType]) -> &NodeContainer {
+        self.nodes.get(data_path).unwrap()
+    }
+
     // need &str for appid: https://github.com/tokio-rs/tracing/issues/1181
     #[instrument(skip(content))]
     fn from_str(appid: &str, content: &str) -> anyhow::Result<Self> {
@@ -210,7 +214,10 @@ impl Page {
         let data_path = DataPath::new();
 
         let schema = json::from_value(json_value)?;
-        let mut node = node::get_node(&schema, data_path.current())?;
+
+        let mut nodes = HashMap::new();
+
+        node::fill_nodes(&mut nodes, &schema, data_path.current())?;
 
         let (full_value, missing) = node::get_value(&schema, &full_config)?;
 
@@ -218,7 +225,9 @@ impl Page {
 
         debug!("missing = {:#?}", missing);
 
-        node::apply_value(&mut node, &full_value, data_path.current(), &missing);
+        for node in nodes.values_mut() {
+            node::apply_value(node, &full_value, data_path.current(), &missing);
+        }
 
         let title = appid.split('.').next_back().unwrap().to_string();
 
@@ -228,7 +237,7 @@ impl Page {
             system_config,
             user_config,
             full_config,
-            node,
+            nodes,
             data_path,
             source_paths,
             source_home_path,
@@ -269,7 +278,7 @@ impl Page {
 
     #[instrument(skip_all)]
     pub fn reload_node(&mut self) -> anyhow::Result<()> {
-        self.node = node::get_node(&self.schema, &self.data_path.current())?;
+        node::fill_nodes(&mut self.nodes, &self.schema, &self.data_path.current())?;
 
         let (full_value, missing) = node::get_value(&self.schema, &self.full_config)?;
 
@@ -277,12 +286,9 @@ impl Page {
 
         debug!("missing = {:#?}", missing);
 
-        node::apply_value(
-            &mut self.node,
-            &full_value,
-            self.data_path.current(),
-            &missing,
-        );
+        for node in self.nodes.values_mut() {
+            node::apply_value(node, &full_value, self.data_path.current(), &missing);
+        }
 
         Ok(())
     }
@@ -470,9 +476,6 @@ impl Page {
                 }
             }
              */
-            PageMsg::ChangeMsg(_, _) => {
-                // todo
-            }
             PageMsg::None => {
                 // pass
             }

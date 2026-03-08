@@ -23,7 +23,7 @@ struct Config {
     /// Doc on field x
     // x: NewStruct,
     y: Complex,
-    /// Doc on field x
+    /// Doc on field u
     u: (),
     u2: UnitS,
 }

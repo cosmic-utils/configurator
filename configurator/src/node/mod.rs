@@ -41,13 +41,14 @@ pub enum Node {
 #[derive(Debug)]
 pub struct NodeString {
     pub value: Option<String>,
+    pub temp: String,
 }
 
 #[derive(Debug)]
 pub struct NodeNumber {
     pub kind: NumberKind,
     pub value: Option<Number>,
-    pub value_string: String,
+    pub temp: String,
 }
 
 impl NodeNumber {
@@ -83,7 +84,6 @@ pub struct NodeStruct {
 #[derive(Debug)]
 pub struct StructField {
     pub description: Option<String>,
-    pub is_incomplete: bool,
 }
 
 #[derive(Debug)]
@@ -93,90 +93,128 @@ pub struct NodeTupleStruct {
     pub fields: Vec<()>,
 }
 
-pub fn get_node(
+/// Alloc one more element
+macro_rules! to_vec_plus_one {
+    ($v:expr) => {{
+        let mut new_vec = Vec::with_capacity($v.len() + 1);
+        new_vec.extend_from_slice($v);
+        new_vec
+    }};
+}
+
+pub fn fill_nodes(
+    nodes: &mut HashMap<Vec<DataPathType>, NodeContainer>,
     root: &RustSchemaRoot,
     data_path: &[DataPathType],
-) -> anyhow::Result<NodeContainer> {
-    let mut schema = get_schema(root, &root.schema)?;
+) -> anyhow::Result<()> {
+    #[instrument(skip_all)]
+    fn inner(
+        nodes: &mut HashMap<Vec<DataPathType>, NodeContainer>,
+        root: &RustSchemaRoot,
+        data_path: &[DataPathType],
+        // false if we should continue to fill children (we want only one level)
+        flag: bool,
+    ) -> anyhow::Result<()> {
+        debug!("{:?}", data_path);
 
-    macro_rules! not_compatible_error {
-        ($data:expr, $schema:expr) => {
-            bail!("schema {} is not compatible with data {}", $schema, $data)
-        };
-    }
+        let schema = schema_at(root, data_path)?;
 
-    for data in data_path {
+        macro_rules! insert_if_not_there {
+            ($nodes:expr, $data_path:expr, $node:expr) => {
+                if !$nodes.contains_key($data_path) {
+                    $nodes.insert(
+                        $data_path.to_vec(),
+                        NodeContainer {
+                            node: $node,
+                            is_incomplete: false,
+                        },
+                    );
+                }
+            };
+        }
+
         match &schema.kind {
+            RustSchemaKind::Unit => {
+                insert_if_not_there!(nodes, data_path, Node::Unit);
+            }
+            RustSchemaKind::Boolean => todo!(),
+            RustSchemaKind::Number(number_kind) => {
+                insert_if_not_there!(
+                    nodes,
+                    data_path,
+                    Node::Number(NodeNumber {
+                        kind: number_kind.clone(),
+                        value: None,
+                        temp: String::new(),
+                    })
+                );
+            }
+            RustSchemaKind::Char => todo!(),
+            RustSchemaKind::String => {
+                insert_if_not_there!(
+                    nodes,
+                    data_path,
+                    Node::String(NodeString {
+                        value: None,
+                        temp: String::new(),
+                    })
+                );
+            }
             RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
             RustSchemaKind::Array(array) => todo!(),
             RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
             RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
             RustSchemaKind::Struct(struct_) => {
-                let name = data
-                    .as_name()
-                    .ok_or(anyhow!("expected name, found indice {}", data))?;
+                insert_if_not_there!(
+                    nodes,
+                    data_path,
+                    Node::Struct(NodeStruct {
+                        name: struct_.name.to_owned(),
+                        description: struct_.description.to_owned(),
+                        fields: struct_
+                            .fields
+                            .iter()
+                            .map(|(k, v)| {
+                                (
+                                    k.to_owned(),
+                                    StructField {
+                                        description: v.description.to_owned(),
+                                    },
+                                )
+                            })
+                            .collect(),
+                    })
+                );
 
-                let field = struct_.fields.get(name).ok_or(anyhow!(
-                    "no field named {} in {}",
-                    name,
-                    struct_.name
-                ))?;
+                if !flag {
+                    let mut data_path_cloned = to_vec_plus_one!(data_path);
 
-                schema = get_schema(&root, &field.schema)?;
+                    for (name, _) in &struct_.fields {
+                        data_path_cloned.push(DataPathType::Name(name.to_owned()));
+
+                        inner(nodes, root, &data_path_cloned, true)?;
+                        data_path_cloned.pop();
+                    }
+                }
             }
-            RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
+            RustSchemaKind::TupleStruct(tuple_struct) => {
+                insert_if_not_there!(
+                    nodes,
+                    data_path,
+                    Node::TupleStruct(NodeTupleStruct {
+                        name: tuple_struct.name.to_owned(),
+                        description: tuple_struct.description.to_owned(),
+                        fields: tuple_struct.fields.iter().map(|_| ()).collect(),
+                    })
+                );
+            }
             RustSchemaKind::Enum(_) => todo!(),
-            RustSchemaKind::Unit => not_compatible_error!(data, "Unit"),
-            RustSchemaKind::Boolean => not_compatible_error!(data, "Boolean"),
-            RustSchemaKind::Number(number_kind) => not_compatible_error!(data, "Number"),
-            RustSchemaKind::Char => not_compatible_error!(data, "Char"),
-            RustSchemaKind::String => not_compatible_error!(data, "String"),
-        }
+        };
+
+        Ok(())
     }
 
-    let node = match &schema.kind {
-        RustSchemaKind::Unit => Node::Unit,
-        RustSchemaKind::Boolean => todo!(),
-        RustSchemaKind::Number(number_kind) => Node::Number(NodeNumber {
-            kind: number_kind.clone(),
-            value: None,
-            value_string: String::new(),
-        }),
-        RustSchemaKind::Char => todo!(),
-        RustSchemaKind::String => Node::String(NodeString { value: None }),
-        RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
-        RustSchemaKind::Array(array) => todo!(),
-        RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
-        RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
-        RustSchemaKind::Struct(struct_) => Node::Struct(NodeStruct {
-            name: struct_.name.to_owned(),
-            description: struct_.description.to_owned(),
-            fields: struct_
-                .fields
-                .iter()
-                .map(|(k, v)| {
-                    (
-                        k.to_owned(),
-                        StructField {
-                            description: v.description.to_owned(),
-                            is_incomplete: false,
-                        },
-                    )
-                })
-                .collect(),
-        }),
-        RustSchemaKind::TupleStruct(tuple_struct) => Node::TupleStruct(NodeTupleStruct {
-            name: tuple_struct.name.to_owned(),
-            description: tuple_struct.description.to_owned(),
-            fields: tuple_struct.fields.iter().map(|_| ()).collect(),
-        }),
-        RustSchemaKind::Enum(_) => todo!(),
-    };
-
-    Ok(NodeContainer {
-        node,
-        is_incomplete: false,
-    })
+    inner(nodes, root, data_path, false)
 }
 
 pub fn apply_value(
@@ -201,16 +239,10 @@ pub fn apply_value(
         Node::Number(node_number) => {
             if let Some(number) = value.as_number() {
                 node_number.value = Some(number.clone());
-                node_number.value_string = number.to_string();
+                node_number.temp = number.to_string();
             }
         }
-        Node::Struct(node_struct) => {
-            for (name, field) in &mut node_struct.fields {
-                let name_data = DataPathType::Name(name.to_owned());
-                let full_path = Box::new(data_path.iter().chain(std::iter::once(&name_data)));
-                field.is_incomplete = missing.is_incomplete(full_path);
-            }
-        }
+        Node::Struct(node_struct) => {}
         Node::TupleStruct(node_tuple_struct) => todo!(),
     }
 }
@@ -454,6 +486,50 @@ impl Missing {
 
         missing.is_missing
     }
+}
+
+fn schema_at<'a>(
+    root: &'a RustSchemaRoot,
+    data_path: &[DataPathType],
+) -> anyhow::Result<&'a RustSchema> {
+    let mut schema = get_schema(root, &root.schema)?;
+
+    macro_rules! not_compatible_error {
+        ($data:expr, $schema:expr) => {
+            bail!("schema {} is not compatible with data {}", $schema, $data)
+        };
+    }
+
+    for data in data_path {
+        match &schema.kind {
+            RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
+            RustSchemaKind::Array(array) => todo!(),
+            RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
+            RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
+            RustSchemaKind::Struct(struct_) => {
+                let name = data
+                    .as_name()
+                    .ok_or(anyhow!("expected name, found indice {}", data))?;
+
+                let field = struct_.fields.get(name).ok_or(anyhow!(
+                    "no field named {} in {}",
+                    name,
+                    struct_.name
+                ))?;
+
+                schema = get_schema(&root, &field.schema)?;
+            }
+            RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
+            RustSchemaKind::Enum(_) => todo!(),
+            RustSchemaKind::Unit => not_compatible_error!(data, "Unit"),
+            RustSchemaKind::Boolean => not_compatible_error!(data, "Boolean"),
+            RustSchemaKind::Number(number_kind) => not_compatible_error!(data, "Number"),
+            RustSchemaKind::Char => not_compatible_error!(data, "Char"),
+            RustSchemaKind::String => not_compatible_error!(data, "String"),
+        }
+    }
+
+    Ok(schema)
 }
 
 fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
