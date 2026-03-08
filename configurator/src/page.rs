@@ -225,8 +225,8 @@ impl Page {
 
         debug!("missing = {:#?}", missing);
 
-        for node in nodes.values_mut() {
-            node::apply_value(node, &full_value, data_path.current(), &missing);
+        for (data_path, node) in &mut nodes {
+            node::apply_value(node, &full_value, data_path, &missing);
         }
 
         let title = appid.split('.').next_back().unwrap().to_string();
@@ -286,8 +286,8 @@ impl Page {
 
         debug!("missing = {:#?}", missing);
 
-        for node in self.nodes.values_mut() {
-            node::apply_value(node, &full_value, self.data_path.current(), &missing);
+        for (data_path, node) in &mut self.nodes {
+            node::apply_value(node, &full_value, data_path, &missing);
         }
 
         Ok(())

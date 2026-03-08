@@ -208,6 +208,7 @@ pub fn fill_nodes(
     inner(nodes, root, data_path, false)
 }
 
+#[instrument(skip_all)]
 pub fn apply_value(
     node: &mut NodeContainer,
     value: &Value,
@@ -216,7 +217,7 @@ pub fn apply_value(
 ) {
     let value = value_at(value, data_path);
 
-    dbg!(&value, data_path);
+    debug!("{:?}: {:?}", data_path, value);
 
     node.is_incomplete = missing.is_incomplete(Box::new(data_path.iter()));
 
