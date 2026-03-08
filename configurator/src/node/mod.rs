@@ -210,44 +210,34 @@ fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
     value
 }
 
-pub fn apply_value<'a>(
-    node: &'a mut NodeContainer,
+pub fn apply_value(
+    node: &mut NodeContainer,
     value: &Value,
-    data_path: &'a [DataPathType],
-    missing: &'a Missing,
+    data_path: &[DataPathType],
+    missing: &Missing,
 ) {
     let value = value_at(value, data_path);
 
     node.is_incomplete = missing.is_incomplete(Box::new(data_path.iter()));
 
     match &mut node.node {
-        Node::Unit => {
-            node.is_incomplete = value.is_unit();
-        }
-        Node::String(node_string) => match value.as_str() {
-            Some(str) => {
+        Node::Unit => {}
+        Node::String(node_string) => {
+            if let Some(str) = value.as_str() {
                 node_string.value = Some(str.to_owned());
             }
-            None => {
-                node.is_incomplete = true;
-            }
-        },
-        Node::Number(node_number) => match value.as_number() {
-            Some(number) => {
+        }
+        Node::Number(node_number) => {
+            if let Some(number) = value.as_number() {
                 node_number.value = Some(number.clone());
                 node_number.value_string = number.to_string();
             }
-            None => {
-                node.is_incomplete = true;
-            }
-        },
+        }
         Node::Struct(node_struct) => {
             for (name, field) in &mut node_struct.fields {
-                field.is_incomplete = missing.is_incomplete(Box::new(
-                    data_path
-                        .iter()
-                        .chain([&DataPathType::Name(name.to_owned())]),
-                ));
+                let name_data = DataPathType::Name(name.to_owned());
+                let full_path = Box::new(data_path.iter().chain(std::iter::once(&name_data)));
+                field.is_incomplete = missing.is_incomplete(full_path);
             }
         }
         Node::TupleStruct(node_tuple_struct) => todo!(),
@@ -280,9 +270,9 @@ impl Missing {
         missing.is_missing = true
     }
 
-    pub fn is_incomplete<'a, 'b>(
+    pub fn is_incomplete<'a>(
         &'a self,
-        data_path: Box<dyn Iterator<Item = &'b DataPathType>>,
+        data_path: Box<dyn Iterator<Item = &'a DataPathType> + 'a>,
     ) -> bool {
         let mut missing = self;
 

@@ -11,8 +11,6 @@ pub enum DataPathType {
     Indice(usize),
 }
 
-
-
 impl Display for DataPathType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
