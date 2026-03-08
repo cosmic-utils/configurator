@@ -85,7 +85,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         Node::Object(node_object) => view_object(data_path, node, node_object),
         Node::Enum(node_enum) => view_enum(data_path, node, node_enum),
         Node::Value(node_value) => view_value(data_path, node, node_value),
-        Node::Null => text("null").into(),
+        Node::Unit => text("null").into(),
         Node::Array(node_array) => view_array(data_path, node, node_array),
         Node::Any => todo!(),
     };
@@ -149,7 +149,7 @@ fn node_list<'a>(
             )
             .push(horizontal_space())
             .push_maybe(match &inner_node.node {
-                Node::Null => Some(Element::from(text("null"))),
+                Node::Unit => Some(Element::from(text("null"))),
                 Node::Bool(node_bool) => Some(
                     toggler(node_bool.value.unwrap_or_default())
                         .on_toggle(move |value| {
@@ -604,7 +604,7 @@ fn view_value<'a>(
 
 fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
     match &node.node {
-        Node::Null => Some(Cow::Borrowed("Null")),
+        Node::Unit => Some(Cow::Borrowed("Null")),
         Node::Bool(node_bool) => None,
         Node::String(node_string) => None,
         Node::Number(node_number) => None,

@@ -1,6 +1,3 @@
-// #![feature(btree_extract_if)]
-#![feature(if_let_guard)]
-
 use app::App;
 use cosmic::app::Settings;
 

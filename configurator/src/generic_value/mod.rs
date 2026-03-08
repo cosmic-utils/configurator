@@ -3,6 +3,8 @@ mod number;
 
 mod merge;
 
+use std::ops::Deref;
+
 pub use number::{F32, F64, Number};
 
 pub use map::Map;
@@ -103,5 +105,13 @@ impl Value {
 
     pub fn is_null(&self) -> bool {
         self == &Value::Option(None)
+    }
+
+    pub fn as_option(&self) -> Option<&Option<Box<Value>>> {
+        if let Value::Option(opt) = self {
+            Some(opt)
+        } else {
+            None
+        }
     }
 }

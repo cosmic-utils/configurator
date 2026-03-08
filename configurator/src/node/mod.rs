@@ -3,13 +3,13 @@ use std::{borrow::Cow, collections::BTreeMap, fmt::Display, rc::Rc};
 use derive_more::derive::Unwrap;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
-use schemars::schema::SchemaObject;
 
 use crate::generic_value::Value;
 
 mod apply_value;
 pub mod data_path;
-pub mod from_json_schema;
+// pub mod from_json_schema;
+pub mod from_rust_schema;
 mod number;
 pub use number::{NumberValue, NumberValueLight};
 #[cfg(test)]
@@ -40,12 +40,17 @@ impl NodeContainer {
             removable: false,
         }
     }
+
+    pub fn set_description(mut self, desc: Option<String>) -> Self {
+        self.description = desc;
+        self
+    }
 }
 
 #[derive(Debug, Clone, Unwrap)]
 #[unwrap(ref_mut)]
 pub enum Node {
-    Null,
+    Unit,
     Bool(NodeBool),
     String(NodeString),
     Number(NodeNumber),
@@ -206,7 +211,7 @@ impl NodeContainer {
     /// Return true if all active note have a value
     pub fn is_valid(&self) -> bool {
         match &self.node {
-            Node::Null => true,
+            Node::Unit => true,
             Node::Bool(node_bool) => node_bool.value.is_some(),
             Node::String(node_string) => node_string.value.is_some(),
             Node::Number(node_number) => node_number.value.is_some(),

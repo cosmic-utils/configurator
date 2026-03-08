@@ -1,0 +1,723 @@
+{
+  "schema": {
+    "Ref": "CosmicPanelConfig"
+  },
+  "definitions": {
+    "AutoHide": {
+      "kind": {
+        "Struct": {
+          "name": "AutoHide",
+          "description": "configurable autohide behavior",
+          "default": {
+            "Struct": [
+              "AutoHide",
+              {
+                "handle_size": {
+                  "Number": {
+                    "U32": 4
+                  }
+                },
+                "transition_time": {
+                  "Number": {
+                    "U32": 200
+                  }
+                },
+                "unhide_delay": {
+                  "Number": {
+                    "U32": 200
+                  }
+                },
+                "wait_time": {
+                  "Number": {
+                    "U32": 1000
+                  }
+                }
+              }
+            ]
+          },
+          "fields": {
+            "handle_size": {
+              "description": "size of the handle in pixels\nshould be > 0",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            },
+            "transition_time": {
+              "description": "time in milliseconds that it should take to transition",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            },
+            "unhide_delay": {
+              "description": "time in milliseconds before the panel should un-hide",
+              "default": {
+                "Number": {
+                  "U32": 200
+                }
+              },
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            },
+            "wait_time": {
+              "description": "time in milliseconds without pointer focus before hiding",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CosmicPanelBackground": {
+      "kind": {
+        "Enum": {
+          "name": "CosmicPanelBackground",
+          "description": "configurable backgrounds for the cosmic panel",
+          "variants": [
+            {
+              "name": "ThemeDefault",
+              "description": "theme default color with optional transparency",
+              "kind": "Unit"
+            },
+            {
+              "name": "Dark",
+              "description": "theme default dark",
+              "kind": "Unit"
+            },
+            {
+              "name": "Light",
+              "description": "theme default light",
+              "kind": "Unit"
+            },
+            {
+              "name": "Color",
+              "description": "RGBA",
+              "kind": {
+                "Tuple": [
+                  {
+                    "Schema": {
+                      "kind": {
+                        "Array": {
+                          "min": 3,
+                          "max": 3,
+                          "kind": {
+                            "Schema": {
+                              "kind": {
+                                "Number": "F32"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "CosmicPanelConfig": {
+      "kind": {
+        "Struct": {
+          "name": "CosmicPanelConfig",
+          "description": "Config structure for the cosmic panel",
+          "default": {
+            "Struct": [
+              "CosmicPanelConfig",
+              {
+                "anchor": {
+                  "EnumVariantUnit": "Top"
+                },
+                "anchor_gap": {
+                  "Bool": false
+                },
+                "autohide": {
+                  "Struct": [
+                    "AutoHide",
+                    {
+                      "handle_size": {
+                        "Number": {
+                          "U32": 4
+                        }
+                      },
+                      "transition_time": {
+                        "Number": {
+                          "U32": 200
+                        }
+                      },
+                      "unhide_delay": {
+                        "Number": {
+                          "U32": 200
+                        }
+                      },
+                      "wait_time": {
+                        "Number": {
+                          "U32": 1000
+                        }
+                      }
+                    }
+                  ]
+                },
+                "autohover_delay_ms": {
+                  "Number": {
+                    "U32": 500
+                  }
+                },
+                "background": {
+                  "EnumVariantUnit": "ThemeDefault"
+                },
+                "border_radius": {
+                  "Number": {
+                    "U32": 8
+                  }
+                },
+                "exclusive_zone": {
+                  "Bool": true
+                },
+                "expand_to_edges": {
+                  "Bool": true
+                },
+                "keyboard_interactivity": {
+                  "EnumVariantUnit": "None"
+                },
+                "layer": {
+                  "EnumVariantUnit": "Top"
+                },
+                "margin": {
+                  "Number": {
+                    "U16": 4
+                  }
+                },
+                "name": {
+                  "String": ""
+                },
+                "opacity": {
+                  "Number": {
+                    "F32": 0.800000011920929
+                  }
+                },
+                "output": {
+                  "EnumVariantUnit": "All"
+                },
+                "padding": {
+                  "Number": {
+                    "U32": 4
+                  }
+                },
+                "padding_overlap": {
+                  "Number": {
+                    "F32": 0.5
+                  }
+                },
+                "plugins_center": "Null",
+                "plugins_wings": "Null",
+                "size": {
+                  "EnumVariantUnit": "M"
+                },
+                "size_center": "Null",
+                "size_wings": "Null",
+                "spacing": {
+                  "Number": {
+                    "U32": 0
+                  }
+                }
+              }
+            ]
+          },
+          "fields": {
+            "anchor": {
+              "description": "edge which the panel is locked to",
+              "default": null,
+              "schema": {
+                "Ref": "PanelAnchor"
+              }
+            },
+            "anchor_gap": {
+              "description": "gap between the panel and the edge of the ouput",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": "Boolean"
+                }
+              }
+            },
+            "autohide": {
+              "description": "enable autohide feature with the transitions lasting the supplied wait\ntime and duration in millis",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Option": {
+                      "Ref": "AutoHide"
+                    }
+                  }
+                }
+              }
+            },
+            "autohover_delay_ms": {
+              "description": "autohover popup delay duration in milliseconds\nIf None, then it is disabled",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Option": {
+                      "Schema": {
+                        "kind": {
+                          "Number": "U32"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "background": {
+              "description": "customized background, or",
+              "default": null,
+              "schema": {
+                "Ref": "CosmicPanelBackground"
+              }
+            },
+            "border_radius": {
+              "description": null,
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            },
+            "exclusive_zone": {
+              "description": "exclusive zone",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": "Boolean"
+                }
+              }
+            },
+            "expand_to_edges": {
+              "description": "whether the panel should stretch to the edges of output",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": "Boolean"
+                }
+              }
+            },
+            "keyboard_interactivity": {
+              "description": "configured interactivity level for the panel",
+              "default": null,
+              "schema": {
+                "Ref": "KeyboardInteractivity"
+              }
+            },
+            "layer": {
+              "description": "configured layer which the panel is on",
+              "default": null,
+              "schema": {
+                "Ref": "Layer"
+              }
+            },
+            "margin": {
+              "description": "margin between the panel and the edge of the output",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U16"
+                  }
+                }
+              }
+            },
+            "name": {
+              "description": "profile name for this config, should be unique",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": "String"
+                }
+              }
+            },
+            "opacity": {
+              "description": "opacity of the panel",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "F32"
+                  }
+                }
+              }
+            },
+            "output": {
+              "description": "name of configured output (Intended for dock or panel), or None to place\non active output (Intended for wrapping a single application)",
+              "default": null,
+              "schema": {
+                "Ref": "CosmicPanelOuput"
+              }
+            },
+            "padding": {
+              "description": "padding around the panel",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            },
+            "padding_overlap": {
+              "description": "padding overlap ratio",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "F32"
+                  }
+                }
+              }
+            },
+            "plugins_center": {
+              "description": "list of plugins in the center of the panel",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Option": {
+                      "Schema": {
+                        "kind": {
+                          "Array": {
+                            "min": null,
+                            "max": null,
+                            "kind": {
+                              "Schema": {
+                                "kind": "String"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "plugins_wings": {
+              "description": "list of plugins on the left / top and right / bottom of the panel",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Option": {
+                      "Schema": {
+                        "kind": {
+                          "Tuple": [
+                            {
+                              "Schema": {
+                                "kind": {
+                                  "Array": {
+                                    "min": null,
+                                    "max": null,
+                                    "kind": {
+                                      "Schema": {
+                                        "kind": "String"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "Schema": {
+                                "kind": {
+                                  "Array": {
+                                    "min": null,
+                                    "max": null,
+                                    "kind": {
+                                      "Schema": {
+                                        "kind": "String"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "size": {
+              "description": "configured size for the panel",
+              "default": null,
+              "schema": {
+                "Ref": "PanelSize"
+              }
+            },
+            "size_center": {
+              "description": "optional size override for center",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Option": {
+                      "Ref": "PanelSize"
+                    }
+                  }
+                }
+              }
+            },
+            "size_wings": {
+              "description": "optional size override for wings",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Option": {
+                      "Schema": {
+                        "kind": {
+                          "Tuple": [
+                            {
+                              "Schema": {
+                                "kind": {
+                                  "Option": {
+                                    "Ref": "PanelSize"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "Schema": {
+                                "kind": {
+                                  "Option": {
+                                    "Ref": "PanelSize"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "spacing": {
+              "description": "space between panel plugins",
+              "default": null,
+              "schema": {
+                "Schema": {
+                  "kind": {
+                    "Number": "U32"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CosmicPanelOuput": {
+      "kind": {
+        "Enum": {
+          "name": "CosmicPanelOuput",
+          "description": "Configuration for the panel's ouput",
+          "variants": [
+            {
+              "name": "All",
+              "description": "show panel on all outputs",
+              "kind": "Unit"
+            },
+            {
+              "name": "Active",
+              "description": "show panel on the active output",
+              "kind": "Unit"
+            },
+            {
+              "name": "Name",
+              "description": "show panel on a specific output",
+              "kind": {
+                "Tuple": [
+                  {
+                    "Schema": {
+                      "kind": "String"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "KeyboardInteractivity": {
+      "kind": {
+        "Enum": {
+          "name": "KeyboardInteractivity",
+          "description": "Interactivity level of the cosmic panel",
+          "variants": [
+            {
+              "name": "None",
+              "description": "Not interactible",
+              "kind": "Unit"
+            },
+            {
+              "name": "Exclusive",
+              "description": "Only surface which is interactible",
+              "kind": "Unit"
+            },
+            {
+              "name": "OnDemand",
+              "description": "Interactible when given keyboard focus",
+              "kind": "Unit"
+            }
+          ]
+        }
+      }
+    },
+    "Layer": {
+      "kind": {
+        "Enum": {
+          "name": "Layer",
+          "description": "Layer which the cosmic panel is on",
+          "variants": [
+            {
+              "name": "Background",
+              "description": "background layer",
+              "kind": "Unit"
+            },
+            {
+              "name": "Bottom",
+              "description": "Bottom layer",
+              "kind": "Unit"
+            },
+            {
+              "name": "Top",
+              "description": "Top layer",
+              "kind": "Unit"
+            },
+            {
+              "name": "Overlay",
+              "description": "Overlay layer",
+              "kind": "Unit"
+            }
+          ]
+        }
+      }
+    },
+    "PanelAnchor": {
+      "kind": {
+        "Enum": {
+          "name": "PanelAnchor",
+          "description": "Edge to which the panel is anchored",
+          "variants": [
+            {
+              "name": "Left",
+              "description": "anchored to left edge",
+              "kind": "Unit"
+            },
+            {
+              "name": "Right",
+              "description": "anchored to right edge",
+              "kind": "Unit"
+            },
+            {
+              "name": "Top",
+              "description": "anchored to top edge",
+              "kind": "Unit"
+            },
+            {
+              "name": "Bottom",
+              "description": "anchored to bottom edge",
+              "kind": "Unit"
+            }
+          ]
+        }
+      }
+    },
+    "PanelSize": {
+      "kind": {
+        "Enum": {
+          "name": "PanelSize",
+          "description": "Configurable size for the cosmic panel",
+          "variants": [
+            {
+              "name": "XS",
+              "description": "XS",
+              "kind": "Unit"
+            },
+            {
+              "name": "S",
+              "description": "S",
+              "kind": "Unit"
+            },
+            {
+              "name": "M",
+              "description": "M",
+              "kind": "Unit"
+            },
+            {
+              "name": "L",
+              "description": "L",
+              "kind": "Unit"
+            },
+            {
+              "name": "XL",
+              "description": "XL",
+              "kind": "Unit"
+            },
+            {
+              "name": "Custom",
+              "description": "Define a custom size",
+              "kind": {
+                "Tuple": [
+                  {
+                    "Schema": {
+                      "kind": {
+                        "Number": "U32"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "X_CONFIGURATOR_SOURCE_PATHS": "/usr/share/cosmic/com.system76.CosmicPanel.Panel/v1",
+  "X_CONFIGURATOR_SOURCE_HOME_PATH": ".config/cosmic/com.system76.CosmicPanel.Panel/v1",
+  "X_CONFIGURATOR_WRITE_PATH": "test_configs/com.system76.CosmicPanel.Panel",
+  "X_CONFIGURATOR_FORMAT": "cosmic_ron"
+}

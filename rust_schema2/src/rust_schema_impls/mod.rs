@@ -14,6 +14,10 @@ macro_rules! forward_impl {
     }
 }
 
+mod array;
 mod core;
+mod maps;
 mod primitives;
+mod sequences;
+mod tuples;
 mod wrappers;

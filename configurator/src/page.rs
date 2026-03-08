@@ -193,7 +193,7 @@ impl Page {
         }
 
         info!("start generating node from schema");
-        let tree = NodeContainer::from_json_schema(&json::from_value(json_value)?);
+        let tree = NodeContainer::from_rust_schema(&json::from_value(json_value)?).unwrap();
 
         let title = appid.split('.').next_back().unwrap().to_string();
 

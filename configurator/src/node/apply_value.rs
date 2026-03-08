@@ -20,7 +20,7 @@ impl NodeContainer {
         self.modified = modified;
 
         match &mut self.node {
-            Node::Null => {
+            Node::Unit => {
                 // nothing to do ?
             }
             Node::Bool(node_bool) => {
@@ -127,8 +127,12 @@ impl NodeContainer {
     fn is_matching(&self, value: &Value) -> bool {
         debug!("\n{value:#?}\n{self:#?}\n");
 
+        if let Value::Option(opt) = value && let Some(opt) = opt {
+            return self.is_matching(opt);
+        }
+
         match &self.node {
-            Node::Null => value.is_null(),
+            Node::Unit => value.is_null() || value.as_option().is_some_and(|o| o.is_none()),
             Node::Bool(node_bool) => value.as_bool().is_some(),
             Node::String(node_string) => value.as_str().is_some(),
             Node::Number(node_number) => value.as_number().is_some(),
@@ -154,7 +158,10 @@ impl NodeContainer {
             },
             Node::Enum(node_enum) => todo!(),
             Node::Array(node_array) => match &node_array.template {
-                NodeArrayTemplate::All(node_container) => todo!(),
+                NodeArrayTemplate::All(node_container) => {
+                    // todo: check the type
+                    value.as_list().is_some()
+                },
                 NodeArrayTemplate::FirstN(node_containers) => {
                     let vec = value
                         .as_tuple()
@@ -179,7 +186,7 @@ impl NodeContainer {
     // todo: remove ALL values. Pass in each node container.
     pub fn remove_value_rec(&mut self) {
         match &mut self.node {
-            Node::Null => {}
+            Node::Unit => {}
             Node::Bool(node_bool) => {
                 node_bool.value.take();
             }

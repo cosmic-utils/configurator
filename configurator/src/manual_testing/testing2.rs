@@ -5,7 +5,7 @@ use std::{
 };
 
 use cosmic::iced_futures::backend::default;
-use schemars::JsonSchema;
+use rust_schema2::RustSchema;
 use serde::{Deserialize, Serialize};
 
 // note:
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 // serde default is needed for allowing partials deserlization from file
 // cosmic config probably allow need this but we should ckeck
 /// Config description
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
 #[serde(default)]
 #[derive(Default)]
 struct Config {
@@ -31,7 +31,7 @@ struct Config {
     hash: HashMap<String, String>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
 #[serde(default)]
 pub struct SubConfig {
     pub hella: Hella,
@@ -40,7 +40,7 @@ pub struct SubConfig {
     pub opt: Option<Option<String>>,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(default)]
 pub struct Hella {
     pub active: bool,
@@ -59,14 +59,14 @@ impl Default for Hella {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, RustSchema, Default)]
 pub enum Choice {
     #[default]
     A,
     B,
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 pub enum EnumSubConfig {
     // A(A),
     B(B),
@@ -75,7 +75,7 @@ pub enum EnumSubConfig {
     D(i32),
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
 #[serde(default)]
 pub struct A {
     s: String,
@@ -87,7 +87,7 @@ impl Default for A {
     }
 }
 
-#[derive(Clone, Debug, JsonSchema, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 pub struct B {}
 
 const NAME: &str = "testing2";

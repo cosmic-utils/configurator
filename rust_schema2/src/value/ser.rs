@@ -432,11 +432,7 @@ mod tests {
         //     y: Some(Box::new(B { x: 2 })),
         // };
 
-        let v = A {
-            x: 1,
-            y: None,
-        };
-
+        let v = A { x: 1, y: None };
 
         let v = to_value(&v);
 
