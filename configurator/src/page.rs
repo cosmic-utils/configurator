@@ -46,7 +46,7 @@ pub struct Page {
     pub node: NodeContainer,
     pub data_path: DataPath,
 
-    pub modif: HashMap<Vec<DataPathType>, Value>,
+    pub modifs: HashMap<Vec<DataPathType>, Value>,
 }
 
 pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
@@ -235,7 +235,7 @@ impl Page {
             write_path,
             format,
             schema,
-            modif: HashMap::new(),
+            modifs: HashMap::new(),
         };
 
         Ok(page)

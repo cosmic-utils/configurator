@@ -91,3 +91,20 @@ struct B {
 
 
 
+pub fn get_node(
+    &mut nodes: HashMap<Vec<DataPathType>, NodeContainer>
+    root: &RustSchemaRoot,
+    data_path: &[DataPathType],
+) -> anyhow::Result<()>;
+
+les nodes stores les "vraie" valeur
+et des valeur temporaire
+
+
+pub modifs: HashMap<Vec<DataPathType>, Value>,
+
+lors d'une update:
+    - on ajoute l'update a modifs
+    - on créeé une c config en mergeant avec full_config 
+    - on appelle get_value, on verifie que missing est vide
+    - si oui, on apply cette value a tous les nodes, et on écrit c
