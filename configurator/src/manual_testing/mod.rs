@@ -30,9 +30,9 @@ pub fn print_node_container<C: RustSchemaTrait>(name: &str) {
     let content = get_schema::<C>(name);
 
     let json_value = json::Value::from_str(&content).unwrap();
-    let tree = NodeContainer::from_rust_schema(&json::from_value(json_value).unwrap()).unwrap();
+    // let tree = NodeContainer::from_rust_schema(&json::from_value(json_value).unwrap()).unwrap();
 
-    println!("{:#?}", tree);
+    // println!("{:#?}", tree);
 }
 
 pub fn gen_schema<C: RustSchemaTrait>(name: &str) {

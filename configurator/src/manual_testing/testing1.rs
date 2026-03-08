@@ -21,7 +21,7 @@ struct NewStruct(u32);
 #[serde(default)]
 struct Config {
     /// Doc on field x
-    x: NewStruct,
+    // x: NewStruct,
     y: Complex,
     /// Doc on field x
     u: (),

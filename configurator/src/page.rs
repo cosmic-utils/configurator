@@ -11,13 +11,14 @@ use cosmic::widget::segmented_button::Entity;
 use directories::BaseDirs;
 
 use include_dir::include_dir;
+use rust_schema2::RustSchemaRoot;
 
 use crate::{
     app::{self, Dialog},
     config::Config,
     generic_value::Value,
     message::{ChangeMsg, PageMsg},
-    node::{Node, NodeContainer, NumberValue, data_path::DataPath},
+    node::{self, Node, NodeContainer, NumberValue, data_path::DataPath},
     providers,
 };
 
@@ -37,7 +38,8 @@ pub struct Page {
     pub user_config: Value,
     pub full_config: Value,
 
-    pub tree: NodeContainer,
+    pub schema: RustSchemaRoot,
+    pub node: NodeContainer,
     pub data_path: DataPath,
 }
 
@@ -193,7 +195,11 @@ impl Page {
         }
 
         info!("start generating node from schema");
-        let tree = NodeContainer::from_rust_schema(&json::from_value(json_value)?).unwrap();
+
+        let data_path = DataPath::new();
+
+        let schema = json::from_value(json_value)?;
+        let node = node::get_node(&schema, data_path.current())?;
 
         let title = appid.split('.').next_back().unwrap().to_string();
 
@@ -203,12 +209,13 @@ impl Page {
             system_config,
             user_config: Value::Empty,
             full_config: Value::Empty,
-            tree,
-            data_path: DataPath::new(),
+            node,
+            data_path,
             source_paths,
             source_home_path,
             write_path,
             format,
+            schema,
         };
 
         if let Err(err) = page.reload() {
@@ -242,22 +249,22 @@ impl Page {
         // debug!("tree = {:#?}", self.tree);
         debug!("full_config = {:#?}", self.full_config);
 
-        self.tree.remove_value_rec();
+        // self.tree.remove_value_rec();
 
-        self.tree.apply_value(&self.full_config, true)?;
+        // self.tree.apply_value(&self.full_config, true)?;
 
-        self.data_path.sanitize_path(&self.tree);
+        // self.data_path.sanitize_path(&self.tree);
 
         Ok(())
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        match self.tree.to_value() {
-            Some(value) => {
-                providers::write(&self.write_path, &self.format, value)?;
-            }
-            None => bail!("no value to write"),
-        }
+        // match self.tree.to_value() {
+        //     Some(value) => {
+        //         providers::write(&self.write_path, &self.format, value)?;
+        //     }
+        //     None => bail!("no value to write"),
+        // }
 
         Ok(())
     }
@@ -281,6 +288,7 @@ impl Page {
             PageMsg::OpenDataPath(data_path_type) => {
                 self.data_path.open(data_path_type);
             }
+            /*
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 let node = self.tree.get_at_mut(data_path.iter()).unwrap();
 
@@ -417,6 +425,10 @@ impl Page {
                 if self.tree.is_valid() {
                     self.write().unwrap();
                 }
+            }
+             */
+            PageMsg::ChangeMsg(_, _) => {
+                // todo
             }
             PageMsg::None => {
                 // pass
