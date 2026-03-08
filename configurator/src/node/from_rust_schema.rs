@@ -122,7 +122,7 @@ pub(crate) fn schema_object_to_node(
                 .map(|variant| -> anyhow::Result<NodeContainer> {
                     match &variant.kind {
                         rust_schema2::EnumVariantKind::Unit => Ok(NodeContainer::from_node(
-                            Node::Value(NodeValue::new(Value::String(variant.name.clone()))),
+                            Node::Value(NodeValue::new(Value::UnitStruct(variant.name.clone()))),
                         )),
                         rust_schema2::EnumVariantKind::Tuple(schemas) => {
                             let template = schemas
