@@ -11,6 +11,30 @@ pub enum DataPathType {
     Indice(usize),
 }
 
+impl From<String> for DataPathType {
+    fn from(value: String) -> Self {
+        DataPathType::Name(value)
+    }
+}
+
+impl From<&String> for DataPathType {
+    fn from(value: &String) -> Self {
+        DataPathType::Name(value.to_owned())
+    }
+}
+
+impl From<&str> for DataPathType {
+    fn from(value: &str) -> Self {
+        DataPathType::Name(value.to_owned())
+    }
+}
+
+impl From<usize> for DataPathType {
+    fn from(value: usize) -> Self {
+        DataPathType::Indice(value)
+    }
+}
+
 impl Display for DataPathType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -34,6 +58,21 @@ impl DataPathType {
             DataPathType::Indice(indice) => Some(*indice),
         }
     }
+}
+
+pub fn data_path_alloc_one(data_path: &[DataPathType]) -> Vec<DataPathType> {
+    let mut new_vec = Vec::with_capacity(data_path.len() + 1);
+    new_vec.extend_from_slice(data_path);
+    new_vec
+}
+
+pub fn data_path_plus_one(
+    data_path: &[DataPathType],
+    more: impl Into<DataPathType>,
+) -> Vec<DataPathType> {
+    let mut new_vec = data_path_alloc_one(data_path);
+    new_vec.push(more.into());
+    new_vec
 }
 
 #[derive(Debug, Clone)]

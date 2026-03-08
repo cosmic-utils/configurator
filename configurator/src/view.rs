@@ -21,7 +21,7 @@ use crate::{
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
         self, Node, NodeContainer, NodeNumber, NodeString, NodeStruct,
-        data_path::{DataPath, DataPathType},
+        data_path::{DataPath, DataPathType, data_path_plus_one},
     },
     page::Page,
 };
@@ -75,7 +75,6 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
     let data_path = page.data_path.current();
 
-
     let node = page.get_node(data_path);
 
     let content = match &node.node {
@@ -121,8 +120,8 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 fn node_list<'a>(
     name: DataPathType,
     description: Option<&'a str>,
-    is_valid: bool,
     data_path: &'a [DataPathType],
+    inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
     fn append_data_path(data_path: &[DataPathType], field: &DataPathType) -> Vec<DataPathType> {
         let mut new_vec = Vec::with_capacity(data_path.len() + 1);
@@ -154,72 +153,80 @@ fn node_list<'a>(
             //     },
             // )
             .push(horizontal_space())
-            // .push_maybe(match &inner_node.node {
-            //     Node::Unit => Some(Element::from(text("null"))),
-            // Node::Bool(node_bool) => Some(
-            //     toggler(node_bool.value.unwrap_or_default())
-            //         .on_toggle(move |value| {
-            //             PageMsg::ChangeMsg(
-            //                 append_data_path(data_path, &name),
-            //                 ChangeMsg::ChangeBool(value),
-            //             )
-            //         })
-            //         .into(),
-            // ),
-            // Node::Enum(node_enum) => {
-            //     #[derive(Eq, Clone)]
-            //     struct Key<'a> {
-            //         pub pos: usize,
-            //         pub value: Cow<'a, str>,
-            //     }
-            //     impl PartialEq for Key<'_> {
-            //         fn eq(&self, other: &Self) -> bool {
-            //             self.pos == other.pos
-            //         }
-            //     }
-            //     #[allow(clippy::to_string_trait_impl)]
-            //     impl ToString for Key<'_> {
-            //         fn to_string(&self) -> String {
-            //             self.value.to_string()
-            //         }
-            //     }
-            //     Some(
-            //         row()
-            //             .push_maybe(node_enum.value.map(|pos| {
-            //                 text(
-            //                     node_to_str(&node_enum.nodes[pos])
-            //                         .unwrap_or(Cow::Owned(pos.to_string())),
-            //                 )
-            //             }))
-            //             .push(pick_list(
-            //                 node_enum
-            //                     .nodes
-            //                     .iter()
-            //                     .enumerate()
-            //                     .map(|(pos, node)| Key {
-            //                         pos,
-            //                         value: node_to_str(node)
-            //                             .unwrap_or(Cow::Owned(pos.to_string())),
-            //                     })
-            //                     .collect::<Vec<_>>(),
-            //                 node_enum.value.map(|pos| Key {
-            //                     pos,
-            //                     value: Cow::Borrowed(""),
-            //                 }),
-            //                 move |key| {
-            //                     PageMsg::ChangeMsg(
-            //                         append_data_path(data_path, &name),
-            //                         ChangeMsg::ChangeEnum(key.pos),
-            //                     )
-            //                 },
-            //             ))
-            //             .align_y(alignment::Vertical::Center)
-            //             .into(),
-            //     )
-            // }
-            //     _ => None,
-            // }),
-            .push_maybe(if !is_valid {
+            .push_maybe(match &inner_node.node {
+                Node::Unit => Some(Element::from(text("null"))),
+                Node::String(node_string) => Some(
+                    text_input("value", &node_string.temp)
+                        .on_input(move |value| {
+                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeString(value))
+                        })
+                        .into(),
+                ),
+
+                // Node::Bool(node_bool) => Some(
+                //     toggler(node_bool.value.unwrap_or_default())
+                //         .on_toggle(move |value| {
+                //             PageMsg::ChangeMsg(
+                //                 append_data_path(data_path, &name),
+                //                 ChangeMsg::ChangeBool(value),
+                //             )
+                //         })
+                //         .into(),
+                // ),
+                // Node::Enum(node_enum) => {
+                //     #[derive(Eq, Clone)]
+                //     struct Key<'a> {
+                //         pub pos: usize,
+                //         pub value: Cow<'a, str>,
+                //     }
+                //     impl PartialEq for Key<'_> {
+                //         fn eq(&self, other: &Self) -> bool {
+                //             self.pos == other.pos
+                //         }
+                //     }
+                //     #[allow(clippy::to_string_trait_impl)]
+                //     impl ToString for Key<'_> {
+                //         fn to_string(&self) -> String {
+                //             self.value.to_string()
+                //         }
+                //     }
+                //     Some(
+                //         row()
+                //             .push_maybe(node_enum.value.map(|pos| {
+                //                 text(
+                //                     node_to_str(&node_enum.nodes[pos])
+                //                         .unwrap_or(Cow::Owned(pos.to_string())),
+                //                 )
+                //             }))
+                //             .push(pick_list(
+                //                 node_enum
+                //                     .nodes
+                //                     .iter()
+                //                     .enumerate()
+                //                     .map(|(pos, node)| Key {
+                //                         pos,
+                //                         value: node_to_str(node)
+                //                             .unwrap_or(Cow::Owned(pos.to_string())),
+                //                     })
+                //                     .collect::<Vec<_>>(),
+                //                 node_enum.value.map(|pos| Key {
+                //                     pos,
+                //                     value: Cow::Borrowed(""),
+                //                 }),
+                //                 move |key| {
+                //                     PageMsg::ChangeMsg(
+                //                         append_data_path(data_path, &name),
+                //                         ChangeMsg::ChangeEnum(key.pos),
+                //                     )
+                //                 },
+                //             ))
+                //             .align_y(alignment::Vertical::Center)
+                //             .into(),
+                //     )
+                // }
+                _ => None,
+            })
+            .push_maybe(if inner_node.is_incomplete {
                 Some(no_value_defined_warning_icon())
             } else {
                 None
@@ -301,8 +308,8 @@ fn view_struct<'a>(
                     node_list(
                         DataPathType::Name(name.clone()),
                         field.description.as_deref(),
-                        true,
                         data_path,
+                        page.get_node(&data_path_plus_one(data_path, name)),
                     )
                 })),
         )
@@ -523,14 +530,9 @@ fn view_string<'a>(
                     .push(text("Current value"))
                     .push(horizontal_space())
                     .push(
-                        text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
-                            move |value| {
-                                PageMsg::ChangeMsg(
-                                    data_path.to_vec(),
-                                    ChangeMsg::ChangeString(value),
-                                )
-                            },
-                        ),
+                        text_input("value", &node_string.temp).on_input(move |value| {
+                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeString(value))
+                        }),
                     )
                     .push_maybe(if node_string.value.is_none() {
                         Some(no_value_defined_warning_icon())

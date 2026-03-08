@@ -12,7 +12,7 @@ use rust_schema2::{NumberKind, RustSchema, RustSchemaKind, RustSchemaOrRef, Rust
 
 use crate::{
     generic_value::{F32, F64, Map, Number, Value},
-    node::data_path::DataPathType,
+    node::data_path::{DataPathType, data_path_alloc_one},
 };
 
 use anyhow::{anyhow, bail};
@@ -91,15 +91,6 @@ pub struct NodeTupleStruct {
     pub name: String,
     pub description: Option<String>,
     pub fields: Vec<()>,
-}
-
-/// Alloc one more element
-macro_rules! to_vec_plus_one {
-    ($v:expr) => {{
-        let mut new_vec = Vec::with_capacity($v.len() + 1);
-        new_vec.extend_from_slice($v);
-        new_vec
-    }};
 }
 
 pub fn fill_nodes(
@@ -187,7 +178,7 @@ pub fn fill_nodes(
                 );
 
                 if !flag {
-                    let mut data_path_cloned = to_vec_plus_one!(data_path);
+                    let mut data_path_cloned = data_path_alloc_one(data_path);
 
                     for (name, _) in &struct_.fields {
                         data_path_cloned.push(DataPathType::Name(name.to_owned()));
@@ -234,6 +225,7 @@ pub fn apply_value(
         Node::String(node_string) => {
             if let Some(str) = value.as_str() {
                 node_string.value = Some(str.to_owned());
+                node_string.temp = str.to_string();
             }
         }
         Node::Number(node_number) => {
