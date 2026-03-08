@@ -179,37 +179,6 @@ pub fn get_node(
     })
 }
 
-fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
-    let mut value = value;
-
-    // todo: rewrite with if_let_guards
-    for data in data_path {
-        value = match (value, data) {
-            (Value::Option(value), DataPathType::Name(_)) => todo!(),
-            (Value::Option(value), DataPathType::Indice(_)) => todo!(),
-            (Value::List(values), DataPathType::Name(_)) => todo!(),
-            (Value::List(values), DataPathType::Indice(_)) => todo!(),
-            (Value::Map(map), DataPathType::Name(_)) => todo!(),
-            (Value::Map(map), DataPathType::Indice(_)) => todo!(),
-            (Value::Tuple(values), DataPathType::Name(_)) => todo!(),
-            (Value::Tuple(values), DataPathType::Indice(_)) => todo!(),
-            (Value::UnitStruct(_), DataPathType::Name(_)) => todo!(),
-            (Value::UnitStruct(_), DataPathType::Indice(_)) => todo!(),
-            (Value::Struct(_, map), DataPathType::Name(name)) => match map.0.get(name) {
-                Some(value) => value,
-                None => return &Value::Empty,
-            },
-            (Value::NamedTuple(_, values), DataPathType::Indice(i)) => match values.get(*i) {
-                Some(value) => value,
-                None => return &Value::Empty,
-            },
-            _ => return &Value::Empty,
-        };
-    }
-
-    value
-}
-
 pub fn apply_value(
     node: &mut NodeContainer,
     value: &Value,
@@ -217,6 +186,8 @@ pub fn apply_value(
     missing: &Missing,
 ) {
     let value = value_at(value, data_path);
+
+    dbg!(&value, data_path);
 
     node.is_incomplete = missing.is_incomplete(Box::new(data_path.iter()));
 
@@ -241,50 +212,6 @@ pub fn apply_value(
             }
         }
         Node::TupleStruct(node_tuple_struct) => todo!(),
-    }
-}
-
-#[derive(Debug)]
-pub struct Missing {
-    is_missing: bool,
-    childs: HashMap<DataPathType, Missing>,
-}
-
-impl Missing {
-    fn new() -> Self {
-        Self {
-            is_missing: false,
-            childs: HashMap::new(),
-        }
-    }
-    pub fn add_missing(&mut self, data_path: Vec<DataPathType>) {
-        let mut missing = self;
-
-        for data in data_path {
-            if !missing.childs.contains_key(&data) {
-                missing.childs.insert(data.clone(), Missing::new());
-            }
-
-            missing = missing.childs.get_mut(&data).unwrap();
-        }
-
-        missing.is_missing = true
-    }
-
-    pub fn is_incomplete<'a>(
-        &'a self,
-        data_path: Box<dyn Iterator<Item = &'a DataPathType> + 'a>,
-    ) -> bool {
-        let mut missing = self;
-
-        for data in data_path {
-            match missing.childs.get(data) {
-                Some(m) => missing = m,
-                None => return false,
-            }
-        }
-
-        missing.is_missing
     }
 }
 
@@ -476,6 +403,81 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
         &mut missing,
     )?;
     Ok((value, missing))
+}
+
+#[derive(Debug)]
+pub struct Missing {
+    is_missing: bool,
+    childs: HashMap<DataPathType, Missing>,
+}
+
+impl Missing {
+    fn new() -> Self {
+        Self {
+            is_missing: false,
+            childs: HashMap::new(),
+        }
+    }
+    pub fn add_missing(&mut self, data_path: Vec<DataPathType>) {
+        let mut missing = self;
+
+        for data in data_path {
+            if !missing.childs.contains_key(&data) {
+                missing.childs.insert(data.clone(), Missing::new());
+            }
+
+            missing = missing.childs.get_mut(&data).unwrap();
+        }
+
+        missing.is_missing = true
+    }
+
+    pub fn is_incomplete<'a>(
+        &'a self,
+        data_path: Box<dyn Iterator<Item = &'a DataPathType> + 'a>,
+    ) -> bool {
+        let mut missing = self;
+
+        for data in data_path {
+            match missing.childs.get(data) {
+                Some(m) => missing = m,
+                None => return false,
+            }
+        }
+
+        missing.is_missing
+    }
+}
+
+fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
+    let mut value = value;
+
+    // todo: rewrite with if_let_guards
+    for data in data_path {
+        value = match (value, data) {
+            (Value::Option(value), DataPathType::Name(_)) => todo!(),
+            (Value::Option(value), DataPathType::Indice(_)) => todo!(),
+            (Value::List(values), DataPathType::Name(_)) => todo!(),
+            (Value::List(values), DataPathType::Indice(_)) => todo!(),
+            (Value::Map(map), DataPathType::Name(_)) => todo!(),
+            (Value::Map(map), DataPathType::Indice(_)) => todo!(),
+            (Value::Tuple(values), DataPathType::Name(_)) => todo!(),
+            (Value::Tuple(values), DataPathType::Indice(_)) => todo!(),
+            (Value::UnitStruct(_), DataPathType::Name(_)) => todo!(),
+            (Value::UnitStruct(_), DataPathType::Indice(_)) => todo!(),
+            (Value::Struct(_, map), DataPathType::Name(name)) => match map.0.get(name) {
+                Some(value) => value,
+                None => return &Value::Empty,
+            },
+            (Value::NamedTuple(_, values), DataPathType::Indice(i)) => match values.get(*i) {
+                Some(value) => value,
+                None => return &Value::Empty,
+            },
+            _ => return &Value::Empty,
+        };
+    }
+
+    value
 }
 
 fn get_schema<'a>(

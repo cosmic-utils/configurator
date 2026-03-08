@@ -200,21 +200,34 @@ impl Page {
             system_config = system_config.merge(&providers::read_from_format(path, &format))
         }
 
+        let user_config =
+            Value::Empty.merge(&providers::read_from_format(&source_home_path, &format));
+
+        let full_config = Value::Empty.merge(&system_config).merge(&user_config);
+
         info!("start generating node from schema");
 
         let data_path = DataPath::new();
 
         let schema = json::from_value(json_value)?;
-        let node = node::get_node(&schema, data_path.current())?;
+        let mut node = node::get_node(&schema, data_path.current())?;
+
+        let (full_value, missing) = node::get_value(&schema, &full_config)?;
+
+        debug!("full_value = {:#?}", full_value);
+
+        debug!("missing = {:#?}", missing);
+
+        node::apply_value(&mut node, &full_value, data_path.current(), &missing);
 
         let title = appid.split('.').next_back().unwrap().to_string();
 
-        let mut page = Self {
+        let page = Self {
             title,
             appid: appid.to_string(),
             system_config,
-            user_config: Value::Empty,
-            full_config: Value::Empty,
+            user_config,
+            full_config,
             node,
             data_path,
             source_paths,
@@ -225,10 +238,6 @@ impl Page {
             modif: HashMap::new(),
         };
 
-        if let Err(err) = page.reload() {
-            error!("reload error: {err}");
-        }
-
         Ok(page)
     }
 
@@ -237,7 +246,7 @@ impl Page {
     }
 
     #[instrument(skip_all)]
-    pub fn reload(&mut self) -> anyhow::Result<()> {
+    pub fn reload_config(&mut self) -> anyhow::Result<()> {
         info!("reload the config");
 
         self.user_config = Value::Empty.merge(&providers::read_from_format(
@@ -253,8 +262,14 @@ impl Page {
             .merge(&self.system_config)
             .merge(&self.user_config);
 
-        // debug!("tree = {:#?}", self.tree);
         debug!("full_config = {:#?}", self.full_config);
+
+        Ok(())
+    }
+
+    #[instrument(skip_all)]
+    pub fn reload_node(&mut self) -> anyhow::Result<()> {
+        self.node = node::get_node(&self.schema, &self.data_path.current())?;
 
         let (full_value, missing) = node::get_value(&self.schema, &self.full_config)?;
 
@@ -262,19 +277,21 @@ impl Page {
 
         debug!("missing = {:#?}", missing);
 
-        // self.tree.remove_value_rec();
-
-        // self.tree.apply_value(&self.full_config, true)?;
-
-        // self.data_path.sanitize_path(&self.tree);
+        node::apply_value(
+            &mut self.node,
+            &full_value,
+            self.data_path.current(),
+            &missing,
+        );
 
         Ok(())
     }
 
-    pub fn refresh_node(&mut self) -> anyhow::Result<()> {
-        self.node = node::get_node(&self.schema, &self.data_path.current()).unwrap();
+    #[instrument(skip_all)]
+    pub fn reload_page(&mut self) -> anyhow::Result<()> {
+        self.reload_config()?;
 
-        let generated_config = node::get_value(&self.schema, &self.full_config)?;
+        self.reload_node()?;
 
         Ok(())
     }
@@ -305,11 +322,11 @@ impl Page {
         match message {
             PageMsg::SelectDataPath(pos) => {
                 self.data_path.change_to(pos);
-                self.node = node::get_node(&self.schema, &self.data_path.current()).unwrap();
+                self.reload_node().unwrap();
             }
             PageMsg::OpenDataPath(data_path_type) => {
                 self.data_path.open(data_path_type);
-                self.node = node::get_node(&self.schema, &self.data_path.current()).unwrap();
+                self.reload_node().unwrap();
             }
 
             PageMsg::ChangeMsg(data_path, change_msg) => {}
