@@ -20,7 +20,7 @@ use crate::{
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
-        self, Node, NodeContainer, NodeNumber, NodeString, NodeStruct, NumberValue,
+        self, Node, NodeContainer, NodeNumber, NodeString, NodeStruct,
         data_path::{DataPath, DataPathType},
     },
     page::Page,
@@ -120,6 +120,7 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 fn node_list<'a>(
     name: DataPathType,
     description: Option<&'a str>,
+    is_valid: bool,
     data_path: &'a [DataPathType],
 ) -> Element<'a, PageMsg> {
     fn append_data_path(data_path: &[DataPathType], field: &DataPathType) -> Vec<DataPathType> {
@@ -154,85 +155,82 @@ fn node_list<'a>(
             .push(horizontal_space())
             // .push_maybe(match &inner_node.node {
             //     Node::Unit => Some(Element::from(text("null"))),
-                // Node::Bool(node_bool) => Some(
-                //     toggler(node_bool.value.unwrap_or_default())
-                //         .on_toggle(move |value| {
-                //             PageMsg::ChangeMsg(
-                //                 append_data_path(data_path, &name),
-                //                 ChangeMsg::ChangeBool(value),
-                //             )
-                //         })
-                //         .into(),
-                // ),
-
-                // Node::Enum(node_enum) => {
-                //     #[derive(Eq, Clone)]
-                //     struct Key<'a> {
-                //         pub pos: usize,
-                //         pub value: Cow<'a, str>,
-                //     }
-
-                //     impl PartialEq for Key<'_> {
-                //         fn eq(&self, other: &Self) -> bool {
-                //             self.pos == other.pos
-                //         }
-                //     }
-
-                //     #[allow(clippy::to_string_trait_impl)]
-                //     impl ToString for Key<'_> {
-                //         fn to_string(&self) -> String {
-                //             self.value.to_string()
-                //         }
-                //     }
-
-                //     Some(
-                //         row()
-                //             .push_maybe(node_enum.value.map(|pos| {
-                //                 text(
-                //                     node_to_str(&node_enum.nodes[pos])
-                //                         .unwrap_or(Cow::Owned(pos.to_string())),
-                //                 )
-                //             }))
-                //             .push(pick_list(
-                //                 node_enum
-                //                     .nodes
-                //                     .iter()
-                //                     .enumerate()
-                //                     .map(|(pos, node)| Key {
-                //                         pos,
-                //                         value: node_to_str(node)
-                //                             .unwrap_or(Cow::Owned(pos.to_string())),
-                //                     })
-                //                     .collect::<Vec<_>>(),
-                //                 node_enum.value.map(|pos| Key {
-                //                     pos,
-                //                     value: Cow::Borrowed(""),
-                //                 }),
-                //                 move |key| {
-                //                     PageMsg::ChangeMsg(
-                //                         append_data_path(data_path, &name),
-                //                         ChangeMsg::ChangeEnum(key.pos),
-                //                     )
-                //                 },
-                //             ))
-                //             .align_y(alignment::Vertical::Center)
-                //             .into(),
-                //     )
-                // }
+            // Node::Bool(node_bool) => Some(
+            //     toggler(node_bool.value.unwrap_or_default())
+            //         .on_toggle(move |value| {
+            //             PageMsg::ChangeMsg(
+            //                 append_data_path(data_path, &name),
+            //                 ChangeMsg::ChangeBool(value),
+            //             )
+            //         })
+            //         .into(),
+            // ),
+            // Node::Enum(node_enum) => {
+            //     #[derive(Eq, Clone)]
+            //     struct Key<'a> {
+            //         pub pos: usize,
+            //         pub value: Cow<'a, str>,
+            //     }
+            //     impl PartialEq for Key<'_> {
+            //         fn eq(&self, other: &Self) -> bool {
+            //             self.pos == other.pos
+            //         }
+            //     }
+            //     #[allow(clippy::to_string_trait_impl)]
+            //     impl ToString for Key<'_> {
+            //         fn to_string(&self) -> String {
+            //             self.value.to_string()
+            //         }
+            //     }
+            //     Some(
+            //         row()
+            //             .push_maybe(node_enum.value.map(|pos| {
+            //                 text(
+            //                     node_to_str(&node_enum.nodes[pos])
+            //                         .unwrap_or(Cow::Owned(pos.to_string())),
+            //                 )
+            //             }))
+            //             .push(pick_list(
+            //                 node_enum
+            //                     .nodes
+            //                     .iter()
+            //                     .enumerate()
+            //                     .map(|(pos, node)| Key {
+            //                         pos,
+            //                         value: node_to_str(node)
+            //                             .unwrap_or(Cow::Owned(pos.to_string())),
+            //                     })
+            //                     .collect::<Vec<_>>(),
+            //                 node_enum.value.map(|pos| Key {
+            //                     pos,
+            //                     value: Cow::Borrowed(""),
+            //                 }),
+            //                 move |key| {
+            //                     PageMsg::ChangeMsg(
+            //                         append_data_path(data_path, &name),
+            //                         ChangeMsg::ChangeEnum(key.pos),
+            //                     )
+            //                 },
+            //             ))
+            //             .align_y(alignment::Vertical::Center)
+            //             .into(),
+            //     )
+            // }
             //     _ => None,
-            // }), .push_maybe(if !inner_node.is_valid() {
-                //     Some(no_value_defined_warning_icon())
-                // } else {
-                //     None
-                // })
-                // .push_maybe(if inner_node.removable {
-                //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
-                //         data_path.to_vec(),
-                //         ChangeMsg::Remove(name_cloned.clone()),
-                //     )))
-                // } else {
-                //     None
-                // }),
+            // }),
+            .push_maybe(if !is_valid {
+                Some(no_value_defined_warning_icon())
+            } else {
+                None
+            })
+            // .push_maybe(if inner_node.removable {
+            //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+            //         data_path.to_vec(),
+            //         ChangeMsg::Remove(name_cloned.clone()),
+            //     )))
+            // } else {
+            //     None
+            // })
     )
     .on_press(PageMsg::OpenDataPath(name_cloned))
     .into()
@@ -303,6 +301,7 @@ fn view_struct<'a>(
                     node_list(
                         DataPathType::Name(name.clone()),
                         field.description.as_deref(),
+                        !field.is_incomplete,
                         data_path,
                     )
                 })),

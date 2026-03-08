@@ -20,7 +20,7 @@ use crate::{
     generic_value::Value,
     message::{ChangeMsg, PageMsg},
     node::{
-        self, Node, NodeContainer, NumberValue,
+        self, Node, NodeContainer,
         data_path::{DataPath, DataPathType},
     },
     providers,

@@ -127,7 +127,7 @@ pub enum EnumVariantKind {
     Struct(BTreeMap<String, StructField>),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NumberKind {
     U8,
     U16,

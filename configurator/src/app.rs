@@ -14,7 +14,7 @@ use zconf2::ConfigManager;
 use crate::{
     config::Config,
     message::{AppMsg, ChangeMsg, PageMsg},
-    node::{NumberValue, data_path::DataPathType},
+    node::data_path::DataPathType,
     page::{self, Page, create_pages},
     view::view_app,
 };
@@ -69,7 +69,8 @@ impl cosmic::Application for App {
 
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
         // let config: ConfigManager<Config> = ConfigManager::new(QUALIFIER, ORG, APP).unwrap();
-        let mut config: ConfigManager<Config> = ConfigManager::from_path("app_config.json").unwrap();
+        let mut config: ConfigManager<Config> =
+            ConfigManager::from_path("app_config.json").unwrap();
         config.update(|_| {});
 
         let mut nav_model = SingleSelectModel::default();

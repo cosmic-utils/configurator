@@ -8,27 +8,26 @@ use std::{
 use derive_more::derive::Unwrap;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
-use rust_schema2::{RustSchema, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot};
+use rust_schema2::{NumberKind, RustSchema, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot};
 
 use crate::{
-    generic_value::{Map, Number, Value},
+    generic_value::{F32, F64, Map, Number, Value},
     node::data_path::DataPathType,
 };
 
 use anyhow::{anyhow, bail};
 
 pub mod data_path;
-mod number;
-pub use number::{NumberValue, NumberValueLight};
 // #[cfg(test)]
 // mod tests;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeContainer {
     pub node: Node,
+    pub is_incomplete: bool,
 }
 
-#[derive(Debug, Clone, Unwrap)]
+#[derive(Debug, Unwrap)]
 #[unwrap(ref_mut)]
 #[non_exhaustive]
 pub enum Node {
@@ -39,31 +38,55 @@ pub enum Node {
     TupleStruct(NodeTupleStruct),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeString {
     pub value: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeNumber {
-    pub kind: NumberValueLight,
-    pub value: Option<NumberValue>,
+    pub kind: NumberKind,
+    pub value: Option<Number>,
     pub value_string: String,
 }
 
-#[derive(Debug, Clone)]
+impl NodeNumber {
+    pub fn try_parse_from_str(&self, str: &str) -> anyhow::Result<Number> {
+        let v = match self.kind {
+            NumberKind::U8 => Number::U8(str.parse::<u8>()?),
+            NumberKind::U16 => Number::U16(str.parse::<u16>()?),
+            NumberKind::U32 => Number::U32(str.parse::<u32>()?),
+            NumberKind::U64 => Number::U64(str.parse::<u64>()?),
+            NumberKind::U128 => Number::U128(str.parse::<u128>()?),
+            NumberKind::USize => Number::USize(str.parse::<usize>()?),
+            NumberKind::I8 => Number::I8(str.parse::<i8>()?),
+            NumberKind::I16 => Number::I16(str.parse::<i16>()?),
+            NumberKind::I32 => Number::I32(str.parse::<i32>()?),
+            NumberKind::I64 => Number::I64(str.parse::<i64>()?),
+            NumberKind::I128 => Number::I128(str.parse::<i128>()?),
+            NumberKind::ISize => Number::ISize(str.parse::<isize>()?),
+            NumberKind::F32 => Number::F32(F32(str.parse::<f32>()?)),
+            NumberKind::F64 => Number::F64(F64(str.parse::<f64>()?)),
+        };
+
+        Ok(v)
+    }
+}
+
+#[derive(Debug)]
 pub struct NodeStruct {
     pub name: String,
     pub description: Option<String>,
     pub fields: IndexMap<String, StructField>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct StructField {
     pub description: Option<String>,
+    pub is_incomplete: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeTupleStruct {
     pub name: String,
     pub description: Option<String>,
@@ -115,22 +138,7 @@ pub fn get_node(
         RustSchemaKind::Unit => Node::Unit,
         RustSchemaKind::Boolean => todo!(),
         RustSchemaKind::Number(number_kind) => Node::Number(NodeNumber {
-            kind: match number_kind {
-                rust_schema2::NumberKind::U8 => NumberValueLight::U8,
-                rust_schema2::NumberKind::U16 => NumberValueLight::U16,
-                rust_schema2::NumberKind::U32 => NumberValueLight::U32,
-                rust_schema2::NumberKind::U64 => NumberValueLight::U64,
-                rust_schema2::NumberKind::U128 => NumberValueLight::U128,
-                rust_schema2::NumberKind::USize => NumberValueLight::USize,
-                rust_schema2::NumberKind::I8 => NumberValueLight::I8,
-                rust_schema2::NumberKind::I16 => NumberValueLight::I16,
-                rust_schema2::NumberKind::I32 => NumberValueLight::I32,
-                rust_schema2::NumberKind::I64 => NumberValueLight::I64,
-                rust_schema2::NumberKind::I128 => NumberValueLight::I128,
-                rust_schema2::NumberKind::ISize => NumberValueLight::ISize,
-                rust_schema2::NumberKind::F32 => NumberValueLight::F32,
-                rust_schema2::NumberKind::F64 => NumberValueLight::F64,
-            },
+            kind: number_kind.clone(),
             value: None,
             value_string: String::new(),
         }),
@@ -151,6 +159,7 @@ pub fn get_node(
                         k.to_owned(),
                         StructField {
                             description: v.description.to_owned(),
+                            is_incomplete: false,
                         },
                     )
                 })
@@ -164,7 +173,85 @@ pub fn get_node(
         RustSchemaKind::Enum(_) => todo!(),
     };
 
-    Ok(NodeContainer { node })
+    Ok(NodeContainer {
+        node,
+        is_incomplete: false,
+    })
+}
+
+fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
+    let mut value = value;
+
+    // todo: rewrite with if_let_guards
+    for data in data_path {
+        value = match (value, data) {
+            (Value::Option(value), DataPathType::Name(_)) => todo!(),
+            (Value::Option(value), DataPathType::Indice(_)) => todo!(),
+            (Value::List(values), DataPathType::Name(_)) => todo!(),
+            (Value::List(values), DataPathType::Indice(_)) => todo!(),
+            (Value::Map(map), DataPathType::Name(_)) => todo!(),
+            (Value::Map(map), DataPathType::Indice(_)) => todo!(),
+            (Value::Tuple(values), DataPathType::Name(_)) => todo!(),
+            (Value::Tuple(values), DataPathType::Indice(_)) => todo!(),
+            (Value::UnitStruct(_), DataPathType::Name(_)) => todo!(),
+            (Value::UnitStruct(_), DataPathType::Indice(_)) => todo!(),
+            (Value::Struct(_, map), DataPathType::Name(name)) => match map.0.get(name) {
+                Some(value) => value,
+                None => return &Value::Empty,
+            },
+            (Value::NamedTuple(_, values), DataPathType::Indice(i)) => match values.get(*i) {
+                Some(value) => value,
+                None => return &Value::Empty,
+            },
+            _ => return &Value::Empty,
+        };
+    }
+
+    value
+}
+
+pub fn apply_value<'a>(
+    node: &'a mut NodeContainer,
+    value: &Value,
+    data_path: &'a [DataPathType],
+    missing: &'a Missing,
+) {
+    let value = value_at(value, data_path);
+
+    node.is_incomplete = missing.is_incomplete(Box::new(data_path.iter()));
+
+    match &mut node.node {
+        Node::Unit => {
+            node.is_incomplete = value.is_unit();
+        }
+        Node::String(node_string) => match value.as_str() {
+            Some(str) => {
+                node_string.value = Some(str.to_owned());
+            }
+            None => {
+                node.is_incomplete = true;
+            }
+        },
+        Node::Number(node_number) => match value.as_number() {
+            Some(number) => {
+                node_number.value = Some(number.clone());
+                node_number.value_string = number.to_string();
+            }
+            None => {
+                node.is_incomplete = true;
+            }
+        },
+        Node::Struct(node_struct) => {
+            for (name, field) in &mut node_struct.fields {
+                field.is_incomplete = missing.is_incomplete(Box::new(
+                    data_path
+                        .iter()
+                        .chain([&DataPathType::Name(name.to_owned())]),
+                ));
+            }
+        }
+        Node::TupleStruct(node_tuple_struct) => todo!(),
+    }
 }
 
 pub struct Missing {
@@ -193,7 +280,10 @@ impl Missing {
         missing.is_missing = true
     }
 
-    pub fn is_a_child_missing(&self, data_path: &[DataPathType]) -> bool {
+    pub fn is_incomplete<'a, 'b>(
+        &'a self,
+        data_path: Box<dyn Iterator<Item = &'b DataPathType>>,
+    ) -> bool {
         let mut missing = self;
 
         for data in data_path {
