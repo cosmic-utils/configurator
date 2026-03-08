@@ -61,8 +61,6 @@ pub enum Node {
     /// represent a final value
     /// currently only string is supported
     Value(NodeValue),
-    // todo: support any
-    Any,
 }
 
 #[derive(Debug, Clone)]
@@ -169,15 +167,6 @@ impl NodeObject {
 }
 
 impl NodeArray {
-    pub fn new_any() -> Self {
-        Self {
-            values: None,
-            template: NodeArrayTemplate::All(Box::new(NodeContainer::from_node(Node::Any))),
-            min: None,
-            max: None,
-        }
-    }
-
     pub fn template(&self, n: Option<usize>) -> NodeContainer {
         match &self.template {
             NodeArrayTemplate::All(new_node) => {
@@ -224,7 +213,6 @@ impl NodeContainer {
                 .as_ref()
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
             Node::Value(node_value) => true,
-            Node::Any => true,
         }
     }
 }

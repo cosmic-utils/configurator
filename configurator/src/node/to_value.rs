@@ -59,7 +59,6 @@ impl NodeContainer {
                     }
                 }),
             Node::Value(node_value) => Some(node_value.value.clone()),
-            Node::Any => todo!(),
         }
     }
 }

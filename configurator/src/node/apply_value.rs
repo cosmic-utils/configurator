@@ -117,7 +117,6 @@ impl NodeContainer {
                     node_array.values = Some(nodes);
                 }
             }
-            Node::Any => todo!(),
         };
 
         Ok(())
@@ -179,7 +178,6 @@ impl NodeContainer {
                 }
             },
             Node::Value(node_value) => &node_value.value == value,
-            Node::Any => todo!(),
         }
     }
 
@@ -211,7 +209,6 @@ impl NodeContainer {
                 node_array.values.take();
             }
             Node::Value(node_value) => {}
-            Node::Any => todo!(),
         };
         self.modified = false;
     }

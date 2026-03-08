@@ -87,7 +87,6 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         Node::Value(node_value) => view_value(data_path, node, node_value),
         Node::Unit => text("null").into(),
         Node::Array(node_array) => view_array(data_path, node, node_array),
-        Node::Any => todo!(),
     };
 
     column()
@@ -612,7 +611,6 @@ fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
         Node::Enum(node_enum) => None,
         Node::Array(node_array) => None,
         Node::Value(node_value) => value_to_str(&node_value.value),
-        Node::Any => Some(Cow::Borrowed("Any")),
     }
 }
 

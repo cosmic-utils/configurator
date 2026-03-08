@@ -20,7 +20,12 @@ struct NewStruct(u32);
 struct Config {
     x: NewStruct,
     y: Complex,
+    u: (),
+    u2: UnitS,
 }
+
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
+struct UnitS;
 
 const NAME: &str = "testing1";
 
