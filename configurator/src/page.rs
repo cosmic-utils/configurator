@@ -279,7 +279,8 @@ impl Page {
                             &self.schema_root,
                             template,
                             &Value::Empty,
-                        );
+                        )
+                        .set_is_removable(true);
 
                         dbg!(&new_node);
 
