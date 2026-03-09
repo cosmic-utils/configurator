@@ -9,11 +9,28 @@ pub struct RustSchemaRoot {
     pub definitions: BTreeMap<RustSchemaId, RustSchema>,
 }
 
+#[derive(Debug)]
+pub struct ResolveSchemaError(String);
+
+impl std::fmt::Display for ResolveSchemaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unknown ref {}", self.0)
+    }
+}
+
+impl std::error::Error for ResolveSchemaError {}
+
 impl RustSchemaRoot {
-    pub fn get_schema<'a>(&'a self, schema: &'a RustSchemaOrRef) -> Option<&'a RustSchema> {
+    pub fn resolve_schema<'a>(
+        &'a self,
+        schema: &'a RustSchemaOrRef,
+    ) -> Result<&'a RustSchema, ResolveSchemaError> {
         match schema {
-            RustSchemaOrRef::Ref(ref_) => self.definitions.get(ref_),
-            RustSchemaOrRef::Schema(rust_schema) => Some(rust_schema),
+            RustSchemaOrRef::Ref(ref_) => match self.definitions.get(ref_) {
+                Some(schema) => Ok(schema),
+                None => Err(ResolveSchemaError(ref_.to_owned())),
+            },
+            RustSchemaOrRef::Schema(rust_schema) => Ok(rust_schema),
         }
     }
 }
@@ -143,4 +160,14 @@ pub enum NumberKind {
     ISize,
     F32,
     F64,
+}
+
+impl RustSchema {
+    pub fn as_array(&self) -> Option<&Array> {
+        if let RustSchemaKind::Array(array) = &self.kind {
+            Some(array)
+        } else {
+            None
+        }
+    }
 }

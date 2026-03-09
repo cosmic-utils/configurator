@@ -89,27 +89,27 @@ impl NodeContainer {
         match &self.node {
             Node::String(node_string) => node_string.value.is_some(),
             Node::Struct(node_struct) => node_struct.fields.values().all(|f| f.node.is_valid()),
-            Node::Array(node_array) => node_array
-                .value
-                .as_ref()
-                .is_some_and(|values| values.iter().all(|n| n.is_valid())),
+            Node::Array(node_array) => node_array.value.as_ref().is_some_and(|values| {
+                let is_complete = node_array
+                    .min
+                    .map(|min| values.len() >= min as usize)
+                    .unwrap_or(true)
+                    && node_array
+                        .max
+                        .map(|max| values.len() <= max as usize)
+                        .unwrap_or(true);
+
+                is_complete && values.iter().all(|n| n.is_valid())
+            }),
         }
     }
-
-    // pub fn get_default(&self) -> Option<&Value> {
-    //     match &self.node {
-    //         Node::String(node_string) => None,
-    //         Node::Array(node_array) => None,
-    //         Node::Struct(node_struct) => node_struct.,
-    //     }
-    // }
 }
 
 pub fn schema_at<'a>(
     root: &'a RustSchemaRoot,
     data_path: &[DataPathType],
 ) -> anyhow::Result<&'a RustSchema> {
-    let mut schema = get_schema(root, &root.schema)?;
+    let mut schema = root.resolve_schema(&root.schema)?;
 
     for data in data_path {
         match (&schema.kind, data) {
@@ -117,7 +117,7 @@ pub fn schema_at<'a>(
             (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Indice(_)) => todo!(),
             (RustSchemaKind::Array(array), DataPathType::Indice(_)) => match &array.kind {
                 Some(kind) => {
-                    schema = get_schema(root, kind)?;
+                    schema = root.resolve_schema(kind)?;
                 }
                 None => bail!("no kind for array: {:?}", schema),
             },
@@ -126,7 +126,7 @@ pub fn schema_at<'a>(
             (RustSchemaKind::Struct(struct_), DataPathType::Name(name)) => {
                 match struct_.fields.get(name) {
                     Some(field) => {
-                        schema = get_schema(root, &field.schema)?;
+                        schema = root.resolve_schema(&field.schema)?;
                     }
                     None => {
                         bail!("no field named {} in {}", name, struct_.name)
@@ -173,14 +173,6 @@ fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
     }
 
     value
-}
-
-fn get_schema<'a>(
-    root: &'a RustSchemaRoot,
-    schema: &'a RustSchemaOrRef,
-) -> anyhow::Result<&'a RustSchema> {
-    root.get_schema(schema)
-        .ok_or(anyhow!("unknow ref {:?}", schema))
 }
 
 fn rust_schema_value_to_value(value: &rust_schema2::Value) -> Value {

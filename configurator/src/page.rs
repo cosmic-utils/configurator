@@ -118,7 +118,7 @@ impl Page {
 
         let mut tree = NodeContainer::from_schema_and_value(
             &schema_root,
-            schema_root.get_schema(&schema_root.schema).unwrap(),
+            schema_root.resolve_schema(&schema_root.schema).unwrap(),
             &full_config,
         );
 
@@ -179,7 +179,7 @@ impl Page {
         self.tree = NodeContainer::from_schema_and_value(
             &self.schema_root,
             self.schema_root
-                .get_schema(&self.schema_root.schema)
+                .resolve_schema(&self.schema_root.schema)
                 .unwrap(),
             &self.full_config,
         );
@@ -262,26 +262,34 @@ impl Page {
                     ChangeMsg::AddNewNodeToObject(_) => todo!(),
 
                     ChangeMsg::AddNewNodeToArray => {
-                        // let node_array = node.node.unwrap_array_mut();
+                        let node_array = node.node.unwrap_array_mut();
 
-                        // let mut new_node = node_array.template(None);
+                        let schema = schema_at(&self.schema_root, &data_path).unwrap();
 
-                        // if let Some(default) = &new_node.default {
-                        //     new_node.apply_value(&default.clone(), false).unwrap();
-                        // }
-                        // new_node.modified = true;
+                        let array = schema.as_array().unwrap();
 
-                        // match &mut node_array.values {
-                        //     Some(values) => {
-                        //         for n in &mut *values {
-                        //             n.modified = true;
-                        //         }
-                        //         values.push(new_node);
-                        //     }
-                        //     None => {
-                        //         node_array.values = Some(vec![new_node]);
-                        //     }
-                        // }
+                        let template = array.kind.as_ref().unwrap();
+                        let template = self.schema_root.resolve_schema(template).unwrap();
+
+                        let mut new_node = NodeContainer::from_schema_and_value(
+                            &self.schema_root,
+                            schema,
+                            &Value::Empty,
+                        );
+
+                        new_node.modified = true;
+
+                        match &mut node_array.value {
+                            Some(values) => {
+                                for n in &mut *values {
+                                    n.modified = true;
+                                }
+                                values.push(new_node);
+                            }
+                            None => {
+                                node_array.value = Some(vec![new_node]);
+                            }
+                        }
                     }
                     ChangeMsg::RenameKey { prev, new } => todo!(),
                 }

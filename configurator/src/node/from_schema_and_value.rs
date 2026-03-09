@@ -4,7 +4,7 @@ use rust_schema2::{RustSchema, RustSchemaKind, RustSchemaRoot};
 use crate::{
     generic_value::Value,
     node::{
-        Node, NodeArray, NodeContainer, NodeString, NodeStruct, StructField, get_schema,
+        Node, NodeArray, NodeContainer, NodeString, NodeStruct, StructField,
         rust_schema_value_to_value,
     },
 };
@@ -42,7 +42,7 @@ impl NodeContainer {
             RustSchemaKind::Array(array) => {
                 if let Some(vec) = value.as_array() {
                     let res = if let Some(template) = &array.kind {
-                        let template = get_schema(root, template).unwrap();
+                        let template = root.resolve_schema(template).unwrap();
 
                         vec.iter()
                             .map(|v| Self::from_schema_and_value(root, template, v))
@@ -52,14 +52,6 @@ impl NodeContainer {
                     };
 
                     NodeContainer {
-                        // is_incomplete: !(array
-                        //     .min
-                        //     .map(|min| res.len() >= min as usize)
-                        //     .unwrap_or(true)
-                        //     && array
-                        //         .max
-                        //         .map(|max| res.len() <= max as usize)
-                        //         .unwrap_or(true)),
                         node: Node::Array(NodeArray {
                             min: array.min,
                             max: array.max,
@@ -115,7 +107,7 @@ impl NodeContainer {
                             .fields
                             .iter()
                             .map(|(field_name, field)| {
-                                let schema = get_schema(root, &field.schema).unwrap();
+                                let schema = root.resolve_schema(&field.schema).unwrap();
 
                                 let struct_default =
                                     struct_.default.as_ref().map(rust_schema_value_to_value);
