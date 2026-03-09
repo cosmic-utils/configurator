@@ -20,6 +20,7 @@ fn get_schema<C: RustSchemaTrait>(name: &str) -> String {
 
     let system_path = format!("{config_path}/system");
     let home_path = format!("{config_path}/home");
+    let write_path = format!("{config_path}/write");
 
     if !fs::exists(&system_path).unwrap() {
         fs::create_dir_all(&system_path).unwrap();
@@ -29,9 +30,14 @@ fn get_schema<C: RustSchemaTrait>(name: &str) -> String {
         fs::create_dir_all(&home_path).unwrap();
     }
 
+    if !fs::exists(&write_path).unwrap() {
+        fs::create_dir_all(&write_path).unwrap();
+    }
+
     configurator_schema::SchemaGenerator::new()
         .source_paths([&system_path])
         .source_home_path(&home_path)
+        .write_path(&write_path)
         .format(ConfigFormat::CosmicRon)
         .generate::<C>()
         .unwrap()
