@@ -1,10 +1,13 @@
-use crate::node::{Node, NodeContainer, data_path::DataPathType};
+use crate::{
+    generic_value::Value,
+    node::{Node, NodeContainer, data_path::DataPathType},
+};
 
 impl NodeContainer {
     // todo: rewrite with if_let_guards
-    pub fn set_modified<'a, 'b>(
-        &'a mut self,
-        data_path: &mut dyn Iterator<Item = &'b DataPathType>,
+    pub fn set_modified_from_data_path(
+        &mut self,
+        data_path: &mut dyn Iterator<Item = &DataPathType>,
     ) {
         let mut node = self;
 
@@ -32,5 +35,33 @@ impl NodeContainer {
         }
 
         node.modified = true;
+    }
+
+    pub fn set_modified_from_value(&mut self, value: &Value) {
+        self.modified = match (&mut self.node, value) {
+            (Node::String(node_string), Value::String(_)) => true,
+            (Node::Array(node_array), Value::Array(values)) => {
+                if let Some(nodes) = &mut node_array.value {
+                    nodes
+                        .iter_mut()
+                        .zip(values.iter())
+                        .for_each(|(node, value)| {
+                            node.set_modified_from_value(value);
+                        });
+                }
+
+                true
+            }
+            (Node::Struct(node_struct), Value::Struct(_, map)) => {
+                for (name, field) in &mut node_struct.fields {
+                    if let Some(value) = map.0.get(name) {
+                        field.node.set_modified_from_value(value);
+                    }
+                }
+
+                true
+            }
+            _ => false,
+        };
     }
 }

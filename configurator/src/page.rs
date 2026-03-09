@@ -42,103 +42,9 @@ pub struct Page {
     pub user_config: Value,
     pub full_config: Value,
 
-    pub schema: RustSchemaRoot,
+    pub schema_root: RustSchemaRoot,
     pub tree: NodeContainer,
     pub data_path: DataPath,
-}
-
-pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
-    #[allow(clippy::vec_init_then_push)]
-    fn default_paths() -> impl Iterator<Item = PathBuf> {
-        let mut data_dirs: Vec<PathBuf> = vec![];
-        #[cfg(target_os = "linux")]
-        let base_dirs = xdg::BaseDirectories::new();
-        #[cfg(target_os = "linux")]
-        data_dirs.push(base_dirs.get_data_home().unwrap());
-        #[cfg(target_os = "linux")]
-        data_dirs.append(&mut base_dirs.get_data_dirs());
-
-        #[cfg(debug_assertions)]
-        data_dirs.push(PathBuf::from("test_schemas"));
-
-        data_dirs.into_iter().map(|d| d.join("configurator"))
-    }
-
-    fn cosmic_compat(config: &Config) -> Box<dyn Iterator<Item = Page> + '_> {
-        if config.cosmic_compat {
-            let dir = include_dir!("$CARGO_MANIFEST_DIR/../cosmic_compat/schemas");
-
-            Box::new(dir.entries().iter().filter_map(|entry| {
-                let file = entry.as_file().unwrap();
-
-                let content = file.contents_utf8().unwrap();
-
-                let appid = appid_from_schema_path(file.path())?;
-
-                if !config.masked.contains(&appid) {
-                    Some(Page::from_str(&appid, content).unwrap())
-                } else {
-                    None
-                }
-            }))
-        } else {
-            Box::new(iter::empty())
-        }
-    }
-
-    fn schema_test_path() -> impl Iterator<Item = PathBuf> {
-        #[cfg(debug_assertions)]
-        {
-            iter::once(PathBuf::from(format!(
-                "{}/test_schemas",
-                env!("CARGO_MANIFEST_DIR")
-            )))
-        }
-
-        #[cfg(not(debug_assertions))]
-        {
-            iter::empty()
-        }
-    }
-
-    default_paths()
-        .chain(schema_test_path())
-        .filter_map(|xdg_path| fs::read_dir(xdg_path).ok())
-        .flatten()
-        .flatten()
-        .filter_map(|entry| {
-            let schema_path = entry.path();
-            let appid = appid_from_schema_path(&schema_path)?;
-
-            if !config.masked.contains(&appid) {
-                match fs::read_to_string(&schema_path) {
-                    Ok(content) => match Page::from_str(&appid, &content) {
-                        Ok(page) => Some(page),
-                        Err(e) => {
-                            error!("{}", e);
-                            None
-                        }
-                    },
-                    Err(e) => {
-                        error!("{}", e);
-                        None
-                    }
-                }
-            } else {
-                None
-            }
-        })
-        .chain(cosmic_compat(config))
-}
-
-fn appid_from_schema_path(schema_path: &Path) -> Option<String> {
-    let schema_name = schema_path.file_name().unwrap().to_string_lossy();
-
-    if schema_name.starts_with('.') {
-        return None;
-    }
-
-    schema_name.strip_suffix(".json").map(ToString::to_string)
 }
 
 impl Page {
@@ -209,13 +115,15 @@ impl Page {
 
         let schema_root = json::from_value(json_value)?;
 
-        let tree = NodeContainer::from_schema_and_value(
+        let mut tree = NodeContainer::from_schema_and_value(
             &schema_root,
             schema_root.get_schema(&schema_root.schema).unwrap(),
             &full_config,
         );
 
-        // dbg!(&tree);
+        tree.set_modified_from_value(&user_config);
+
+        dbg!(&tree);
 
         let title = appid.split('.').next_back().unwrap().to_string();
 
@@ -230,7 +138,7 @@ impl Page {
             source_home_path,
             write_path,
             format,
-            schema: schema_root,
+            schema_root,
             tree,
         };
 
@@ -264,17 +172,21 @@ impl Page {
     }
 
     #[instrument(skip_all)]
-    pub fn reload_node(&mut self) -> anyhow::Result<()> {
-        // todo
-
-        Ok(())
-    }
-
-    #[instrument(skip_all)]
     pub fn reload_page(&mut self) -> anyhow::Result<()> {
         self.reload_config()?;
 
-        self.reload_node()?;
+        self.tree = NodeContainer::from_schema_and_value(
+            &self.schema_root,
+            self
+                .schema_root
+                .get_schema(&self.schema_root.schema)
+                .unwrap(),
+            &self.full_config,
+        );
+
+        self.tree.set_modified_from_value(&self.user_config);
+
+        self.data_path.sanitize_path(&self.tree);
 
         Ok(())
     }
@@ -305,11 +217,9 @@ impl Page {
         match message {
             PageMsg::SelectDataPath(pos) => {
                 self.data_path.change_to(pos);
-                self.reload_node().unwrap();
             }
             PageMsg::OpenDataPath(data_path_type) => {
                 self.data_path.open(data_path_type);
-                self.reload_node().unwrap();
             }
 
             PageMsg::ChangeMsg(data_path, change_msg) => {
@@ -324,7 +234,7 @@ impl Page {
                     ChangeMsg::ChangeString(value) => {
                         let node_string = node.node.unwrap_string_mut();
                         node_string.value = Some(value);
-                        self.tree.set_modified(&mut data_path.iter());
+                        self.tree.set_modified_from_data_path(&mut data_path.iter());
                     }
                     ChangeMsg::ChangeNumber(_) => todo!(),
                     ChangeMsg::ChangeEnum(_) => todo!(),
@@ -504,4 +414,98 @@ impl Page {
 
         action
     }
+}
+
+pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
+    #[allow(clippy::vec_init_then_push)]
+    fn default_paths() -> impl Iterator<Item = PathBuf> {
+        let mut data_dirs: Vec<PathBuf> = vec![];
+        #[cfg(target_os = "linux")]
+        let base_dirs = xdg::BaseDirectories::new();
+        #[cfg(target_os = "linux")]
+        data_dirs.push(base_dirs.get_data_home().unwrap());
+        #[cfg(target_os = "linux")]
+        data_dirs.append(&mut base_dirs.get_data_dirs());
+
+        #[cfg(debug_assertions)]
+        data_dirs.push(PathBuf::from("test_schemas"));
+
+        data_dirs.into_iter().map(|d| d.join("configurator"))
+    }
+
+    fn cosmic_compat(config: &Config) -> Box<dyn Iterator<Item = Page> + '_> {
+        if config.cosmic_compat {
+            let dir = include_dir!("$CARGO_MANIFEST_DIR/../cosmic_compat/schemas");
+
+            Box::new(dir.entries().iter().filter_map(|entry| {
+                let file = entry.as_file().unwrap();
+
+                let content = file.contents_utf8().unwrap();
+
+                let appid = appid_from_schema_path(file.path())?;
+
+                if !config.masked.contains(&appid) {
+                    Some(Page::from_str(&appid, content).unwrap())
+                } else {
+                    None
+                }
+            }))
+        } else {
+            Box::new(iter::empty())
+        }
+    }
+
+    fn schema_test_path() -> impl Iterator<Item = PathBuf> {
+        #[cfg(debug_assertions)]
+        {
+            iter::once(PathBuf::from(format!(
+                "{}/test_schemas",
+                env!("CARGO_MANIFEST_DIR")
+            )))
+        }
+
+        #[cfg(not(debug_assertions))]
+        {
+            iter::empty()
+        }
+    }
+
+    default_paths()
+        .chain(schema_test_path())
+        .filter_map(|xdg_path| fs::read_dir(xdg_path).ok())
+        .flatten()
+        .flatten()
+        .filter_map(|entry| {
+            let schema_path = entry.path();
+            let appid = appid_from_schema_path(&schema_path)?;
+
+            if !config.masked.contains(&appid) {
+                match fs::read_to_string(&schema_path) {
+                    Ok(content) => match Page::from_str(&appid, &content) {
+                        Ok(page) => Some(page),
+                        Err(e) => {
+                            error!("{}", e);
+                            None
+                        }
+                    },
+                    Err(e) => {
+                        error!("{}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        })
+        .chain(cosmic_compat(config))
+}
+
+fn appid_from_schema_path(schema_path: &Path) -> Option<String> {
+    let schema_name = schema_path.file_name().unwrap().to_string_lossy();
+
+    if schema_name.starts_with('.') {
+        return None;
+    }
+
+    schema_name.strip_suffix(".json").map(ToString::to_string)
 }

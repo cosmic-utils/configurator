@@ -16,7 +16,7 @@ impl NodeContainer {
         schema: &RustSchema,
         value: &Value,
     ) -> Self {
-        debug!("schema = {:#?}\nvalue = {:#?}", schema, value);
+        // debug!("schema = {:#?}\nvalue = {:#?}", schema, value);
 
         match &schema.kind {
             RustSchemaKind::Unit => todo!(),
@@ -61,8 +61,8 @@ impl NodeContainer {
                         //         .map(|max| res.len() <= max as usize)
                         //         .unwrap_or(true)),
                         node: Node::Array(NodeArray {
-                            min: array.min.clone(),
-                            max: array.max.clone(),
+                            min: array.min,
+                            max: array.max,
                             value: Some(res),
                         }),
                         modified: false,
@@ -70,8 +70,8 @@ impl NodeContainer {
                 } else {
                     NodeContainer {
                         node: Node::Array(NodeArray {
-                            min: array.min.clone(),
-                            max: array.max.clone(),
+                            min: array.min,
+                            max: array.max,
                             value: None,
                         }),
                         modified: false,

@@ -130,7 +130,7 @@ impl DataPath {
     /// Keep the maximum of path, based on nodes that still exist
     pub fn sanitize_path(&mut self, tree: &NodeContainer) {
         // todo: rewrite with if_let_guards
-        fn find_first_invalid_index<'a>(
+        fn find_first_invalid_index(
             data_path: &[DataPathType],
             mut node: &NodeContainer,
         ) -> Option<usize> {

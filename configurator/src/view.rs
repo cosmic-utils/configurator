@@ -132,7 +132,7 @@ fn node_list<'a>(
             .push(
                 column()
                     .push(text(format!("{}", name)))
-                    .push_maybe(description.map(|d| text::caption(d))),
+                    .push_maybe(description.map(text::caption)),
             )
             // .push_maybe(
             //     if inner_node.removable

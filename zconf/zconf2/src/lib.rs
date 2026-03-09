@@ -22,7 +22,7 @@ impl<S> ConfigManager<S> {
 
         let parent = settings_file_path.parent().expect("parent");
         if !parent.exists() {
-            fs::create_dir_all(&parent)?;
+            fs::create_dir_all(parent)?;
         }
 
         let settings = if !settings_file_path.exists() {

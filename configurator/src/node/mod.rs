@@ -66,6 +66,7 @@ pub struct NodeArray {
 
 impl NodeContainer {
     pub fn remove_value_rec(&mut self) {
+        self.modified = false;
         match &mut self.node {
             Node::String(node_string) => {
                 node_string.value.take();
@@ -81,7 +82,6 @@ impl NodeContainer {
                 node_array.value.take();
             }
         };
-        self.modified = false;
     }
 
     /// Return true if all active nodes have a value
@@ -126,7 +126,7 @@ fn schema_at<'a>(
                     struct_.name
                 ))?;
 
-                schema = get_schema(&root, &field.schema)?;
+                schema = get_schema(root, &field.schema)?;
             }
             RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
             RustSchemaKind::Enum(_) => todo!(),
