@@ -4,75 +4,112 @@ use derive_more::derive::Unwrap;
 
 use crate::node::{Node, NodeContainer};
 
-#[derive(Debug, Clone, Unwrap, PartialEq, Eq, Hash)]
-#[unwrap(ref)]
-pub enum DataPathType {
-    Name(String),
-    Indice(usize),
-}
+pub use data_path_type::DataPathType;
+pub use data_path_type_copy::DataPathTypeCopy;
 
-impl From<String> for DataPathType {
-    fn from(value: String) -> Self {
-        DataPathType::Name(value)
-    }
-}
-
-impl From<&String> for DataPathType {
-    fn from(value: &String) -> Self {
-        DataPathType::Name(value.to_owned())
-    }
-}
-
-impl From<&str> for DataPathType {
-    fn from(value: &str) -> Self {
-        DataPathType::Name(value.to_owned())
-    }
-}
-
-impl From<usize> for DataPathType {
-    fn from(value: usize) -> Self {
-        DataPathType::Indice(value)
-    }
-}
-
-impl Display for DataPathType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DataPathType::Name(name) => write!(f, "{}", name),
-            DataPathType::Indice(pos) => write!(f, "{}", pos),
-        }
-    }
-}
-
-impl DataPathType {
-    pub fn as_name(&self) -> Option<&str> {
-        match self {
-            DataPathType::Name(name) => Some(name.as_str()),
-            DataPathType::Indice(_) => None,
-        }
-    }
-
-    pub fn as_indice(&self) -> Option<usize> {
-        match self {
-            DataPathType::Name(_) => None,
-            DataPathType::Indice(indice) => Some(*indice),
-        }
-    }
-}
-
-pub fn data_path_alloc_one(data_path: &[DataPathType]) -> Vec<DataPathType> {
+pub fn alloc_one(data_path: &[DataPathType]) -> Vec<DataPathType> {
     let mut new_vec = Vec::with_capacity(data_path.len() + 1);
     new_vec.extend_from_slice(data_path);
     new_vec
 }
 
-pub fn data_path_push(
-    data_path: &[DataPathType],
-    more: impl Into<DataPathType>,
-) -> Vec<DataPathType> {
-    let mut new_vec = data_path_alloc_one(data_path);
+pub fn push_one(data_path: &[DataPathType], more: impl Into<DataPathType>) -> Vec<DataPathType> {
+    let mut new_vec = alloc_one(data_path);
     new_vec.push(more.into());
     new_vec
+}
+
+mod data_path_type {
+    use std::fmt::Display;
+
+    use derive_more::Unwrap;
+
+    #[derive(Debug, Clone, Unwrap, PartialEq, Eq, Hash)]
+    #[unwrap(ref)]
+    pub enum DataPathType {
+        Name(String),
+        Indice(usize),
+    }
+
+    impl From<String> for DataPathType {
+        fn from(value: String) -> Self {
+            DataPathType::Name(value)
+        }
+    }
+
+    impl From<&String> for DataPathType {
+        fn from(value: &String) -> Self {
+            DataPathType::Name(value.to_owned())
+        }
+    }
+
+    impl From<&str> for DataPathType {
+        fn from(value: &str) -> Self {
+            DataPathType::Name(value.to_owned())
+        }
+    }
+
+    impl From<usize> for DataPathType {
+        fn from(value: usize) -> Self {
+            DataPathType::Indice(value)
+        }
+    }
+
+    impl Display for DataPathType {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                DataPathType::Name(name) => write!(f, "{}", name),
+                DataPathType::Indice(pos) => write!(f, "{}", pos),
+            }
+        }
+    }
+
+    impl DataPathType {
+        pub fn as_name(&self) -> Option<&str> {
+            match self {
+                DataPathType::Name(name) => Some(name.as_str()),
+                DataPathType::Indice(_) => None,
+            }
+        }
+
+        pub fn as_indice(&self) -> Option<usize> {
+            match self {
+                DataPathType::Name(_) => None,
+                DataPathType::Indice(indice) => Some(*indice),
+            }
+        }
+    }
+}
+
+mod data_path_type_copy {
+    use std::fmt::Display;
+
+    use crate::node::data_path::DataPathType;
+
+    /// Same as [`DataPathType`], but implement [`Copy`]
+    #[derive(Clone, Copy)]
+    pub enum DataPathTypeCopy<'a> {
+        Name(&'a String),
+        Indice(usize),
+    }
+
+    impl<'a> Display for DataPathTypeCopy<'a> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                DataPathTypeCopy::Name(name) => write!(f, "{}", name),
+                DataPathTypeCopy::Indice(pos) => write!(f, "{}", pos),
+            }
+        }
+    }
+
+    impl From<DataPathTypeCopy<'_>> for DataPathType {
+        fn from(value: DataPathTypeCopy<'_>) -> Self {
+            match value {
+                DataPathTypeCopy::Name(name) => DataPathType::Name(name.to_owned()),
+                DataPathTypeCopy::Indice(pos) => DataPathType::Indice(pos),
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -126,7 +163,9 @@ impl DataPath {
             None => &[],
         }
     }
+}
 
+impl DataPath {
     /// Keep the maximum of path, based on nodes that still exist
     pub fn sanitize_path(&mut self, tree: &NodeContainer) {
         fn find_first_invalid_index(
@@ -166,7 +205,6 @@ impl DataPath {
         }
     }
 }
-
 impl NodeContainer {
     pub fn get_at<'a, 'b>(
         &'a self,

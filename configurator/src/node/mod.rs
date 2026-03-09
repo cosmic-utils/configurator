@@ -12,7 +12,7 @@ use rust_schema2::{NumberKind, RustSchema, RustSchemaKind, RustSchemaOrRef, Rust
 
 use crate::{
     generic_value::{F32, F64, Map, Number, Value},
-    node::data_path::{DataPathType, data_path_alloc_one},
+    node::data_path::DataPathType,
 };
 
 use anyhow::{anyhow, bail};

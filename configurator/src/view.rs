@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Display};
 
 use cosmic::{
     Element,
@@ -21,7 +21,7 @@ use crate::{
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
         self, Node, NodeArray, NodeContainer, NodeString, NodeStruct,
-        data_path::{DataPath, DataPathType, data_path_push},
+        data_path::{self, DataPath, DataPathType, DataPathTypeCopy},
     },
     page::Page,
 };
@@ -119,11 +119,11 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 }
 
 fn node_list<'a>(
-    name: DataPathType,
+    name: DataPathTypeCopy<'a>,
     data_path: &'a [DataPathType],
     inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
-    let name_cloned = name.clone();
+    let name_cloned = name;
 
     mouse_area(
         row()
@@ -152,7 +152,7 @@ fn node_list<'a>(
                     text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
                         move |value| {
                             PageMsg::ChangeMsg(
-                                data_path_push(data_path, name),
+                                data_path::push_one(data_path, name),
                                 ChangeMsg::ChangeString(value),
                             )
                         },
@@ -226,17 +226,16 @@ fn node_list<'a>(
                 Some(no_value_defined_warning_icon())
             } else {
                 None
-            })
-            // .push_maybe(if inner_node.is_removable {
-            //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
-            //         data_path_push(data_path, name),
-            //         ChangeMsg::Remove(name_cloned.clone()),
-            //     )))
-            // } else {
-            //     None
-            // }),
+            }), // .push_maybe(if inner_node.is_removable {
+                //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+                //         data_path_push(data_path, name),
+                //         ChangeMsg::Remove(name_cloned.clone()),
+                //     )))
+                // } else {
+                //     None
+                // }),
     )
-    .on_press(PageMsg::OpenDataPath(name_cloned))
+    .on_press(PageMsg::OpenDataPath(name_cloned.into()))
     .into()
 }
 
@@ -302,11 +301,12 @@ fn view_struct<'a>(
                 .map(|desc| section().title("Description").add(text(desc))),
         )
         .push(
-            section()
-                .title("Values")
-                .extend(node_struct.fields.iter().map(|(name, field)| {
-                    node_list(DataPathType::Name(name.clone()), data_path, field)
-                })),
+            section().title("Values").extend(
+                node_struct
+                    .fields
+                    .iter()
+                    .map(|(name, field)| node_list(DataPathTypeCopy::Name(name), data_path, field)),
+            ),
         )
         // .push_maybe(node.default.as_ref().map(|default| {
         //     section().title("Default").add(
@@ -346,7 +346,7 @@ fn view_array<'a>(
                     .iter()
                     .enumerate()
                     .map(|(pos, inner_node)| {
-                        node_list(DataPathType::Indice(pos), data_path, inner_node)
+                        node_list(DataPathTypeCopy::Indice(pos), data_path, inner_node)
                     }),
             ),
         )
