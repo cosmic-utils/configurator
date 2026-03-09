@@ -41,7 +41,7 @@ pub fn value_to_ron_value(value: Value) -> ron_value::Value {
         Value::Option(opt) => {
             ron_value::Value::Option(opt.map(|v| Box::new(value_to_ron_value(*v))))
         }
-        Value::List(values) => {
+        Value::Array(values) => {
             ron_value::Value::List(values.into_iter().map(value_to_ron_value).collect())
         }
         Value::Map(map) => {
@@ -62,7 +62,7 @@ pub fn value_to_ron_value(value: Value) -> ron_value::Value {
             }
             ron_value::Value::Struct(name, m)
         }
-        Value::NamedTuple(name, values) => {
+        Value::TupleStruct(name, values) => {
             ron_value::Value::NamedTuple(name, values.into_iter().map(value_to_ron_value).collect())
         }
     }
@@ -94,7 +94,7 @@ pub fn ron_value_to_value(value: ron_value::Value) -> Value {
             Value::Option(value.map(|v| Box::new(ron_value_to_value(*v))))
         }
         ron_value::Value::List(values) => {
-            Value::List(values.into_iter().map(ron_value_to_value).collect())
+            Value::Array(values.into_iter().map(ron_value_to_value).collect())
         }
         ron_value::Value::Map(map) => {
             let mut map2 = Map::new();
@@ -120,7 +120,7 @@ pub fn ron_value_to_value(value: ron_value::Value) -> Value {
             Value::Struct(name, map2)
         }
         ron_value::Value::NamedTuple(name, values) => {
-            Value::NamedTuple(name, values.into_iter().map(ron_value_to_value).collect())
+            Value::TupleStruct(name, values.into_iter().map(ron_value_to_value).collect())
         }
     }
 }

@@ -676,11 +676,11 @@ fn value_to_str(value: &Value) -> Option<Cow<'_, str>> {
         Value::String(s) => Some(Cow::Borrowed(s)),
         Value::Bytes(items) => todo!(),
         Value::Option(value) => todo!(),
-        Value::List(values) => todo!(),
+        Value::Array(values) => todo!(),
         Value::Map(map) => todo!(),
         Value::Tuple(values) => todo!(),
         Value::UnitStruct(s) => Some(Cow::Borrowed(s)),
         Value::Struct(_, map) => todo!(),
-        Value::NamedTuple(_, values) => todo!(),
+        Value::TupleStruct(_, values) => todo!(),
     }
 }

@@ -21,6 +21,8 @@ pub mod data_path;
 // #[cfg(test)]
 // mod tests;
 
+mod new_gen;
+
 #[derive(Debug)]
 pub struct NodeContainer {
     pub node: Node,
@@ -254,9 +256,7 @@ pub fn apply_value(
             }
         }
         Node::Struct(node_struct) => {}
-        Node::Array(node_array) => {
-            
-        }
+        Node::Array(node_array) => {}
         Node::TupleStruct(node_tuple_struct) => todo!(),
     }
 }
@@ -408,7 +408,7 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                     }
                 }
 
-                if let Some((name, values)) = value.as_named_tuple() {
+                if let Some((name, values)) = value.as_tuple_struct() {
                     let mut final_values = Vec::new();
 
                     for (pos, field) in tuple_struct.fields.iter().enumerate() {
@@ -426,7 +426,7 @@ pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result
                         data_path.pop();
                     }
 
-                    Value::NamedTuple(tuple_struct.name.to_owned(), final_values)
+                    Value::TupleStruct(tuple_struct.name.to_owned(), final_values)
                 } else {
                     not_compatible_error!("TupleStruct", value, schema)
                 }
@@ -554,8 +554,8 @@ fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
         value = match (value, data) {
             (Value::Option(value), DataPathType::Name(_)) => todo!(),
             (Value::Option(value), DataPathType::Indice(_)) => todo!(),
-            (Value::List(values), DataPathType::Name(_)) => todo!(),
-            (Value::List(values), DataPathType::Indice(_)) => todo!(),
+            (Value::Array(values), DataPathType::Name(_)) => todo!(),
+            (Value::Array(values), DataPathType::Indice(_)) => todo!(),
             (Value::Map(map), DataPathType::Name(_)) => todo!(),
             (Value::Map(map), DataPathType::Indice(_)) => todo!(),
             (Value::Tuple(values), DataPathType::Name(_)) => todo!(),
@@ -566,7 +566,7 @@ fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
                 Some(value) => value,
                 None => return &Value::Empty,
             },
-            (Value::NamedTuple(_, values), DataPathType::Indice(i)) => match values.get(*i) {
+            (Value::TupleStruct(_, values), DataPathType::Indice(i)) => match values.get(*i) {
                 Some(value) => value,
                 None => return &Value::Empty,
             },
@@ -619,7 +619,7 @@ fn rust_schema_value_to_value(value: &rust_schema2::Value) -> Value {
                 .map(|(k, v)| (k.to_owned(), rust_schema_value_to_value(v)))
                 .collect(),
         ),
-        rust_schema2::Value::TupleStruct(name, values) => Value::NamedTuple(
+        rust_schema2::Value::TupleStruct(name, values) => Value::TupleStruct(
             name.to_owned(),
             values.iter().map(rust_schema_value_to_value).collect(),
         ),

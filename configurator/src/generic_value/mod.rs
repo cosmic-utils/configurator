@@ -20,12 +20,12 @@ pub enum Value {
     String(String),
     Bytes(Vec<u8>),
     Option(Option<Box<Value>>),
-    List(Vec<Value>),
+    Array(Vec<Value>),
     Map(Map<Value, Value>),
     Tuple(Vec<Value>),
     UnitStruct(String),
     Struct(Option<String>, Map<String, Value>),
-    NamedTuple(String, Vec<Value>),
+    TupleStruct(String, Vec<Value>),
 }
 
 impl From<&str> for Value {
@@ -81,8 +81,8 @@ impl Value {
         self == &Value::Unit
     }
 
-    pub fn as_list(&self) -> Option<&Vec<Value>> {
-        if let Value::List(v) = self {
+    pub fn as_array(&self) -> Option<&Vec<Value>> {
+        if let Value::Array(v) = self {
             Some(v)
         } else {
             None
@@ -97,8 +97,8 @@ impl Value {
         }
     }
 
-    pub fn as_named_tuple(&self) -> Option<(&String, &Vec<Value>)> {
-        if let Value::NamedTuple(name, v) = self {
+    pub fn as_tuple_struct(&self) -> Option<(&String, &Vec<Value>)> {
+        if let Value::TupleStruct(name, v) = self {
             Some((name, v))
         } else {
             None

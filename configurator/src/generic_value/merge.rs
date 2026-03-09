@@ -49,7 +49,7 @@ impl Value {
             }
 
             // lists and tuples we merge indexwise, but elements in `other` win
-            (Value::List(l1), Value::List(l2)) => {
+            (Value::Array(l1), Value::Array(l2)) => {
                 let len = usize::max(l1.len(), l2.len());
                 let mut out = Vec::with_capacity(len);
                 for i in 0..len {
@@ -61,7 +61,7 @@ impl Value {
                     };
                     out.push(v);
                 }
-                Value::List(out)
+                Value::Array(out)
             }
 
             (Value::Tuple(t1), Value::Tuple(t2)) => {
@@ -79,7 +79,7 @@ impl Value {
                 Value::Tuple(out)
             }
 
-            (Value::NamedTuple(name1, t1), Value::NamedTuple(name2, t2)) if name1 == name2 => {
+            (Value::TupleStruct(name1, t1), Value::TupleStruct(name2, t2)) if name1 == name2 => {
                 let len = usize::max(t1.len(), t2.len());
                 let mut out = Vec::with_capacity(len);
                 for i in 0..len {
@@ -91,7 +91,7 @@ impl Value {
                     };
                     out.push(v);
                 }
-                Value::NamedTuple(name1.clone(), out)
+                Value::TupleStruct(name1.clone(), out)
             }
 
             // same variant but no special merging strategy -- other wins
@@ -161,9 +161,9 @@ mod tests {
 
     #[test]
     fn merge_lists() {
-        let a = Value::List(vec![Value::from(1), Value::from(2)]);
-        let b = Value::List(vec![Value::from(10)]);
+        let a = Value::Array(vec![Value::from(1), Value::from(2)]);
+        let b = Value::Array(vec![Value::from(10)]);
         let merged = a.merge(&b);
-        assert_eq!(merged, Value::List(vec![Value::from(10), Value::from(2)]));
+        assert_eq!(merged, Value::Array(vec![Value::from(10), Value::from(2)]));
     }
 }
