@@ -146,7 +146,6 @@ pub fn schema_at<'a>(
 fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
     let mut value = value;
 
-    // todo: rewrite with if_let_guards
     for data in data_path {
         value = match (value, data) {
             (Value::Option(value), DataPathType::Name(_)) => todo!(),
@@ -159,14 +158,16 @@ fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
             (Value::Tuple(values), DataPathType::Indice(_)) => todo!(),
             (Value::UnitStruct(_), DataPathType::Name(_)) => todo!(),
             (Value::UnitStruct(_), DataPathType::Indice(_)) => todo!(),
-            (Value::Struct(_, map), DataPathType::Name(name)) => match map.0.get(name) {
-                Some(value) => value,
-                None => return &Value::Empty,
-            },
-            (Value::TupleStruct(_, values), DataPathType::Indice(i)) => match values.get(*i) {
-                Some(value) => value,
-                None => return &Value::Empty,
-            },
+            (Value::Struct(_, map), DataPathType::Name(name))
+                if let Some(value) = map.0.get(name) =>
+            {
+                value
+            }
+            (Value::TupleStruct(_, values), DataPathType::Indice(i))
+                if let Some(value) = values.get(*i) =>
+            {
+                value
+            }
             _ => return &Value::Empty,
         };
     }
