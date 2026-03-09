@@ -4,7 +4,6 @@ use crate::{
 };
 
 impl NodeContainer {
-    // todo: rewrite with if_let_guards
     pub fn set_modified<'a>(
         &mut self,
         data_path: impl IntoIterator<Item = &'a DataPathType>,

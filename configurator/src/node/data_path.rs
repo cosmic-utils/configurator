@@ -129,28 +129,22 @@ impl DataPath {
 
     /// Keep the maximum of path, based on nodes that still exist
     pub fn sanitize_path(&mut self, tree: &NodeContainer) {
-        // todo: rewrite with if_let_guards
         fn find_first_invalid_index(
             data_path: &[DataPathType],
             mut node: &NodeContainer,
         ) -> Option<usize> {
             for (pos, data) in data_path.iter().enumerate() {
                 match (&node.node, data) {
-                    (Node::Array(node_array), DataPathType::Indice(i)) => {
+                    (Node::Array(node_array), DataPathType::Indice(i))
                         if let Some(value) = &node_array.value
-                            && let Some(n) = value.get(*i)
-                        {
-                            node = n;
-                        } else {
-                            return Some(pos);
-                        }
+                            && let Some(n) = value.get(*i) =>
+                    {
+                        node = n;
                     }
-                    (Node::Struct(node_struct), DataPathType::Name(name)) => {
-                        if let Some(field) = node_struct.fields.get(name) {
-                            node = &field.node;
-                        } else {
-                            return Some(pos);
-                        }
+                    (Node::Struct(node_struct), DataPathType::Name(name))
+                        if let Some(field) = node_struct.fields.get(name) =>
+                    {
+                        node = &field.node;
                     }
                     _ => return Some(pos),
                 }
