@@ -223,7 +223,7 @@ fn node_list<'a>(
             .push_maybe((!inner_node.is_valid()).then(|| no_value_defined_warning_icon()))
             .push_maybe(inner_node.is_removable.then(|| {
                 icon_button!("close24").on_press(PageMsg::ChangeMsg(
-                    data_path::push_one(data_path, name),
+                    data_path.to_vec(),
                     ChangeMsg::Remove(name.into()),
                 ))
             })),
