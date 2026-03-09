@@ -279,12 +279,12 @@ impl Page {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        // match self.tree.to_value() {
-        //     Some(value) => {
-        //         providers::write(&self.write_path, &self.format, value)?;
-        //     }
-        //     None => bail!("no value to write"),
-        // }
+        match self.tree.to_value() {
+            Some(value) => {
+                providers::write(&self.write_path, &self.format, value)?;
+            }
+            None => bail!("no value to write"),
+        }
 
         Ok(())
     }
@@ -331,6 +331,12 @@ impl Page {
                     ChangeMsg::AddNewNodeToObject(_) => todo!(),
                     ChangeMsg::AddNewNodeToArray => todo!(),
                     ChangeMsg::RenameKey { prev, new } => todo!(),
+                }
+
+                self.data_path.sanitize_path(&self.tree);
+
+                if self.tree.is_valid() {
+                    self.write().unwrap();
                 }
             }
 

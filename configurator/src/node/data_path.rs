@@ -116,7 +116,7 @@ impl DataPath {
         self.vec.get(pos)
     }
 
-    pub fn get_current(&self) -> Option<&DataPathType> {
+    pub fn last_current_data(&self) -> Option<&DataPathType> {
         self.pos.map(|pos| self.get_at(pos).unwrap())
     }
 
@@ -124,6 +124,51 @@ impl DataPath {
         match self.pos {
             Some(pos) => &self.vec[0..=pos],
             None => &[],
+        }
+    }
+
+    /// Keep the maximum of path, based on nodes that still exist
+    pub fn sanitize_path(&mut self, tree: &NodeContainer) {
+        // todo: rewrite with if_let_guards
+        fn find_first_invalid_index<'a>(
+            data_path: &[DataPathType],
+            mut node: &NodeContainer,
+        ) -> Option<usize> {
+            for (pos, data) in data_path.iter().enumerate() {
+                match (&node.node, data) {
+                    (Node::Array(node_array), DataPathType::Indice(i)) => {
+                        if let Some(value) = &node_array.value
+                            && let Some(n) = value.get(*i)
+                        {
+                            node = n;
+                        } else {
+                            return Some(pos);
+                        }
+                    }
+                    (Node::Struct(node_struct), DataPathType::Name(name)) => {
+                        if let Some(field) = node_struct.fields.get(name) {
+                            node = &field.node;
+                        } else {
+                            return Some(pos);
+                        }
+                    }
+                    _ => return Some(pos),
+                }
+            }
+
+            None
+        }
+
+        if let Some(pos) = find_first_invalid_index(&self.vec, tree) {
+            self.vec.truncate(pos);
+
+            if pos == 0 {
+                self.pos = None;
+            } else {
+                self.pos = self
+                    .pos
+                    .map(|current_pos| std::cmp::min(current_pos, pos - 1));
+            }
         }
     }
 }

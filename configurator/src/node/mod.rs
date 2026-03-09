@@ -85,6 +85,19 @@ impl NodeContainer {
         };
         self.modified = false;
     }
+
+    /// Return true if all active nodes have a value
+    // todo: rewrite this without recursion
+    pub fn is_valid(&self) -> bool {
+        match &self.node {
+            Node::String(node_string) => node_string.value.is_some(),
+            Node::Struct(node_struct) => node_struct.fields.values().all(|f| f.node.is_valid()),
+            Node::Array(node_array) => node_array
+                .value
+                .as_ref()
+                .is_some_and(|values| values.iter().all(|n| n.is_valid())),
+        }
+    }
 }
 
 fn schema_at<'a>(
