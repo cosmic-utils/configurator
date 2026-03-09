@@ -60,6 +60,29 @@ pub struct NodeArray {
 }
 
 impl NodeContainer {
+    pub fn from_node(node: Node) -> Self {
+        Self {
+            node,
+            modified: false,
+            name: None,
+            description: None,
+        }
+    }
+
+    pub fn set_name(self, name: String) -> Self {
+        Self {
+            name: Some(name),
+            ..self
+        }
+    }
+
+    pub fn set_description(self, description: Option<String>) -> Self {
+        Self {
+            description,
+            ..self
+        }
+    }
+
     pub fn remove_value_rec(&mut self) {
         self.modified = false;
         match &mut self.node {
