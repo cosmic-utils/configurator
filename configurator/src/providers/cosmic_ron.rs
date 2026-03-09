@@ -47,7 +47,7 @@ pub fn value_to_ron_value(value: Value) -> ron_value::Value {
         Value::Map(map) => {
             let mut m = ron_value::Map::new();
             for (k, v) in map.0 {
-                m.insert(value_to_ron_value(k), value_to_ron_value(v));
+                m.insert(k, value_to_ron_value(v));
             }
             ron_value::Value::Map(m)
         }
@@ -100,8 +100,11 @@ pub fn ron_value_to_value(value: ron_value::Value) -> Value {
             let mut map2 = Map::new();
 
             for (key, value) in map {
-                map2.0
-                    .insert(ron_value_to_value(key), ron_value_to_value(value));
+                let ron_value::Value::String(key) = key else {
+                    panic!("key is not a string")
+                };
+
+                map2.0.insert(key, ron_value_to_value(value));
             }
 
             Value::Map(map2)

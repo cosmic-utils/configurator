@@ -21,7 +21,7 @@ pub enum Value {
     Bytes(Vec<u8>),
     Option(Option<Box<Value>>),
     Array(Vec<Value>),
-    Map(Map<Value, Value>),
+    Map(Map<String, Value>),
     Tuple(Vec<Value>),
     UnitStruct(String),
     Struct(Option<String>, Map<String, Value>),

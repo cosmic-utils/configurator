@@ -180,26 +180,35 @@ fn rust_schema_value_to_value(value: &rust_schema2::Value) -> Value {
         rust_schema2::Value::Null => Value::Option(None),
         rust_schema2::Value::Bool(bool) => Value::Bool(*bool),
         rust_schema2::Value::Number(number) => Value::Number(match number {
-            rust_schema2::Number::U8(_) => todo!(),
-            rust_schema2::Number::U16(_) => todo!(),
-            rust_schema2::Number::U32(_) => todo!(),
-            rust_schema2::Number::U64(_) => todo!(),
-            rust_schema2::Number::U128(_) => todo!(),
-            rust_schema2::Number::USize(_) => todo!(),
-            rust_schema2::Number::I8(_) => todo!(),
-            rust_schema2::Number::I16(_) => todo!(),
+            rust_schema2::Number::U8(v) => Number::U8(*v),
+            rust_schema2::Number::U16(v) => Number::U16(*v),
+            rust_schema2::Number::U32(v) => Number::U32(*v),
+            rust_schema2::Number::U64(v) => Number::U64(*v),
+            rust_schema2::Number::U128(v) => Number::U128(*v),
+            rust_schema2::Number::USize(v) => Number::USize(*v),
+            rust_schema2::Number::I8(v) => Number::I8(*v),
+            rust_schema2::Number::I16(v) => Number::I16(*v),
             rust_schema2::Number::I32(v) => Number::I32(*v),
-            rust_schema2::Number::I64(_) => todo!(),
-            rust_schema2::Number::I128(_) => todo!(),
-            rust_schema2::Number::ISize(_) => todo!(),
-            rust_schema2::Number::F32(f32) => todo!(),
-            rust_schema2::Number::F64(f64) => todo!(),
+            rust_schema2::Number::I64(v) => Number::I64(*v),
+            rust_schema2::Number::I128(v) => Number::I128(*v),
+            rust_schema2::Number::ISize(v) => Number::ISize(*v),
+            rust_schema2::Number::F32(rust_schema2::F32(v)) => Number::F32(F32(*v)),
+            rust_schema2::Number::F64(rust_schema2::F64(v)) => Number::F64(F64(*v)),
         }),
-        rust_schema2::Value::Char(_) => todo!(),
+        rust_schema2::Value::Char(c) => Value::Char(*c),
         rust_schema2::Value::String(s) => Value::String(s.to_owned()),
-        rust_schema2::Value::Array(values) => todo!(),
-        rust_schema2::Value::Tuple(values) => todo!(),
-        rust_schema2::Value::Map(btree_map) => todo!(),
+        rust_schema2::Value::Array(values) => {
+            Value::Array(values.iter().map(rust_schema_value_to_value).collect())
+        }
+        rust_schema2::Value::Tuple(values) => {
+            Value::Tuple(values.iter().map(rust_schema_value_to_value).collect())
+        }
+        rust_schema2::Value::Map(btree_map) => Value::Map(
+            btree_map
+                .iter()
+                .map(|(k, v)| (k.to_owned(), rust_schema_value_to_value(v)))
+                .collect(),
+        ),
         rust_schema2::Value::UnitStruct(name) => Value::UnitStruct(name.to_owned()),
         rust_schema2::Value::Struct(name, btree_map) => Value::Struct(
             Some(name.to_owned()),

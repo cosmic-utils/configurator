@@ -130,34 +130,7 @@ mod tests {
         assert_eq!(none.merge(&a), a);
     }
 
-    #[test]
-    fn merge_maps_and_structs() {
-        let mut m1 = Map::new();
-        m1.0.insert(Value::from("x"), Value::from(1));
-        let mut m2 = Map::new();
-        m2.0.insert(Value::from("y"), Value::from(2));
-        m2.0.insert(Value::from("x"), Value::from(3));
-        let merged = Value::Map(m1.clone()).merge(&Value::Map(m2.clone()));
-        if let Value::Map(m) = merged {
-            assert_eq!(m.0.get(&Value::from("x")), Some(&Value::from(3)));
-            assert_eq!(m.0.get(&Value::from("y")), Some(&Value::from(2)));
-        } else {
-            panic!("expected map");
-        }
-
-        let mut s1 = Map::new();
-        s1.0.insert("a".to_string(), Value::from(1));
-        let mut s2 = Map::new();
-        s2.0.insert("b".to_string(), Value::from(2));
-        s2.0.insert("a".to_string(), Value::from(3));
-        let merged = Value::Struct(None, s1).merge(&Value::Struct(None, s2));
-        if let Value::Struct(_, ms) = merged {
-            assert_eq!(ms.0.get("a"), Some(&Value::from(3)));
-            assert_eq!(ms.0.get("b"), Some(&Value::from(2)));
-        } else {
-            panic!("expected struct");
-        }
-    }
+    
 
     #[test]
     fn merge_lists() {

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
 #[serde(default)]
 struct A {
+    v: Vec<String>,
     x: String,
     y: String,
     z: String,
@@ -13,6 +14,7 @@ struct A {
 impl Default for A {
     fn default() -> Self {
         A {
+            v: Vec::new(),
             x: String::default(),
             y: String::default(),
             z: String::default(),
