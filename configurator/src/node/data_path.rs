@@ -168,7 +168,6 @@ impl DataPath {
 }
 
 impl NodeContainer {
-    // todo: rewrite with if_let_guards
     pub fn get_at<'a, 'b>(
         &'a self,
         data_path: Box<dyn Iterator<Item = &'b DataPathType> + 'b>,
@@ -177,21 +176,16 @@ impl NodeContainer {
 
         for data in data_path {
             match (&node.node, data) {
-                (Node::Array(node_array), DataPathType::Indice(pos)) => {
+                (Node::Array(node_array), DataPathType::Indice(pos))
                     if let Some(value) = &node_array.value
-                        && let Some(n) = value.get(*pos)
-                    {
-                        node = n;
-                    } else {
-                        return None;
-                    }
+                        && let Some(n) = value.get(*pos) =>
+                {
+                    node = n;
                 }
-                (Node::Struct(node_struct), DataPathType::Name(name)) => {
-                    if let Some(field) = node_struct.fields.get(name) {
-                        node = &field.node;
-                    } else {
-                        return None;
-                    }
+                (Node::Struct(node_struct), DataPathType::Name(name))
+                    if let Some(field) = node_struct.fields.get(name) =>
+                {
+                    node = &field.node;
                 }
                 _ => return None,
             }
