@@ -220,19 +220,13 @@ fn node_list<'a>(
                 // }
                 _ => None,
             })
-            .push_maybe(if false {
-                Some(no_value_defined_warning_icon())
-            } else {
-                None
-            })
-            .push_maybe(if inner_node.is_removable {
-                Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+            .push_maybe((!inner_node.is_valid()).then(|| no_value_defined_warning_icon()))
+            .push_maybe(inner_node.is_removable.then(|| {
+                icon_button!("close24").on_press(PageMsg::ChangeMsg(
                     data_path::push_one(data_path, name),
                     ChangeMsg::Remove(name.into()),
-                )))
-            } else {
-                None
-            }),
+                ))
+            })),
     )
     .on_press(PageMsg::OpenDataPath(name.into()))
     .into()
