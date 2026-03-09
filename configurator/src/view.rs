@@ -6,10 +6,10 @@ use cosmic::{
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
-        button, column, container, horizontal_space, mouse_area, row, scrollable,
+        button, column, container, mouse_area, row, scrollable,
         segmented_button::Entity,
         settings::section,
-        text, text_input,
+        space, text, text_input,
         tooltip::{Position, tooltip},
     },
 };
@@ -101,7 +101,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
 fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
     tooltip(
         icon!("report24").class(cosmic::theme::Svg::custom(|e| cosmic::widget::svg::Style {
-            color: Some(Color::from_rgb(236.0, 194.0, 58.0)),
+            color: Some(Color::from_rgb(236.0 / 255.0, 194.0 / 255.0, 58.0 / 255.0)),
         })),
         text("You need to define some values that have no default!"),
         Position::Top,
@@ -143,7 +143,7 @@ fn node_list<'a>(
             //         None
             //     },
             // )
-            .push(horizontal_space())
+            .push(space::horizontal())
             .push_maybe(match &node.node {
                 // Node::Unit => Some(Element::from(text("null"))),
                 Node::String(node_string) => Some({
@@ -532,7 +532,7 @@ fn view_string<'a>(
             section().title("Value").add(
                 row()
                     .push(text("Current value"))
-                    .push(horizontal_space())
+                    .push(space::horizontal())
                     .push(
                         text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
                             move |value| {
