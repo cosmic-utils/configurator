@@ -1,15 +1,23 @@
 use indexmap::IndexMap;
 use rust_schema2::{RustSchema, RustSchemaKind, RustSchemaRoot};
 
-use crate::{generic_value::Value, node::{Node, NodeArray, NodeContainer, NodeString, NodeStruct, StructField, get_schema, rust_schema_value_to_value}};
+use crate::{
+    generic_value::Value,
+    node::{
+        Node, NodeArray, NodeContainer, NodeString, NodeStruct, StructField, get_schema,
+        rust_schema_value_to_value,
+    },
+};
 
 impl NodeContainer {
+    #[instrument(skip_all)]
     pub fn from_schema_and_value(
         root: &RustSchemaRoot,
         schema: &RustSchema,
         value: &Value,
-        modified: bool,
     ) -> Self {
+        debug!("schema = {:#?}\nvalue = {:#?}", schema, value);
+
         match &schema.kind {
             RustSchemaKind::Unit => todo!(),
             RustSchemaKind::Boolean => todo!(),
@@ -21,14 +29,12 @@ impl NodeContainer {
                         node: Node::String(NodeString {
                             value: Some(str.to_owned()),
                         }),
-                        modified,
+                        modified: false,
                     }
                 } else {
                     NodeContainer {
-                        node: Node::String(NodeString {
-                            value: None,
-                        }),
-                        modified,
+                        node: Node::String(NodeString { value: None }),
+                        modified: false,
                     }
                 }
             }
@@ -39,7 +45,7 @@ impl NodeContainer {
                         let template = get_schema(root, template).unwrap();
 
                         vec.iter()
-                            .map(|v| Self::from_schema_and_value(root, template, v, modified))
+                            .map(|v| Self::from_schema_and_value(root, template, v))
                             .collect()
                     } else {
                         vec![]
@@ -59,7 +65,7 @@ impl NodeContainer {
                             max: array.max.clone(),
                             value: Some(res),
                         }),
-                        modified,
+                        modified: false,
                     }
                 } else {
                     NodeContainer {
@@ -68,104 +74,38 @@ impl NodeContainer {
                             max: array.max.clone(),
                             value: None,
                         }),
-                        modified,
+                        modified: false,
                     }
                 }
             }
             RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
             RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
             RustSchemaKind::Struct(struct_) => {
-                if value.is_empty() {
-                    if let Some(struct_default) = &struct_.default {
-                        // struct_default can't be empty
-                        return Self::from_schema_and_value(
-                            root,
-                            schema,
-                            &rust_schema_value_to_value(struct_default),
-                            false,
-                        );
-                    }
-                }
-
-                if let Some((name, map)) = value.as_struct() {
-                    let mut fields = IndexMap::new();
-
-                    for (field_name, field) in &struct_.fields {
-                        let schema = get_schema(root, &field.schema).unwrap();
-                        let description = field.description.to_owned();
-
-                        if let Some(field_default) = &field.default {
-                            if let Some(field_value) = map.0.get(field_name)
-                                && !modified
-                            {
-                                fields.insert(
-                                    field_name.to_owned(),
-                                    StructField {
-                                        description,
-                                        node: Self::from_schema_and_value(
-                                            root,
-                                            schema,
-                                            field_value,
-                                            modified,
-                                        ),
-                                    },
-                                );
-                            } else {
-                                fields.insert(
-                                    field_name.to_owned(),
-                                    StructField {
-                                        description,
-                                        node: Self::from_schema_and_value(
-                                            root,
-                                            schema,
-                                            &rust_schema_value_to_value(field_default),
-                                            false,
-                                        ),
-                                    },
-                                );
-                            }
-                        } else {
-                            if let Some(field_value) = map.0.get(field_name) {
-                                fields.insert(
-                                    field_name.to_owned(),
-                                    StructField {
-                                        description,
-                                        node: Self::from_schema_and_value(
-                                            root,
-                                            schema,
-                                            field_value,
-                                            modified,
-                                        ),
-                                    },
-                                );
-                            } else {
-                                fields.insert(
-                                    field_name.to_owned(),
-                                    StructField {
-                                        description,
-                                        node: Self::from_schema_and_value(
-                                            root,
-                                            schema,
-                                            &Value::Empty,
-                                            false,
-                                        ),
-                                    },
-                                );
-                            }
-                        }
+                fn get_struct_field_value<'a>(
+                    prev_value: &'a Value,
+                    struct_default: &'a Option<Value>,
+                    field_default: &'a Option<Value>,
+                    field_name: &'a str,
+                ) -> &'a Value {
+                    if let Some((_, map)) = prev_value.as_struct()
+                        && let Some(value) = map.0.get(field_name)
+                    {
+                        return value;
                     }
 
-                    return NodeContainer {
-                        node: Node::Struct(NodeStruct {
-                            name: struct_.name.to_owned(),
-                            description: struct_.description.to_owned(),
-                            fields,
-                        }),
-                        modified,
-                    };
-                }
+                    if let Some(field_default) = field_default {
+                        return field_default;
+                    }
 
-                for (field_name, field) in &struct_.fields {}
+                    if let Some(struct_default) = struct_default
+                        && let Some((_, map)) = struct_default.as_struct()
+                        && let Some(value) = map.0.get(field_name)
+                    {
+                        return value;
+                    }
+
+                    &Value::Empty
+                }
 
                 NodeContainer {
                     node: Node::Struct(NodeStruct {
@@ -174,25 +114,34 @@ impl NodeContainer {
                         fields: struct_
                             .fields
                             .iter()
-                            .map(|(k, v)| {
-                                let schema = get_schema(root, &v.schema).unwrap();
+                            .map(|(field_name, field)| {
+                                let schema = get_schema(root, &field.schema).unwrap();
+
+                                let struct_default =
+                                    struct_.default.as_ref().map(rust_schema_value_to_value);
+                                let field_default =
+                                    field.default.as_ref().map(rust_schema_value_to_value);
 
                                 (
-                                    k.to_owned(),
+                                    field_name.to_owned(),
                                     StructField {
-                                        description: v.description.to_owned(),
+                                        description: field.description.to_owned(),
                                         node: Self::from_schema_and_value(
                                             root,
                                             schema,
-                                            &Value::Empty,
-                                            false,
+                                            get_struct_field_value(
+                                                value,
+                                                &struct_default,
+                                                &field_default,
+                                                field_name,
+                                            ),
                                         ),
                                     },
                                 )
                             })
                             .collect(),
                     }),
-                    modified,
+                    modified: false,
                 }
             }
             RustSchemaKind::TupleStruct(tuple_struct) => todo!(),

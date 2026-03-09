@@ -213,8 +213,9 @@ impl Page {
             &schema_root,
             schema_root.get_schema(&schema_root.schema).unwrap(),
             &full_config,
-            true,
         );
+
+        // dbg!(&tree);
 
         let title = appid.split('.').next_back().unwrap().to_string();
 
@@ -337,6 +338,8 @@ impl Page {
 
                 if self.tree.is_valid() {
                     self.write().unwrap();
+                } else {
+                    info!("tree is not valid")
                 }
             }
 
