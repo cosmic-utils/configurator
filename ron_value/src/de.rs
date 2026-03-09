@@ -550,6 +550,7 @@ fn tuple_struct<'a>() -> Parser<'a, char, Value> {
 fn named_struct<'a>() -> Parser<'a, char, Value> {
     (ident().opt() - ws() - sym('(') - ws()
         + (named_field() + (comma() * named_field()).repeat(0..) - comma().opt()).opt()
+        - ws()
         - sym(')'))
     .map(|(ident, v)| {
         let mut map = Map::new();

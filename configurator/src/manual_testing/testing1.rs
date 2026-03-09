@@ -68,9 +68,9 @@ fn print_ron() {
 #[test]
 #[ignore]
 fn from_ron() {
-    let content = "Complex2( x: \"hello\", y: \"\" )";
+    let content = "Complex2( x: \"hello\" , y: \"\" )";
 
-    super::from_ron::<Complex2>(content);
+    // super::from_ron::<Complex2>(content);
 
     let value = ron_value::from_str(&content).unwrap();
 
