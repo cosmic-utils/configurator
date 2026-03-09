@@ -121,7 +121,7 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 fn node_list<'a>(
     name: DataPathTypeCopy<'a>,
     data_path: &'a [DataPathType],
-    inner_node: &'a NodeContainer,
+    node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
     mouse_area(
         row()
@@ -129,7 +129,7 @@ fn node_list<'a>(
             .push(
                 column()
                     .push(text(format!("{}", name)))
-                    .push_maybe(inner_node.description.as_ref().map(text::caption)),
+                    .push_maybe(node.description.as_ref().map(text::caption)),
             )
             // .push_maybe(
             //     if inner_node.removable
@@ -144,7 +144,7 @@ fn node_list<'a>(
             //     },
             // )
             .push(horizontal_space())
-            .push_maybe(match &inner_node.node {
+            .push_maybe(match &node.node {
                 // Node::Unit => Some(Element::from(text("null"))),
                 Node::String(node_string) => Some({
                     text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
@@ -220,8 +220,8 @@ fn node_list<'a>(
                 // }
                 _ => None,
             })
-            .push_maybe((!inner_node.is_valid()).then(|| no_value_defined_warning_icon()))
-            .push_maybe(inner_node.is_removable.then(|| {
+            .push_maybe((!node.is_valid()).then(|| no_value_defined_warning_icon()))
+            .push_maybe(node.is_removable.then(|| {
                 icon_button!("close24").on_press(PageMsg::ChangeMsg(
                     data_path.to_vec(),
                     ChangeMsg::Remove(name.into()),
