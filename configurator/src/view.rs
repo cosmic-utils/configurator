@@ -20,7 +20,7 @@ use crate::{
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
-        self, Node, NodeContainer, NodeString, NodeStruct,
+        self, Node, NodeArray, NodeContainer, NodeString, NodeStruct,
         data_path::{DataPath, DataPathType, data_path_push},
     },
     page::Page,
@@ -88,7 +88,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
         // Node::Array(node_array) => view_array(data_path, node, node_array),
         Node::Struct(node_struct) => view_struct(page, data_path, node, node_struct),
         // Node::TupleStruct(_) => todo!(),
-        Node::Array(_) => todo!(),
+        Node::Array(node_array) => view_array(data_path, node, node_array),
     };
 
     column()
@@ -300,13 +300,12 @@ fn view_struct<'a>(
                 .title("Values")
                 .extend(node_struct.fields.iter().map(|(name, field)| {
                     let data_path = data_path_push(data_path, name);
-                    let inner_node = page.tree.get_at(Box::new(data_path.iter())).unwrap();
 
                     node_list(
                         DataPathType::Name(name.clone()),
                         field.description.as_deref(),
                         data_path,
-                        inner_node,
+                        &field.node,
                     )
                 })),
         )
@@ -328,51 +327,52 @@ fn view_struct<'a>(
         .into()
 }
 
-// fn view_array<'a>(
-//     data_path: &'a [DataPathType],
-//     node: &'a NodeContainer,
-//     node_array: &'a NodeArray,
-// ) -> Element<'a, PageMsg> {
-//     column()
-//         .push_maybe(
-//             node.description
-//                 .as_ref()
-//                 .map(|desc| section().title("Description").add(text(desc))),
-//         )
-//         .push(
-//             section().title("Values").extend(
-//                 node_array
-//                     .values
-//                     .as_ref()
-//                     .map_or(&[] as &[NodeContainer], |v| v.as_slice())
-//                     .iter()
-//                     .enumerate()
-//                     .map(|(pos, inner_node)| {
-//                         node_list(DataPathType::Indice(pos), None, inner_node, data_path)
-//                     }),
-//             ),
-//         )
-//         .push(icon_button!("add24").on_press(PageMsg::ChangeMsg(
-//             data_path.to_vec(),
-//             ChangeMsg::AddNewNodeToArray,
-//         )))
-//         .push_maybe(node.default.as_ref().map(|default| {
-//             section().title("Default").add(
-//                 row()
-//                     .push(horizontal_space())
-//                     .push(
-//                         // xxx: the on_press need to be lazy
-//                         button::text("reset to default").on_press(PageMsg::ChangeMsg(
-//                             data_path.to_vec(),
-//                             ChangeMsg::ApplyDefault,
-//                         )),
-//                     )
-//                     .push(this_will_remove_all_children()),
-//             )
-//         }))
-//         .spacing(SPACING)
-//         .into()
-// }
+fn view_array<'a>(
+    data_path: &'a [DataPathType],
+    node: &'a NodeContainer,
+    node_array: &'a NodeArray,
+) -> Element<'a, PageMsg> {
+    column()
+        // .push_maybe(
+        //     node.description
+        //         .as_ref()
+        //         .map(|desc| section().title("Description").add(text(desc))),
+        // )
+        .push(
+            section().title("Values").extend(
+                node_array
+                    .value
+                    .as_ref()
+                    .map_or(&[] as &[NodeContainer], |v| v.as_slice())
+                    .iter()
+                    .enumerate()
+                    .map(|(pos, inner_node)| {
+                        let data_path = data_path_push(data_path, pos);
+                        node_list(DataPathType::Indice(pos), None, data_path, inner_node)
+                    }),
+            ),
+        )
+        .push(icon_button!("add24").on_press(PageMsg::ChangeMsg(
+            data_path.to_vec(),
+            ChangeMsg::AddNewNodeToArray,
+        )))
+        // .push_maybe(node.default.as_ref().map(|default| {
+        //     section().title("Default").add(
+        //         row()
+        //             .push(horizontal_space())
+        //             .push(
+        //                 // xxx: the on_press need to be lazy
+        //                 button::text("reset to default").on_press(PageMsg::ChangeMsg(
+        //                     data_path.to_vec(),
+        //                     ChangeMsg::ApplyDefault,
+        //                 )),
+        //             )
+        //             .push(this_will_remove_all_children()),
+        //     )
+        // }))
+        .spacing(SPACING)
+        .into()
+}
 
 // fn view_enum<'a>(
 //     data_path: &'a [DataPathType],

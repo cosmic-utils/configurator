@@ -235,6 +235,9 @@ impl Page {
                 self.tree.set_modified(&data_path[..data_path.len() - 1]);
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
+
+                debug!("{:?} {:?}", data_path, change_msg);
+
                 let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
 
                 match change_msg {
@@ -264,18 +267,22 @@ impl Page {
                     ChangeMsg::AddNewNodeToArray => {
                         let node_array = node.node.unwrap_array_mut();
 
-                        let schema = schema_at(&self.schema_root, &data_path).unwrap();
+                        let array_schema = schema_at(&self.schema_root, &data_path).unwrap();
 
-                        let array = schema.as_array().unwrap();
+                        let array = array_schema.as_array().unwrap();
 
                         let template = array.kind.as_ref().unwrap();
                         let template = self.schema_root.resolve_schema(template).unwrap();
 
+                        dbg!(&template);
+
                         let mut new_node = NodeContainer::from_schema_and_value(
                             &self.schema_root,
-                            schema,
+                            template,
                             &Value::Empty,
                         );
+
+                        dbg!(&new_node);
 
                         new_node.modified = true;
 
