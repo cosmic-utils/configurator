@@ -72,7 +72,6 @@ impl NodeContainer {
                 node_string.value.take();
             }
             Node::Struct(node_struct) => {
-                // remove hashmap object ?
                 node_struct
                     .fields
                     .values_mut()
