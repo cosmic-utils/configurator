@@ -209,7 +209,7 @@ impl Page {
 
         let schema_root = json::from_value(json_value)?;
 
-        let tree = node::from_schema_and_value(
+        let tree = NodeContainer::from_schema_and_value(
             &schema_root,
             schema_root.get_schema(&schema_root.schema).unwrap(),
             &full_config,
@@ -311,21 +311,28 @@ impl Page {
                 self.reload_node().unwrap();
             }
 
-            PageMsg::ChangeMsg(data_path, change_msg) => match change_msg {
-                ChangeMsg::ApplyDefault => todo!(),
-                ChangeMsg::ChangeBool(_) => todo!(),
-                ChangeMsg::ChangeString(value) => {
-                    let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
-                    let node_string = node.node.unwrap_string_mut();
-                    node_string.tampon = value.clone();
+            PageMsg::ChangeMsg(data_path, change_msg) => {
+                let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
+
+                match change_msg {
+                    ChangeMsg::ApplyDefault => {
+                        node.remove_value_rec();
+                        // todo
+                    }
+                    ChangeMsg::ChangeBool(_) => todo!(),
+                    ChangeMsg::ChangeString(value) => {
+                        let node_string = node.node.unwrap_string_mut();
+                        node_string.tampon = value.clone();
+                        self.tree.set_modified(&mut data_path.iter());
+                    }
+                    ChangeMsg::ChangeNumber(_) => todo!(),
+                    ChangeMsg::ChangeEnum(_) => todo!(),
+                    ChangeMsg::Remove(data_path_type) => todo!(),
+                    ChangeMsg::AddNewNodeToObject(_) => todo!(),
+                    ChangeMsg::AddNewNodeToArray => todo!(),
+                    ChangeMsg::RenameKey { prev, new } => todo!(),
                 }
-                ChangeMsg::ChangeNumber(_) => todo!(),
-                ChangeMsg::ChangeEnum(_) => todo!(),
-                ChangeMsg::Remove(data_path_type) => todo!(),
-                ChangeMsg::AddNewNodeToObject(_) => todo!(),
-                ChangeMsg::AddNewNodeToArray => todo!(),
-                ChangeMsg::RenameKey { prev, new } => todo!(),
-            },
+            }
 
             /*
             PageMsg::ChangeMsg(data_path, change_msg) => {
