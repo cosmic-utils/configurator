@@ -29,6 +29,7 @@ mod to_value;
 pub struct NodeContainer {
     pub node: Node,
     pub modified: bool,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Unwrap)]
@@ -47,13 +48,11 @@ pub struct NodeString {
 #[derive(Debug)]
 pub struct NodeStruct {
     pub name: String,
-    pub description: Option<String>,
     pub fields: IndexMap<String, StructField>,
 }
 
 #[derive(Debug)]
 pub struct StructField {
-    pub description: Option<String>,
     pub node: NodeContainer,
 }
 

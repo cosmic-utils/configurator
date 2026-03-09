@@ -3,10 +3,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
 #[serde(default)]
+/// Desc A
 struct A {
+    /// Desc v
     v: Vec<String>,
+    /// Desc x
     x: String,
+    /// Desc y
     y: String,
+    /// Desc z
     z: String,
     d: String,
 }

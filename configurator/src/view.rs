@@ -120,7 +120,6 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 
 fn node_list<'a>(
     name: DataPathType,
-    description: Option<&'a str>,
     data_path: Vec<DataPathType>,
     inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
@@ -132,7 +131,7 @@ fn node_list<'a>(
             .push(
                 column()
                     .push(text(format!("{}", name)))
-                    .push_maybe(description.map(text::caption)),
+                    .push_maybe(inner_node.description.as_ref().map(text::caption)),
             )
             // .push_maybe(
             //     if inner_node.removable
@@ -290,8 +289,7 @@ fn view_struct<'a>(
     column()
         .push(section().title("Name").add(text(&node_struct.name)))
         .push_maybe(
-            node_struct
-                .description
+            node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
@@ -301,12 +299,7 @@ fn view_struct<'a>(
                 .extend(node_struct.fields.iter().map(|(name, field)| {
                     let data_path = data_path_push(data_path, name);
 
-                    node_list(
-                        DataPathType::Name(name.clone()),
-                        field.description.as_deref(),
-                        data_path,
-                        &field.node,
-                    )
+                    node_list(DataPathType::Name(name.clone()), data_path, &field.node)
                 })),
         )
         // .push_maybe(node.default.as_ref().map(|default| {
@@ -348,7 +341,7 @@ fn view_array<'a>(
                     .enumerate()
                     .map(|(pos, inner_node)| {
                         let data_path = data_path_push(data_path, pos);
-                        node_list(DataPathType::Indice(pos), None, data_path, inner_node)
+                        node_list(DataPathType::Indice(pos), data_path, inner_node)
                     }),
             ),
         )
@@ -532,11 +525,11 @@ fn view_string<'a>(
     node_string: &'a NodeString,
 ) -> Element<'a, PageMsg> {
     column()
-        // .push_maybe(
-        //     node.description
-        //         .as_ref()
-        //         .map(|desc| section().title("Description").add(text(desc))),
-        // )
+        .push_maybe(
+            node.description
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
         .push(
             section().title("Value").add(
                 row()
