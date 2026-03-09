@@ -226,14 +226,15 @@ fn node_list<'a>(
                 Some(no_value_defined_warning_icon())
             } else {
                 None
-            }), // .push_maybe(if inner_node.is_removable {
-                //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
-                //         data_path_push(data_path, name),
-                //         ChangeMsg::Remove(name_cloned.clone()),
-                //     )))
-                // } else {
-                //     None
-                // }),
+            })
+            .push_maybe(if inner_node.is_removable {
+                Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+                    data_path::push_one(data_path, name),
+                    ChangeMsg::Remove(name_cloned.into()),
+                )))
+            } else {
+                None
+            }),
     )
     .on_press(PageMsg::OpenDataPath(name_cloned.into()))
     .into()
