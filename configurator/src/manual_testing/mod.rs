@@ -1,4 +1,9 @@
-use std::{fmt::Debug, fs, path::Path, str::FromStr};
+use std::{
+    fmt::Debug,
+    fs::{self, create_dir_all},
+    path::Path,
+    str::FromStr,
+};
 
 use configurator_utils::ConfigFormat;
 use rust_schema2::RustSchemaTrait;
@@ -13,8 +18,20 @@ mod testing2;
 fn get_schema<C: RustSchemaTrait>(name: &str) -> String {
     let config_path = format!("{}/test_configs/{}", env!("CARGO_MANIFEST_DIR"), name);
 
+    let system_path = format!("{config_path}/system");
+    let home_path = format!("{config_path}/home");
+
+    if !fs::exists(&system_path).unwrap() {
+        fs::create_dir_all(&system_path).unwrap();
+    }
+
+    if !fs::exists(&home_path).unwrap() {
+        fs::create_dir_all(&home_path).unwrap();
+    }
+
     configurator_schema::SchemaGenerator::new()
-        .source_home_path(&config_path)
+        .source_paths([&system_path])
+        .source_home_path(&home_path)
         .format(ConfigFormat::CosmicRon)
         .generate::<C>()
         .unwrap()
