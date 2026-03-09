@@ -27,10 +27,11 @@ mod to_value;
 
 #[derive(Debug)]
 pub struct NodeContainer {
-    pub node: Node,
-    pub modified: bool,
     pub name: Option<String>,
     pub description: Option<String>,
+    pub modified: bool,
+    pub is_removable: bool,
+    pub node: Node,
 }
 
 #[derive(Debug, Unwrap)]
@@ -66,6 +67,7 @@ impl NodeContainer {
             modified: false,
             name: None,
             description: None,
+            is_removable: false,
         }
     }
 
@@ -79,6 +81,13 @@ impl NodeContainer {
     pub fn set_description(self, description: Option<String>) -> Self {
         Self {
             description,
+            ..self
+        }
+    }
+
+    pub fn set_is_removable(self, is_removable: bool) -> Self {
+        Self {
+            is_removable,
             ..self
         }
     }

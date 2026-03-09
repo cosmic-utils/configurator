@@ -120,7 +120,7 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 
 fn node_list<'a>(
     name: DataPathType,
-    data_path: Vec<DataPathType>,
+    data_path: &'a [DataPathType],
     inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
     let name_cloned = name.clone();
@@ -148,13 +148,16 @@ fn node_list<'a>(
             .push(horizontal_space())
             .push_maybe(match &inner_node.node {
                 // Node::Unit => Some(Element::from(text("null"))),
-                Node::String(node_string) => Some(
+                Node::String(node_string) => Some({
                     text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
                         move |value| {
-                            PageMsg::ChangeMsg(data_path.clone(), ChangeMsg::ChangeString(value))
+                            PageMsg::ChangeMsg(
+                                data_path_push(data_path, name),
+                                ChangeMsg::ChangeString(value),
+                            )
                         },
-                    ),
-                ),
+                    )
+                }),
 
                 // Node::Bool(node_bool) => Some(
                 //     toggler(node_bool.value.unwrap_or_default())
@@ -223,14 +226,15 @@ fn node_list<'a>(
                 Some(no_value_defined_warning_icon())
             } else {
                 None
-            }), // .push_maybe(if inner_node.removable {
-                //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
-                //         data_path.to_vec(),
-                //         ChangeMsg::Remove(name_cloned.clone()),
-                //     )))
-                // } else {
-                //     None
-                // })
+            })
+            // .push_maybe(if inner_node.is_removable {
+            //     Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+            //         data_path_push(data_path, name),
+            //         ChangeMsg::Remove(name_cloned.clone()),
+            //     )))
+            // } else {
+            //     None
+            // }),
     )
     .on_press(PageMsg::OpenDataPath(name_cloned))
     .into()
@@ -301,8 +305,6 @@ fn view_struct<'a>(
             section()
                 .title("Values")
                 .extend(node_struct.fields.iter().map(|(name, field)| {
-                    let data_path = data_path_push(data_path, name);
-
                     node_list(DataPathType::Name(name.clone()), data_path, field)
                 })),
         )
@@ -344,7 +346,6 @@ fn view_array<'a>(
                     .iter()
                     .enumerate()
                     .map(|(pos, inner_node)| {
-                        let data_path = data_path_push(data_path, pos);
                         node_list(DataPathType::Indice(pos), data_path, inner_node)
                     }),
             ),

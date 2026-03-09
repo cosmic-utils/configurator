@@ -29,7 +29,10 @@ impl NodeContainer {
 
                         Some(
                             vec.iter()
-                                .map(|v| Self::from_schema_and_value(root, template, v))
+                                .map(|v| {
+                                    Self::from_schema_and_value(root, template, v)
+                                        .set_is_removable(true)
+                                })
                                 .collect(),
                         )
                     } else {
