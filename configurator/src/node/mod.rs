@@ -87,7 +87,6 @@ impl NodeContainer {
     }
 
     /// Return true if all active nodes have a value
-    // todo: rewrite this without recursion
     pub fn is_valid(&self) -> bool {
         match &self.node {
             Node::String(node_string) => node_string.value.is_some(),
