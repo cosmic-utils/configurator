@@ -144,7 +144,7 @@ impl DataPath {
                     (Node::Struct(node_struct), DataPathType::Name(name))
                         if let Some(field) = node_struct.fields.get(name) =>
                     {
-                        node = &field.node;
+                        node = field;
                     }
                     _ => return Some(pos),
                 }
@@ -185,7 +185,7 @@ impl NodeContainer {
                 (Node::Struct(node_struct), DataPathType::Name(name))
                     if let Some(field) = node_struct.fields.get(name) =>
                 {
-                    node = &field.node;
+                    node = field;
                 }
                 _ => return None,
             }
@@ -213,7 +213,7 @@ impl NodeContainer {
                 }
                 (Node::Struct(node_struct), DataPathType::Name(name)) => {
                     if let Some(field) = node_struct.fields.get_mut(name) {
-                        node = &mut field.node;
+                        node = field;
                     } else {
                         return None;
                     }

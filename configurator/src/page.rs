@@ -235,7 +235,6 @@ impl Page {
                 self.tree.set_modified(&data_path[..data_path.len() - 1]);
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
-
                 debug!("{:?} {:?}", data_path, change_msg);
 
                 let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();

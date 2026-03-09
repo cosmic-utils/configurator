@@ -4,10 +4,7 @@ use crate::{
 };
 
 impl NodeContainer {
-    pub fn set_modified<'a>(
-        &mut self,
-        data_path: impl IntoIterator<Item = &'a DataPathType>,
-    ) {
+    pub fn set_modified<'a>(&mut self, data_path: impl IntoIterator<Item = &'a DataPathType>) {
         let mut node = self;
 
         for data in data_path {
@@ -24,7 +21,7 @@ impl NodeContainer {
                 }
                 (Node::Struct(node_struct), DataPathType::Name(name)) => {
                     if let Some(field) = node_struct.fields.get_mut(name) {
-                        node = &mut field.node;
+                        node = field;
                     } else {
                         panic!()
                     }
@@ -54,7 +51,7 @@ impl NodeContainer {
             (Node::Struct(node_struct), Value::Struct(_, map)) => {
                 for (name, field) in &mut node_struct.fields {
                     if let Some(value) = map.0.get(name) {
-                        field.node.set_modified_from_value(value);
+                        field.set_modified_from_value(value);
                     }
                 }
 

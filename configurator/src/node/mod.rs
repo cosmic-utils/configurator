@@ -29,6 +29,7 @@ mod to_value;
 pub struct NodeContainer {
     pub node: Node,
     pub modified: bool,
+    pub name: Option<String>,
     pub description: Option<String>,
 }
 
@@ -47,13 +48,7 @@ pub struct NodeString {
 
 #[derive(Debug)]
 pub struct NodeStruct {
-    pub name: String,
-    pub fields: IndexMap<String, StructField>,
-}
-
-#[derive(Debug)]
-pub struct StructField {
-    pub node: NodeContainer,
+    pub fields: IndexMap<String, NodeContainer>,
 }
 
 #[derive(Debug)]
@@ -75,7 +70,7 @@ impl NodeContainer {
                 node_struct
                     .fields
                     .values_mut()
-                    .for_each(|field| field.node.remove_value_rec());
+                    .for_each(|field| field.remove_value_rec());
             }
             Node::Array(node_array) => {
                 node_array.value.take();
@@ -87,7 +82,7 @@ impl NodeContainer {
     pub fn is_valid(&self) -> bool {
         match &self.node {
             Node::String(node_string) => node_string.value.is_some(),
-            Node::Struct(node_struct) => node_struct.fields.values().all(|f| f.node.is_valid()),
+            Node::Struct(node_struct) => node_struct.fields.values().all(|f| f.is_valid()),
             Node::Array(node_array) => node_array.value.as_ref().is_some_and(|values| {
                 let is_complete = node_array
                     .min

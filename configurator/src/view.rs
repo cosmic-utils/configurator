@@ -287,7 +287,11 @@ fn view_struct<'a>(
     node_struct: &'a NodeStruct,
 ) -> Element<'a, PageMsg> {
     column()
-        .push(section().title("Name").add(text(&node_struct.name)))
+        .push_maybe(
+            node.name
+                .as_ref()
+                .map(|name| section().title("Name").add(text(name))),
+        )
         .push_maybe(
             node.description
                 .as_ref()
@@ -299,7 +303,7 @@ fn view_struct<'a>(
                 .extend(node_struct.fields.iter().map(|(name, field)| {
                     let data_path = data_path_push(data_path, name);
 
-                    node_list(DataPathType::Name(name.clone()), data_path, &field.node)
+                    node_list(DataPathType::Name(name.clone()), data_path, field)
                 })),
         )
         // .push_maybe(node.default.as_ref().map(|default| {

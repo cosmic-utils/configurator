@@ -130,8 +130,6 @@ mod tests {
         assert_eq!(none.merge(&a), a);
     }
 
-    
-
     #[test]
     fn merge_lists() {
         let a = Value::Array(vec![Value::from(1), Value::from(2)]);

@@ -20,11 +20,11 @@ impl NodeContainer {
                 let mut map = Map::new();
 
                 for (key, field) in &node_struct.fields {
-                    if let Some(value) = field.node.to_value() {
+                    if let Some(value) = field.to_value() {
                         map.0.insert(key.to_owned(), value);
                     }
                 }
-                Some(Value::Struct(Some(node_struct.name.to_owned()), map))
+                Some(Value::Struct(self.name.clone(), map))
             }
             Node::Array(node_array) => {
                 let mut values = Vec::new();
