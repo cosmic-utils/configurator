@@ -194,7 +194,6 @@ impl NodeContainer {
         Some(node)
     }
 
-    // todo: rewrite with if_let_guards
     pub fn get_at_mut<'a, 'b>(
         &'a mut self,
         data_path: Box<dyn Iterator<Item = &'b DataPathType> + 'b>,
