@@ -322,7 +322,7 @@ impl Page {
                     ChangeMsg::ChangeBool(_) => todo!(),
                     ChangeMsg::ChangeString(value) => {
                         let node_string = node.node.unwrap_string_mut();
-                        node_string.tampon = value.clone();
+                        node_string.value = Some(value);
                         self.tree.set_modified(&mut data_path.iter());
                     }
                     ChangeMsg::ChangeNumber(_) => todo!(),

@@ -20,7 +20,6 @@ impl NodeContainer {
                     NodeContainer {
                         node: Node::String(NodeString {
                             value: Some(str.to_owned()),
-                            tampon: str.to_string(),
                         }),
                         modified,
                     }
@@ -28,7 +27,6 @@ impl NodeContainer {
                     NodeContainer {
                         node: Node::String(NodeString {
                             value: None,
-                            tampon: String::default(),
                         }),
                         modified,
                     }

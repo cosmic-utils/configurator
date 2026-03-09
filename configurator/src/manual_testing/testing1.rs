@@ -68,7 +68,13 @@ fn print_ron() {
 #[test]
 #[ignore]
 fn from_ron() {
-    super::from_ron::<Config>("(x:0,y:(x:\"hello\",y:10))");
+    let content = "Complex2( x: \"hello\", y: \"\" )";
+
+    super::from_ron::<Complex2>(content);
+
+    let value = ron_value::from_str(&content).unwrap();
+
+    dbg!(&value);
 }
 
 #[test]

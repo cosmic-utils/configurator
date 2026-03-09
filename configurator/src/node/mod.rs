@@ -42,7 +42,6 @@ pub enum Node {
 #[derive(Debug)]
 pub struct NodeString {
     pub value: Option<String>,
-    pub tampon: String,
 }
 
 #[derive(Debug)]
@@ -70,7 +69,6 @@ impl NodeContainer {
         match &mut self.node {
             Node::String(node_string) => {
                 node_string.value.take();
-                node_string.tampon.clear();
             }
             Node::Struct(node_struct) => {
                 // remove hashmap object ?

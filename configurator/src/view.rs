@@ -150,9 +150,11 @@ fn node_list<'a>(
             .push_maybe(match &inner_node.node {
                 // Node::Unit => Some(Element::from(text("null"))),
                 Node::String(node_string) => Some(
-                    text_input("value", &node_string.tampon).on_input(move |value| {
-                        PageMsg::ChangeMsg(data_path.clone(), ChangeMsg::ChangeString(value))
-                    }),
+                    text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
+                        move |value| {
+                            PageMsg::ChangeMsg(data_path.clone(), ChangeMsg::ChangeString(value))
+                        },
+                    ),
                 ),
 
                 // Node::Bool(node_bool) => Some(
@@ -525,9 +527,14 @@ fn view_string<'a>(
                     .push(text("Current value"))
                     .push(horizontal_space())
                     .push(
-                        text_input("value", &node_string.tampon).on_input(move |value| {
-                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeString(value))
-                        }),
+                        text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
+                            move |value| {
+                                PageMsg::ChangeMsg(
+                                    data_path.to_vec(),
+                                    ChangeMsg::ChangeString(value),
+                                )
+                            },
+                        ),
                     )
                     .push_maybe(if node_string.value.is_none() {
                         Some(no_value_defined_warning_icon())
