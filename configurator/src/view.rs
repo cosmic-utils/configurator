@@ -123,8 +123,6 @@ fn node_list<'a>(
     data_path: &'a [DataPathType],
     inner_node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
-    let name_cloned = name;
-
     mouse_area(
         row()
             .align_y(Alignment::Center)
@@ -230,13 +228,13 @@ fn node_list<'a>(
             .push_maybe(if inner_node.is_removable {
                 Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
                     data_path::push_one(data_path, name),
-                    ChangeMsg::Remove(name_cloned.into()),
+                    ChangeMsg::Remove(name.into()),
                 )))
             } else {
                 None
             }),
     )
-    .on_press(PageMsg::OpenDataPath(name_cloned.into()))
+    .on_press(PageMsg::OpenDataPath(name.into()))
     .into()
 }
 
