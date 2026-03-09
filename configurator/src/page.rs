@@ -22,6 +22,7 @@ use crate::{
     node::{
         self, Node, NodeContainer,
         data_path::{DataPath, DataPathType},
+        schema_at,
     },
     providers,
 };
@@ -177,8 +178,7 @@ impl Page {
 
         self.tree = NodeContainer::from_schema_and_value(
             &self.schema_root,
-            self
-                .schema_root
+            self.schema_root
                 .get_schema(&self.schema_root.schema)
                 .unwrap(),
             &self.full_config,
@@ -222,27 +222,71 @@ impl Page {
                 self.data_path.open(data_path_type);
             }
 
+            PageMsg::ApplyDefault(data_path) => {
+                let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
+
+                node.remove_value_rec();
+
+                let schema = schema_at(&self.schema_root, &data_path).unwrap();
+
+                // todo: get the default value
+                // *node = NodeContainer::from_schema_and_value(&self.schema_root, schema, value);
+
+                self.tree.set_modified(&data_path[..data_path.len() - 1]);
+            }
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
 
                 match change_msg {
-                    ChangeMsg::ApplyDefault => {
-                        node.remove_value_rec();
-                        // todo
-                    }
                     ChangeMsg::ChangeBool(_) => todo!(),
                     ChangeMsg::ChangeString(value) => {
                         let node_string = node.node.unwrap_string_mut();
                         node_string.value = Some(value);
-                        self.tree.set_modified_from_data_path(&mut data_path.iter());
                     }
                     ChangeMsg::ChangeNumber(_) => todo!(),
                     ChangeMsg::ChangeEnum(_) => todo!(),
-                    ChangeMsg::Remove(data_path_type) => todo!(),
+                    ChangeMsg::Remove(data) => match &mut node.node {
+                        Node::Array(node_array) => {
+                            node_array
+                                .value
+                                .as_mut()
+                                .unwrap()
+                                .remove(data.unwrap_indice());
+
+                            for n in node_array.value.as_mut().unwrap() {
+                                n.modified = true;
+                            }
+                        }
+                        _ => panic!(),
+                    },
                     ChangeMsg::AddNewNodeToObject(_) => todo!(),
-                    ChangeMsg::AddNewNodeToArray => todo!(),
+
+                    ChangeMsg::AddNewNodeToArray => {
+                        // let node_array = node.node.unwrap_array_mut();
+
+                        // let mut new_node = node_array.template(None);
+
+                        // if let Some(default) = &new_node.default {
+                        //     new_node.apply_value(&default.clone(), false).unwrap();
+                        // }
+                        // new_node.modified = true;
+
+                        // match &mut node_array.values {
+                        //     Some(values) => {
+                        //         for n in &mut *values {
+                        //             n.modified = true;
+                        //         }
+                        //         values.push(new_node);
+                        //     }
+                        //     None => {
+                        //         node_array.values = Some(vec![new_node]);
+                        //     }
+                        // }
+                    }
                     ChangeMsg::RenameKey { prev, new } => todo!(),
                 }
+
+                self.tree.set_modified(data_path.iter());
 
                 self.data_path.sanitize_path(&self.tree);
 

@@ -95,46 +95,48 @@ impl NodeContainer {
                 .is_some_and(|values| values.iter().all(|n| n.is_valid())),
         }
     }
+
+    // pub fn get_default(&self) -> Option<&Value> {
+    //     match &self.node {
+    //         Node::String(node_string) => None,
+    //         Node::Array(node_array) => None,
+    //         Node::Struct(node_struct) => node_struct.,
+    //     }
+    // }
 }
 
-fn schema_at<'a>(
+pub fn schema_at<'a>(
     root: &'a RustSchemaRoot,
     data_path: &[DataPathType],
 ) -> anyhow::Result<&'a RustSchema> {
     let mut schema = get_schema(root, &root.schema)?;
 
-    macro_rules! not_compatible_error {
-        ($data:expr, $schema:expr) => {
-            bail!("schema {} is not compatible with data {}", $schema, $data)
-        };
-    }
-
     for data in data_path {
-        match &schema.kind {
-            RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Array(array) => todo!(),
-            RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
-            RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Struct(struct_) => {
-                let name = data
-                    .as_name()
-                    .ok_or(anyhow!("expected name, found indice {}", data))?;
-
-                let field = struct_.fields.get(name).ok_or(anyhow!(
-                    "no field named {} in {}",
-                    name,
-                    struct_.name
-                ))?;
-
-                schema = get_schema(root, &field.schema)?;
+        match (&schema.kind, data) {
+            (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Name(_)) => todo!(),
+            (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Indice(_)) => todo!(),
+            (RustSchemaKind::Array(array), DataPathType::Indice(_)) => match &array.kind {
+                Some(kind) => {
+                    schema = get_schema(root, kind)?;
+                }
+                None => bail!("no kind for array: {:?}", schema),
+            },
+            (RustSchemaKind::Tuple(rust_schema_or_refs), DataPathType::Indice(_)) => todo!(),
+            (RustSchemaKind::Map(rust_schema_or_ref), DataPathType::Name(_)) => todo!(),
+            (RustSchemaKind::Struct(struct_), DataPathType::Name(name)) => {
+                match struct_.fields.get(name) {
+                    Some(field) => {
+                        schema = get_schema(root, &field.schema)?;
+                    }
+                    None => {
+                        bail!("no field named {} in {}", name, struct_.name)
+                    }
+                }
             }
-            RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
-            RustSchemaKind::Enum(_) => todo!(),
-            RustSchemaKind::Unit => not_compatible_error!(data, "Unit"),
-            RustSchemaKind::Boolean => not_compatible_error!(data, "Boolean"),
-            RustSchemaKind::Number(number_kind) => not_compatible_error!(data, "Number"),
-            RustSchemaKind::Char => not_compatible_error!(data, "Char"),
-            RustSchemaKind::String => not_compatible_error!(data, "String"),
+            (RustSchemaKind::TupleStruct(tuple_struct), DataPathType::Indice(_)) => todo!(),
+            (RustSchemaKind::Enum(_), DataPathType::Name(_)) => todo!(),
+            (RustSchemaKind::Enum(_), DataPathType::Indice(_)) => todo!(),
+            _ => bail!("schema {:?} is not compatible with {}", schema, data),
         }
     }
 

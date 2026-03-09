@@ -5,9 +5,9 @@ use crate::{
 
 impl NodeContainer {
     // todo: rewrite with if_let_guards
-    pub fn set_modified_from_data_path(
+    pub fn set_modified<'a>(
         &mut self,
-        data_path: &mut dyn Iterator<Item = &DataPathType>,
+        data_path: impl IntoIterator<Item = &'a DataPathType>,
     ) {
         let mut node = self;
 

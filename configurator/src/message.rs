@@ -16,6 +16,7 @@ pub enum PageMsg {
     SelectDataPath(Option<usize>),
     OpenDataPath(DataPathType),
     ChangeMsg(Vec<DataPathType>, ChangeMsg),
+    ApplyDefault(Vec<DataPathType>),
     DialogAddNewNodeToObject(Vec<DataPathType>),
     DialogRenameKey(Vec<DataPathType>, String),
     None,
@@ -23,7 +24,6 @@ pub enum PageMsg {
 
 #[derive(Clone, Debug)]
 pub enum ChangeMsg {
-    ApplyDefault,
     ChangeBool(bool),
     ChangeString(String),
     ChangeNumber(String),
