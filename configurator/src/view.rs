@@ -352,10 +352,26 @@ fn view_array<'a>(
                     }),
             ),
         )
-        .push(icon_button!("add24").on_press(PageMsg::ChangeMsg(
-            data_path.to_vec(),
-            ChangeMsg::AddNewNodeToArray,
-        )))
+        .push_maybe(
+            (node_array.has_template
+                && node_array
+                    .max
+                    .map(|max| {
+                        (max as usize)
+                            < node_array
+                                .value
+                                .as_ref()
+                                .map(|value| value.len())
+                                .unwrap_or(0)
+                    })
+                    .unwrap_or(true))
+            .then(|| {
+                icon_button!("add24").on_press(PageMsg::ChangeMsg(
+                    data_path.to_vec(),
+                    ChangeMsg::AddNewNodeToArray,
+                ))
+            }),
+        )
         // .push_maybe(node.default.as_ref().map(|default| {
         //     section().title("Default").add(
         //         row()

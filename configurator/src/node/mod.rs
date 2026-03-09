@@ -62,6 +62,7 @@ pub struct NodeArray {
     pub min: Option<u64>,
     pub max: Option<u64>,
     pub value: Option<Vec<NodeContainer>>,
+    pub has_template: bool,
 }
 
 impl NodeContainer {

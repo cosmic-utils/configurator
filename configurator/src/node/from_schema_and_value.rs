@@ -40,34 +40,30 @@ impl NodeContainer {
             }
             RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
             RustSchemaKind::Array(array) => {
-                if let Some(vec) = value.as_array() {
-                    let res = if let Some(template) = &array.kind {
+                let value = if let Some(vec) = value.as_array() {
+                    if let Some(template) = &array.kind {
                         let template = root.resolve_schema(template).unwrap();
 
-                        vec.iter()
-                            .map(|v| Self::from_schema_and_value(root, template, v))
-                            .collect()
+                        Some(
+                            vec.iter()
+                                .map(|v| Self::from_schema_and_value(root, template, v))
+                                .collect(),
+                        )
                     } else {
-                        vec![]
-                    };
-
-                    NodeContainer {
-                        node: Node::Array(NodeArray {
-                            min: array.min,
-                            max: array.max,
-                            value: Some(res),
-                        }),
-                        modified: false,
+                        Some(vec![])
                     }
                 } else {
-                    NodeContainer {
-                        node: Node::Array(NodeArray {
-                            min: array.min,
-                            max: array.max,
-                            value: None,
-                        }),
-                        modified: false,
-                    }
+                    None
+                };
+
+                NodeContainer {
+                    node: Node::Array(NodeArray {
+                        min: array.min,
+                        max: array.max,
+                        value,
+                        has_template: array.kind.is_some(),
+                    }),
+                    modified: false,
                 }
             }
             RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
