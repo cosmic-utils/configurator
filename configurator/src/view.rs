@@ -330,11 +330,11 @@ fn view_array<'a>(
     node_array: &'a NodeArray,
 ) -> Element<'a, PageMsg> {
     column()
-        // .push_maybe(
-        //     node.description
-        //         .as_ref()
-        //         .map(|desc| section().title("Description").add(text(desc))),
-        // )
+        .push_maybe(
+            node.description
+                .as_ref()
+                .map(|desc| section().title("Description").add(text(desc))),
+        )
         .push(
             section().title("Values").extend(
                 node_array
