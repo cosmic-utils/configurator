@@ -16,16 +16,30 @@ use crate::{
 #[serde(default)]
 struct NewStruct(u32);
 
+/// Doc on struct Complex2
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
+#[serde(default)]
+struct Complex2 {
+    /// Doc on field x
+    x: String,
+    y: String,
+}
+
+impl Default for Complex2 {
+    fn default() -> Self {
+        Self {
+            x: String::from("hello"),
+            y: Default::default(),
+        }
+    }
+}
+
 /// Doc on upper
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
-    /// Doc on field x
-    // x: NewStruct,
-    y: Complex,
-    /// Doc on field u
-    u: (),
-    u2: UnitS,
+    /// Doc on field y
+    y: Complex2,
 }
 
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
