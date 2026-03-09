@@ -20,7 +20,7 @@ use crate::{
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
-        self, Node, NodeContainer, NodeNumber, NodeString, NodeStruct,
+        self, Node, NodeContainer, NodeString, NodeStruct,
         data_path::{DataPath, DataPathType, data_path_push},
     },
     page::Page,
@@ -75,19 +75,19 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
     let data_path = page.data_path.current();
 
-    let node = page.get_node(data_path);
+    let node = page.tree.get_at(Box::new(data_path.iter())).unwrap();
 
     let content = match &node.node {
         // Node::Bool(node_bool) => view_bool(data_path, node, node_bool),
         Node::String(node_string) => view_string(data_path, node, node_string),
-        Node::Number(node_number) => view_number(data_path, node, node_number),
+        // Node::Number(node_number) => view_number(data_path, node, node_number),
         // Node::Object(node_object) => view_object(data_path, node, node_object),
         // Node::Enum(node_enum) => view_enum(data_path, node, node_enum),
         // Node::Value(node_value) => view_value(data_path, node, node_value),
-        Node::Unit => text("null").into(),
+        // Node::Unit => text("null").into(),
         // Node::Array(node_array) => view_array(data_path, node, node_array),
         Node::Struct(node_struct) => view_struct(page, data_path, node, node_struct),
-        Node::TupleStruct(_) => todo!(),
+        // Node::TupleStruct(_) => todo!(),
         Node::Array(_) => todo!(),
     };
 
@@ -148,13 +148,11 @@ fn node_list<'a>(
             // )
             .push(horizontal_space())
             .push_maybe(match &inner_node.node {
-                Node::Unit => Some(Element::from(text("null"))),
+                // Node::Unit => Some(Element::from(text("null"))),
                 Node::String(node_string) => Some(
-                    text_input("value", &node_string.temp)
-                        .on_input(move |value| {
-                            PageMsg::ChangeMsg(data_path.clone(), ChangeMsg::ChangeString(value))
-                        })
-                        .into(),
+                    text_input("value", &node_string.tampon).on_input(move |value| {
+                        PageMsg::ChangeMsg(data_path.clone(), ChangeMsg::ChangeString(value))
+                    }),
                 ),
 
                 // Node::Bool(node_bool) => Some(
@@ -220,7 +218,7 @@ fn node_list<'a>(
                 // }
                 _ => None,
             })
-            .push_maybe(if inner_node.is_incomplete {
+            .push_maybe(if false {
                 Some(no_value_defined_warning_icon())
             } else {
                 None
@@ -300,7 +298,7 @@ fn view_struct<'a>(
                 .title("Values")
                 .extend(node_struct.fields.iter().map(|(name, field)| {
                     let data_path = data_path_push(data_path, name);
-                    let inner_node = page.get_node(&data_path);
+                    let inner_node = page.tree.get_at(Box::new(data_path.iter())).unwrap();
 
                     node_list(
                         DataPathType::Name(name.clone()),
@@ -527,7 +525,7 @@ fn view_string<'a>(
                     .push(text("Current value"))
                     .push(horizontal_space())
                     .push(
-                        text_input("value", &node_string.temp).on_input(move |value| {
+                        text_input("value", &node_string.tampon).on_input(move |value| {
                             PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeString(value))
                         }),
                     )
@@ -564,68 +562,68 @@ fn view_string<'a>(
         .into()
 }
 
-fn view_number<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_number: &'a NodeNumber,
-) -> Element<'a, PageMsg> {
-    column()
-        // .push_maybe(
-        //     node.description
-        //         .as_ref()
-        //         .map(|desc| section().title("Description").add(text(desc))),
-        // )
-        .push(
-            section().title("Value").add(
-                row()
-                    .push(text("Current value"))
-                    .push(horizontal_space())
-                    .push(
-                        text_input("value", &node_number.temp).on_input(move |value| {
-                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeNumber(value))
-                        }),
-                    )
-                    .push_maybe(if node_number.value.is_none() {
-                        Some(no_value_defined_warning_icon())
-                    } else if node_number.try_parse_from_str(&node_number.temp).is_err() {
-                        Some(
-                            tooltip(
-                                icon!("report24"),
-                                text("This value is incorrect."),
-                                Position::Top,
-                            )
-                            .into(),
-                        )
-                    } else {
-                        None
-                    }),
-            ),
-        )
-        // .push_maybe(
-        //     node.default
-        //         .as_ref()
-        //         .and_then(|v| v.as_number())
-        //         .map(|default| {
-        //             section()
-        //                 .title("Default")
-        //                 .add(
-        //                     row()
-        //                         .push(text("Default value"))
-        //                         .push(horizontal_space())
-        //                         .push(text(NumberValue::from_number(default).to_string())),
-        //                 )
-        //                 .add(row().push(horizontal_space()).push(
-        //                     // xxx: the on_press need to be lazy
-        //                     button::text("reset to default").on_press(PageMsg::ChangeMsg(
-        //                         data_path.to_vec(),
-        //                         ChangeMsg::ApplyDefault,
-        //                     )),
-        //                 ))
-        //         }),
-        // )
-        .spacing(SPACING)
-        .into()
-}
+// fn view_number<'a>(
+//     data_path: &'a [DataPathType],
+//     node: &'a NodeContainer,
+//     node_number: &'a NodeNumber,
+// ) -> Element<'a, PageMsg> {
+//     column()
+//         .push_maybe(
+//             node.description
+//                 .as_ref()
+//                 .map(|desc| section().title("Description").add(text(desc))),
+//         )
+//         .push(
+//             section().title("Value").add(
+//                 row()
+//                     .push(text("Current value"))
+//                     .push(horizontal_space())
+//                     .push(
+//                         text_input("value", &node_number.temp).on_input(move |value| {
+//                             PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeNumber(value))
+//                         }),
+//                     )
+//                     .push_maybe(if node_number.value.is_none() {
+//                         Some(no_value_defined_warning_icon())
+//                     } else if node_number.try_parse_from_str(&node_number.temp).is_err() {
+//                         Some(
+//                             tooltip(
+//                                 icon!("report24"),
+//                                 text("This value is incorrect."),
+//                                 Position::Top,
+//                             )
+//                             .into(),
+//                         )
+//                     } else {
+//                         None
+//                     }),
+//             ),
+//         )
+//         .push_maybe(
+//             node.default
+//                 .as_ref()
+//                 .and_then(|v| v.as_number())
+//                 .map(|default| {
+//                     section()
+//                         .title("Default")
+//                         .add(
+//                             row()
+//                                 .push(text("Default value"))
+//                                 .push(horizontal_space())
+//                                 .push(text(NumberValue::from_number(default).to_string())),
+//                         )
+//                         .add(row().push(horizontal_space()).push(
+//                             // xxx: the on_press need to be lazy
+//                             button::text("reset to default").on_press(PageMsg::ChangeMsg(
+//                                 data_path.to_vec(),
+//                                 ChangeMsg::ApplyDefault,
+//                             )),
+//                         ))
+//                 }),
+//         )
+//         .spacing(SPACING)
+//         .into()
+// }
 
 // fn view_value<'a>(
 //     data_path: &'a [DataPathType],
@@ -647,21 +645,21 @@ fn view_number<'a>(
 //         .into()
 // }
 
-fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
-    match &node.node {
-        Node::Unit => Some(Cow::Borrowed("Null")),
-        // Node::Bool(node_bool) => None,
-        Node::String(node_string) => None,
-        Node::Number(node_number) => None,
-        // Node::Object(node_object) => None,
-        // Node::Enum(node_enum) => None,
-        // Node::Array(node_array) => None,
-        // Node::Value(node_value) => value_to_str(&node_value.value),
-        Node::Struct(node_struct) => Some(Cow::Borrowed(node_struct.name.as_str())),
-        Node::TupleStruct(_) => todo!(),
-        Node::Array(_) => todo!(),
-    }
-}
+// fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
+//     match &node.node {
+//         Node::Unit => Some(Cow::Borrowed("Null")),
+//         // Node::Bool(node_bool) => None,
+//         Node::String(node_string) => None,
+//         Node::Number(node_number) => None,
+//         // Node::Object(node_object) => None,
+//         // Node::Enum(node_enum) => None,
+//         // Node::Array(node_array) => None,
+//         // Node::Value(node_value) => value_to_str(&node_value.value),
+//         Node::Struct(node_struct) => Some(Cow::Borrowed(node_struct.name.as_str())),
+//         Node::TupleStruct(_) => todo!(),
+//         Node::Array(_) => todo!(),
+//     }
+// }
 
 fn value_to_str(value: &Value) -> Option<Cow<'_, str>> {
     match value {

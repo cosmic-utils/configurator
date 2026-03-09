@@ -43,10 +43,8 @@ pub struct Page {
     pub full_config: Value,
 
     pub schema: RustSchemaRoot,
-    pub nodes: HashMap<Vec<DataPathType>, NodeContainer>,
+    pub tree: NodeContainer,
     pub data_path: DataPath,
-
-    pub modifs: HashMap<Vec<DataPathType>, Value>,
 }
 
 pub fn create_pages(config: &Config) -> impl Iterator<Item = Page> + use<'_> {
@@ -144,14 +142,6 @@ fn appid_from_schema_path(schema_path: &Path) -> Option<String> {
 }
 
 impl Page {
-    pub fn get_node(&self, data_path: &[DataPathType]) -> &NodeContainer {
-        self.nodes.get(data_path).unwrap()
-    }
-
-    pub fn get_node_mut(&mut self, data_path: &[DataPathType]) -> &mut NodeContainer {
-        self.nodes.get_mut(data_path).unwrap()
-    }
-
     // need &str for appid: https://github.com/tokio-rs/tracing/issues/1181
     #[instrument(skip(content))]
     fn from_str(appid: &str, content: &str) -> anyhow::Result<Self> {
@@ -217,21 +207,14 @@ impl Page {
 
         let data_path = DataPath::new();
 
-        let schema = json::from_value(json_value)?;
+        let schema_root = json::from_value(json_value)?;
 
-        let mut nodes = HashMap::new();
-
-        node::fill_nodes(&mut nodes, &schema, data_path.current())?;
-
-        let (full_value, missing) = node::get_value(&schema, &full_config)?;
-
-        debug!("full_value = {:#?}", full_value);
-
-        debug!("missing = {:#?}", missing);
-
-        for (data_path, node) in &mut nodes {
-            node::apply_value(node, &full_value, data_path, &missing);
-        }
+        let tree = node::from_schema_and_value(
+            &schema_root,
+            schema_root.get_schema(&schema_root.schema).unwrap(),
+            &full_config,
+            true,
+        );
 
         let title = appid.split('.').next_back().unwrap().to_string();
 
@@ -241,14 +224,13 @@ impl Page {
             system_config,
             user_config,
             full_config,
-            nodes,
             data_path,
             source_paths,
             source_home_path,
             write_path,
             format,
-            schema,
-            modifs: HashMap::new(),
+            schema: schema_root,
+            tree,
         };
 
         Ok(page)
@@ -282,17 +264,7 @@ impl Page {
 
     #[instrument(skip_all)]
     pub fn reload_node(&mut self) -> anyhow::Result<()> {
-        node::fill_nodes(&mut self.nodes, &self.schema, &self.data_path.current())?;
-
-        let (full_value, missing) = node::get_value(&self.schema, &self.full_config)?;
-
-        debug!("full_value = {:#?}", full_value);
-
-        debug!("missing = {:#?}", missing);
-
-        for (data_path, node) in &mut self.nodes {
-            node::apply_value(node, &full_value, data_path, &missing);
-        }
+        // todo
 
         Ok(())
     }
@@ -343,10 +315,9 @@ impl Page {
                 ChangeMsg::ApplyDefault => todo!(),
                 ChangeMsg::ChangeBool(_) => todo!(),
                 ChangeMsg::ChangeString(value) => {
-                    let node = self.get_node_mut(&data_path);
+                    let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
                     let node_string = node.node.unwrap_string_mut();
-                    node_string.temp = value.clone();
-                    self.modifs.insert(data_path, Value::String(value));
+                    node_string.tampon = value.clone();
                 }
                 ChangeMsg::ChangeNumber(_) => todo!(),
                 ChangeMsg::ChangeEnum(_) => todo!(),

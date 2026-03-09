@@ -21,60 +21,25 @@ pub mod data_path;
 // #[cfg(test)]
 // mod tests;
 
-mod new_gen;
 
 #[derive(Debug)]
 pub struct NodeContainer {
     pub node: Node,
-    pub is_incomplete: bool,
+    pub modified: bool,
 }
 
 #[derive(Debug, Unwrap)]
 #[unwrap(ref_mut)]
-#[non_exhaustive]
 pub enum Node {
-    Unit,
     String(NodeString),
-    Number(NodeNumber),
     Array(NodeArray),
     Struct(NodeStruct),
-    TupleStruct(NodeTupleStruct),
 }
 
 #[derive(Debug)]
 pub struct NodeString {
     pub value: Option<String>,
-    pub temp: String,
-}
-
-#[derive(Debug)]
-pub struct NodeNumber {
-    pub kind: NumberKind,
-    pub value: Option<Number>,
-    pub temp: String,
-}
-
-impl NodeNumber {
-    pub fn try_parse_from_str(&self, str: &str) -> anyhow::Result<Number> {
-        let v = match self.kind {
-            NumberKind::U8 => Number::U8(str.parse::<u8>()?),
-            NumberKind::U16 => Number::U16(str.parse::<u16>()?),
-            NumberKind::U32 => Number::U32(str.parse::<u32>()?),
-            NumberKind::U64 => Number::U64(str.parse::<u64>()?),
-            NumberKind::U128 => Number::U128(str.parse::<u128>()?),
-            NumberKind::USize => Number::USize(str.parse::<usize>()?),
-            NumberKind::I8 => Number::I8(str.parse::<i8>()?),
-            NumberKind::I16 => Number::I16(str.parse::<i16>()?),
-            NumberKind::I32 => Number::I32(str.parse::<i32>()?),
-            NumberKind::I64 => Number::I64(str.parse::<i64>()?),
-            NumberKind::I128 => Number::I128(str.parse::<i128>()?),
-            NumberKind::ISize => Number::ISize(str.parse::<isize>()?),
-            NumberKind::F32 => Number::F32(F32(str.parse::<f32>()?)),
-            NumberKind::F64 => Number::F64(F64(str.parse::<f64>()?)),
-        };
-
-        Ok(v)
-    }
+    pub tampon: String,
 }
 
 #[derive(Debug)]
@@ -87,420 +52,205 @@ pub struct NodeStruct {
 #[derive(Debug)]
 pub struct StructField {
     pub description: Option<String>,
-}
-
-#[derive(Debug)]
-pub struct NodeTupleStruct {
-    pub name: String,
-    pub description: Option<String>,
-    pub fields: Vec<()>,
+    pub node: NodeContainer,
 }
 
 #[derive(Debug)]
 pub struct NodeArray {
     pub min: Option<u64>,
     pub max: Option<u64>,
-    pub len: Option<usize>,
+    pub value: Option<Vec<NodeContainer>>,
 }
 
-pub fn fill_nodes(
-    nodes: &mut HashMap<Vec<DataPathType>, NodeContainer>,
+pub fn from_schema_and_value(
     root: &RustSchemaRoot,
-    data_path: &[DataPathType],
-) -> anyhow::Result<()> {
-    #[instrument(skip_all)]
-    fn inner(
-        nodes: &mut HashMap<Vec<DataPathType>, NodeContainer>,
-        root: &RustSchemaRoot,
-        data_path: &[DataPathType],
-        // false if we should continue to fill children (we want only one level)
-        flag: bool,
-    ) -> anyhow::Result<()> {
-        debug!("{:?}", data_path);
-
-        let schema = schema_at(root, data_path)?;
-
-        macro_rules! insert_if_not_there {
-            ($nodes:expr, $data_path:expr, $node:expr) => {
-                if !$nodes.contains_key($data_path) {
-                    $nodes.insert(
-                        $data_path.to_vec(),
-                        NodeContainer {
-                            node: $node,
-                            is_incomplete: false,
-                        },
-                    );
+    schema: &RustSchema,
+    value: &Value,
+    modified: bool,
+) -> NodeContainer {
+    match &schema.kind {
+        RustSchemaKind::Unit => todo!(),
+        RustSchemaKind::Boolean => todo!(),
+        RustSchemaKind::Number(number_kind) => todo!(),
+        RustSchemaKind::Char => todo!(),
+        RustSchemaKind::String => {
+            if let Some(str) = value.as_str() {
+                NodeContainer {
+                    node: Node::String(NodeString {
+                        value: Some(str.to_owned()),
+                        tampon: str.to_string(),
+                    }),
+                    modified,
                 }
-            };
+            } else {
+                NodeContainer {
+                    node: Node::String(NodeString {
+                        value: None,
+                        tampon: String::default(),
+                    }),
+                    modified,
+                }
+            }
         }
+        RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
+        RustSchemaKind::Array(array) => {
+            if let Some(vec) = value.as_array() {
+                let res = if let Some(template) = &array.kind {
+                    let template = get_schema(root, template).unwrap();
 
-        match &schema.kind {
-            RustSchemaKind::Unit => {
-                insert_if_not_there!(nodes, data_path, Node::Unit);
-            }
-            RustSchemaKind::Boolean => todo!(),
-            RustSchemaKind::Number(number_kind) => {
-                insert_if_not_there!(
-                    nodes,
-                    data_path,
-                    Node::Number(NodeNumber {
-                        kind: number_kind.clone(),
-                        value: None,
-                        temp: String::new(),
-                    })
-                );
-            }
-            RustSchemaKind::Char => todo!(),
-            RustSchemaKind::String => {
-                insert_if_not_there!(
-                    nodes,
-                    data_path,
-                    Node::String(NodeString {
-                        value: None,
-                        temp: String::new(),
-                    })
-                );
-            }
-            RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Array(array) => {
-                insert_if_not_there!(
-                    nodes,
-                    data_path,
-                    Node::Array(NodeArray {
+                    vec.iter()
+                        .map(|v| from_schema_and_value(root, template, v, modified))
+                        .collect()
+                } else {
+                    vec![]
+                };
+
+                NodeContainer {
+                    // is_incomplete: !(array
+                    //     .min
+                    //     .map(|min| res.len() >= min as usize)
+                    //     .unwrap_or(true)
+                    //     && array
+                    //         .max
+                    //         .map(|max| res.len() <= max as usize)
+                    //         .unwrap_or(true)),
+                    node: Node::Array(NodeArray {
                         min: array.min.clone(),
                         max: array.max.clone(),
-                        len: None,
-                    })
-                );
+                        value: Some(res),
+                    }),
+                    modified,
+                }
+            } else {
+                NodeContainer {
+                    node: Node::Array(NodeArray {
+                        min: array.min.clone(),
+                        max: array.max.clone(),
+                        value: None,
+                    }),
+                    modified,
+                }
             }
-            RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
-            RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Struct(struct_) => {
-                insert_if_not_there!(
-                    nodes,
-                    data_path,
-                    Node::Struct(NodeStruct {
+        }
+        RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
+        RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
+        RustSchemaKind::Struct(struct_) => {
+            if value.is_empty() {
+                if let Some(struct_default) = &struct_.default {
+                    // struct_default can't be empty
+                    return from_schema_and_value(
+                        root,
+                        schema,
+                        &rust_schema_value_to_value(struct_default),
+                        false,
+                    );
+                }
+            }
+
+            if let Some((name, map)) = value.as_struct() {
+                let mut fields = IndexMap::new();
+
+                for (field_name, field) in &struct_.fields {
+                    let schema = get_schema(root, &field.schema).unwrap();
+                    let description = field.description.to_owned();
+
+                    if let Some(field_default) = &field.default {
+                        if let Some(field_value) = map.0.get(field_name)
+                            && !modified
+                        {
+                            fields.insert(
+                                field_name.to_owned(),
+                                StructField {
+                                    description,
+                                    node: from_schema_and_value(
+                                        root,
+                                        schema,
+                                        field_value,
+                                        modified,
+                                    ),
+                                },
+                            );
+                        } else {
+                            fields.insert(
+                                field_name.to_owned(),
+                                StructField {
+                                    description,
+                                    node: from_schema_and_value(
+                                        root,
+                                        schema,
+                                        &rust_schema_value_to_value(field_default),
+                                        false,
+                                    ),
+                                },
+                            );
+                        }
+                    } else {
+                        if let Some(field_value) = map.0.get(field_name) {
+                            fields.insert(
+                                field_name.to_owned(),
+                                StructField {
+                                    description,
+                                    node: from_schema_and_value(
+                                        root,
+                                        schema,
+                                        field_value,
+                                        modified,
+                                    ),
+                                },
+                            );
+                        } else {
+                            fields.insert(
+                                field_name.to_owned(),
+                                StructField {
+                                    description,
+                                    node: from_schema_and_value(root, schema, &Value::Empty, false),
+                                },
+                            );
+                        }
+                    }
+                }
+
+                return NodeContainer {
+                    node: Node::Struct(NodeStruct {
                         name: struct_.name.to_owned(),
                         description: struct_.description.to_owned(),
-                        fields: struct_
-                            .fields
-                            .iter()
-                            .map(|(k, v)| {
-                                (
-                                    k.to_owned(),
-                                    StructField {
-                                        description: v.description.to_owned(),
-                                    },
-                                )
-                            })
-                            .collect(),
-                    })
-                );
-
-                if !flag {
-                    let mut data_path_cloned = data_path_alloc_one(data_path);
-
-                    for (name, _) in &struct_.fields {
-                        data_path_cloned.push(DataPathType::Name(name.to_owned()));
-
-                        inner(nodes, root, &data_path_cloned, true)?;
-                        data_path_cloned.pop();
-                    }
-                }
+                        fields,
+                    }),
+                    modified,
+                };
             }
-            RustSchemaKind::TupleStruct(tuple_struct) => {
-                insert_if_not_there!(
-                    nodes,
-                    data_path,
-                    Node::TupleStruct(NodeTupleStruct {
-                        name: tuple_struct.name.to_owned(),
-                        description: tuple_struct.description.to_owned(),
-                        fields: tuple_struct.fields.iter().map(|_| ()).collect(),
-                    })
-                );
-            }
-            RustSchemaKind::Enum(_) => todo!(),
-        };
 
-        Ok(())
-    }
+            for (field_name, field) in &struct_.fields {}
 
-    inner(nodes, root, data_path, false)
-}
+            NodeContainer {
+                node: Node::Struct(NodeStruct {
+                    name: struct_.name.to_owned(),
+                    description: struct_.description.to_owned(),
+                    fields: struct_
+                        .fields
+                        .iter()
+                        .map(|(k, v)| {
+                            let schema = get_schema(root, &v.schema).unwrap();
 
-#[instrument(skip_all)]
-pub fn apply_value(
-    node: &mut NodeContainer,
-    value: &Value,
-    data_path: &[DataPathType],
-    missing: &Missing,
-) {
-    let value = value_at(value, data_path);
-
-    debug!("{:?}: {:?}", data_path, value);
-
-    node.is_incomplete = missing.is_incomplete(Box::new(data_path.iter()));
-
-    match &mut node.node {
-        Node::Unit => {}
-        Node::String(node_string) => {
-            if let Some(str) = value.as_str() {
-                node_string.value = Some(str.to_owned());
-                node_string.temp = str.to_string();
+                            (
+                                k.to_owned(),
+                                StructField {
+                                    description: v.description.to_owned(),
+                                    node: from_schema_and_value(root, schema, &Value::Empty, false),
+                                },
+                            )
+                        })
+                        .collect(),
+                }),
+                modified,
             }
         }
-        Node::Number(node_number) => {
-            if let Some(number) = value.as_number() {
-                node_number.value = Some(number.clone());
-                node_number.temp = number.to_string();
-            }
-        }
-        Node::Struct(node_struct) => {}
-        Node::Array(node_array) => {}
-        Node::TupleStruct(node_tuple_struct) => todo!(),
+        RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
+        RustSchemaKind::Enum(_) => todo!(),
     }
 }
 
-pub fn get_value(root: &RustSchemaRoot, initial_value: &Value) -> anyhow::Result<(Value, Missing)> {
-    fn inner(
-        root: &RustSchemaRoot,
-        schema: &RustSchema,
-        value: &Value,
-        is_default: bool,
-        data_path: &mut Vec<DataPathType>,
-        missing: &mut Missing,
-    ) -> anyhow::Result<Value> {
-        macro_rules! not_compatible_error {
-            ($expected:expr, $found:expr, $schema:expr) => {
-                bail!(
-                    "imcompatible value: expected {}, found {:?}. Schema: {:?}",
-                    $expected,
-                    $found,
-                    $schema,
-                )
-            };
-        }
 
-        let value = match &schema.kind {
-            RustSchemaKind::Unit => {
-                if value.is_unit() {
-                    value.clone()
-                } else {
-                    not_compatible_error!("Unit", value, schema)
-                }
-            }
-            RustSchemaKind::Boolean => {
-                if value.as_bool().is_some() {
-                    value.clone()
-                } else {
-                    not_compatible_error!("Boolean", value, schema)
-                }
-            }
-            RustSchemaKind::Number(number_kind) => {
-                // todo: convert
-                if value.as_number().is_some() {
-                    value.clone()
-                } else {
-                    not_compatible_error!("Number", value, schema)
-                }
-            }
-            RustSchemaKind::Char => todo!(),
-            RustSchemaKind::String => {
-                if value.as_str().is_some() {
-                    value.clone()
-                } else {
-                    not_compatible_error!("String", value, schema)
-                }
-            }
-            RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Array(array) => todo!(),
-            RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
-            RustSchemaKind::Map(rust_schema_or_ref) => todo!(),
-            RustSchemaKind::Struct(struct_) => {
-                if value.is_empty() {
-                    if let Some(struct_default) = &struct_.default {
-                        // struct_default can't be empty
-                        inner(
-                            root,
-                            schema,
-                            &rust_schema_value_to_value(struct_default),
-                            true,
-                            data_path,
-                            missing,
-                        )?
-                    } else {
-                        missing.add_missing(data_path.clone());
-                        Value::Empty
-                    }
-                } else if let Some((name, map)) = value.as_struct() {
-                    let mut new_map = Map::new();
-
-                    for (field_name, field) in &struct_.fields {
-                        data_path.push(DataPathType::Name(field_name.to_owned()));
-                        if let Some(field_default) = &field.default {
-                            if let Some(field_value) = map.0.get(field_name)
-                                && !is_default
-                            {
-                                new_map.0.insert(
-                                    field_name.to_owned(),
-                                    inner(
-                                        root,
-                                        get_schema(root, &field.schema)?,
-                                        field_value,
-                                        is_default,
-                                        data_path,
-                                        missing,
-                                    )?,
-                                );
-                            } else {
-                                new_map.0.insert(
-                                    field_name.to_owned(),
-                                    inner(
-                                        root,
-                                        get_schema(root, &field.schema)?,
-                                        &rust_schema_value_to_value(field_default),
-                                        true,
-                                        data_path,
-                                        missing,
-                                    )?,
-                                );
-                            }
-                        } else {
-                            if let Some(field_value) = map.0.get(field_name) {
-                                new_map.0.insert(
-                                    field_name.to_owned(),
-                                    inner(
-                                        root,
-                                        get_schema(root, &field.schema)?,
-                                        field_value,
-                                        is_default,
-                                        data_path,
-                                        missing,
-                                    )?,
-                                );
-                            } else {
-                                missing.add_missing(data_path.clone());
-                            }
-                        }
-
-                        data_path.pop();
-                    }
-
-                    Value::Struct(name.to_owned(), new_map)
-                } else if let Some(name) = value.as_unit_struct() {
-                    value.clone()
-                } else {
-                    not_compatible_error!("Struct", value, schema)
-                }
-            }
-            RustSchemaKind::TupleStruct(tuple_struct) => {
-                if value.is_empty() {
-                    if let Some(default) = &tuple_struct.default {
-                        // default can't be empty
-                        return inner(
-                            root,
-                            schema,
-                            &rust_schema_value_to_value(default),
-                            true,
-                            data_path,
-                            missing,
-                        );
-                    }
-                }
-
-                if let Some((name, values)) = value.as_tuple_struct() {
-                    let mut final_values = Vec::new();
-
-                    for (pos, field) in tuple_struct.fields.iter().enumerate() {
-                        let schema = get_schema(&root, &root.schema)?;
-
-                        data_path.push(DataPathType::Indice(pos));
-
-                        if let Some(value) = values.get(pos) {
-                            final_values
-                                .push(inner(root, schema, value, is_default, data_path, missing)?);
-                        } else {
-                            missing.add_missing(data_path.clone());
-                        };
-
-                        data_path.pop();
-                    }
-
-                    Value::TupleStruct(tuple_struct.name.to_owned(), final_values)
-                } else {
-                    not_compatible_error!("TupleStruct", value, schema)
-                }
-            }
-            RustSchemaKind::Enum(_) => todo!(),
-        };
-
-        Ok(value)
-    }
-
-    let schema = get_schema(&root, &root.schema)?;
-    let mut missing = Missing::new();
-    let mut data_path = Vec::new();
-    let value = inner(
-        root,
-        schema,
-        initial_value,
-        false,
-        &mut data_path,
-        &mut missing,
-    )?;
-    Ok((value, missing))
-}
-
-#[derive(Debug)]
-pub struct Missing {
-    is_missing: bool,
-    childs: HashMap<DataPathType, Missing>,
-}
-
-impl Missing {
-    fn new() -> Self {
-        Self {
-            is_missing: false,
-            childs: HashMap::new(),
-        }
-    }
-    pub fn add_missing(&mut self, data_path: Vec<DataPathType>) {
-        let mut missing = self;
-
-        for data in data_path {
-            if !missing.childs.contains_key(&data) {
-                missing.childs.insert(data.clone(), Missing::new());
-            }
-
-            missing = missing.childs.get_mut(&data).unwrap();
-        }
-
-        missing.is_missing = true
-    }
-
-    pub fn is_incomplete<'a>(
-        &'a self,
-        data_path: Box<dyn Iterator<Item = &'a DataPathType> + 'a>,
-    ) -> bool {
-        if self.is_missing {
-            return true;
-        }
-
-        let mut missing = self;
-
-        for data in data_path {
-            match missing.childs.get(data) {
-                Some(m) if m.is_missing => return true,
-                Some(m) => {
-                    missing = m;
-                }
-                None => return false,
-            }
-        }
-
-        missing.is_missing
-    }
-}
 
 fn schema_at<'a>(
     root: &'a RustSchemaRoot,
