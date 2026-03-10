@@ -78,6 +78,27 @@ impl NodeContainer {
                     &Value::Empty
                 }
 
+                fn get_struct_field_default<'a>(
+                    struct_default: &'a Option<Value>,
+                    field_default: &'a Option<Value>,
+                    field_name: &'a str,
+                ) -> Option<&'a Value> {
+                    if let Some(field_default) = field_default {
+                        return Some(field_default);
+                    }
+
+                    if let Some(struct_default) = struct_default
+                        && let Some((_, map)) = struct_default.as_struct()
+                        && let Some(value) = map.0.get(field_name)
+                    {
+                        return Some(value);
+                    }
+
+                    None
+                }
+
+                let struct_default = struct_.default.as_ref().map(rust_schema_value_to_value);
+
                 NodeContainer::from_node(Node::Struct(NodeStruct {
                     fields: struct_
                         .fields
@@ -85,8 +106,6 @@ impl NodeContainer {
                         .map(|(field_name, field)| {
                             let schema = root.resolve_schema(&field.schema).unwrap();
 
-                            let struct_default =
-                                struct_.default.as_ref().map(rust_schema_value_to_value);
                             let field_default =
                                 field.default.as_ref().map(rust_schema_value_to_value);
 
@@ -103,13 +122,22 @@ impl NodeContainer {
                                     ),
                                 )
                                 .set_name(field_name.to_owned())
-                                .set_description(field.description.to_owned()),
+                                .set_description(field.description.to_owned())
+                                .set_default(
+                                    get_struct_field_default(
+                                        &struct_default,
+                                        &field_default,
+                                        field_name,
+                                    )
+                                    .cloned(),
+                                ),
                             )
                         })
                         .collect(),
                 }))
                 .set_name(struct_.name.to_owned())
                 .set_description(struct_.description.to_owned())
+                .set_default(struct_default)
             }
             RustSchemaKind::TupleStruct(tuple_struct) => todo!(),
             RustSchemaKind::Enum(_) => todo!(),

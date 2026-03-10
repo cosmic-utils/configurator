@@ -31,6 +31,7 @@ pub struct NodeContainer {
     pub description: Option<String>,
     pub modified: bool,
     pub is_removable: bool,
+    pub default: Option<Value>,
     pub node: Node,
 }
 
@@ -68,6 +69,7 @@ impl NodeContainer {
             name: None,
             description: None,
             is_removable: false,
+            default: None,
         }
     }
 
@@ -90,6 +92,10 @@ impl NodeContainer {
             is_removable,
             ..self
         }
+    }
+
+    pub fn set_default(self, default: Option<Value>) -> Self {
+        Self { default, ..self }
     }
 
     pub fn remove_value_rec(&mut self) {

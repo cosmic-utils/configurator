@@ -229,10 +229,11 @@ impl Page {
 
                 let schema = schema_at(&self.schema_root, &data_path).unwrap();
 
-                // todo: get the default value
-                // *node = NodeContainer::from_schema_and_value(&self.schema_root, schema, value);
-
-                // self.tree.set_modified(&data_path[..data_path.len() - 1]);
+                *node = NodeContainer::from_schema_and_value(
+                    &self.schema_root,
+                    schema,
+                    node.default.as_ref().unwrap_or(&Value::Empty),
+                );
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 debug!("{:?} {:?}", data_path, change_msg);
