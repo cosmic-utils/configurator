@@ -1,58 +1,43 @@
 use crate::*;
 
 #[derive(Debug)]
-pub enum DefaultConflictError<'a> {
+pub enum DefaultConflictError {
     UnknownSchema(ResolveSchemaError),
-    Conflict {
-        id: String,
-        upper_default: Option<&'a Value>,
-        actual_default: Option<&'a Value>,
-    },
+    Conflict(String),
 }
 
-impl From<ResolveSchemaError> for DefaultConflictError<'_> {
+impl From<ResolveSchemaError> for DefaultConflictError {
     fn from(value: ResolveSchemaError) -> Self {
         DefaultConflictError::UnknownSchema(value)
     }
 }
 
-impl std::fmt::Display for DefaultConflictError<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl std::fmt::Display for DefaultConflictError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             DefaultConflictError::UnknownSchema(err) => err.fmt(f),
-            DefaultConflictError::Conflict {
-                id,
-                upper_default,
-                actual_default,
-            } => {
-                write!(
-                    f,
-                    "{}: Upper default is {:?} but his default is {:?}",
-                    id, upper_default, actual_default
-                )
+            DefaultConflictError::Conflict(err) => {
+                write!(f, "{}", err)
             }
         }
     }
 }
 
-impl std::error::Error for DefaultConflictError<'_> {}
+impl std::error::Error for DefaultConflictError {}
 
-impl<'a> DefaultConflictError<'a> {
-    fn conflict(
-        id: impl Into<String>,
-        upper: Option<&'a Value>,
-        default: Option<&'a Value>,
-    ) -> Self {
-        Self::Conflict {
-            id: id.into(),
-            upper_default: upper,
-            actual_default: default,
-        }
+impl DefaultConflictError {
+    fn conflict(id: impl Into<String>, upper: Option<&Value>, default: Option<&Value>) -> Self {
+        Self::Conflict(format!(
+            "{}: Upper default is {:?} but his default is {:?}",
+            id.into(),
+            upper,
+            default
+        ))
     }
 }
 
 impl RustSchemaRoot {
-    pub fn assert_default_no_conflict<'a>(&'a self) -> Result<(), DefaultConflictError<'a>> {
+    pub fn assert_default_no_conflict<'a>(&'a self) -> Result<(), DefaultConflictError> {
         let schema = self.resolve_schema(&self.schema)?;
 
         assert_default_no_conflict(self, schema, ValueState::NotSet)
@@ -111,7 +96,7 @@ fn assert_default_no_conflict<'a>(
     root: &'a RustSchemaRoot,
     schema: &'a RustSchema,
     value: ValueState<'a>,
-) -> Result<(), DefaultConflictError<'a>> {
+) -> Result<(), DefaultConflictError> {
     match &schema.kind {
         RustSchemaKind::Option(schema) => {
             let schema = root.resolve_schema(schema)?;
