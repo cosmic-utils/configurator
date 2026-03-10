@@ -173,20 +173,22 @@ fn clear_dir(path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn write(path: &Path, value: Value) -> anyhow::Result<()> {
-    let value = value_to_ron_value(value);
+pub fn write(path: &Path, value: Option<Value>) -> anyhow::Result<()> {
+    let value = value.map(value_to_ron_value);
 
     clear_dir(path)?;
 
-    let map = if let ron_value::Value::Struct(_, map) = value {
-        map
-    } else {
-        bail!("initial value is not a struct")
-    };
+    if let Some(value) = value {
+        let map = if let ron_value::Value::Struct(_, map) = value {
+            map
+        } else {
+            bail!("initial value is not a struct")
+        };
 
-    for (key, value) in map {
-        let content = ron_value::to_string(&value).unwrap();
-        write_and_create_parent(&path.join(key), content.as_bytes())?;
+        for (key, value) in map {
+            let content = ron_value::to_string(&value).unwrap();
+            write_and_create_parent(&path.join(key), content.as_bytes())?;
+        }
     }
 
     Ok(())

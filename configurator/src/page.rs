@@ -194,13 +194,9 @@ impl Page {
     }
 
     pub fn write(&self) -> anyhow::Result<()> {
-        match self.tree.to_value() {
-            Some(value) => {
-                debug!("write value: {:?}", value);
-                providers::write(&self.write_path, &self.format, value)?;
-            }
-            None => bail!("no value to write"),
-        }
+        let value = self.tree.to_value();
+        debug!("write value: {:?}", value);
+        providers::write(&self.write_path, &self.format, value)?;
 
         Ok(())
     }
