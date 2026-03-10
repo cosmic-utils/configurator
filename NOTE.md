@@ -83,3 +83,12 @@ et est ce que ca rend set modified pour tous les enfants safe ?
 contraite:
 - tous doit avoir un default
 - chaque default doit être identique
+
+
+
+-----------------------------------------------
+
+default impl problem
+
+- default devrait dependre de system config aussi
+- si on crée un nouveau node, il faut que sa value et son default soit appliqué
