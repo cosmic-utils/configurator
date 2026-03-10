@@ -270,7 +270,7 @@ impl Page {
 
                         let array = array_schema.as_array().unwrap();
 
-                        let template = array.kind.as_ref().unwrap();
+                        let template = array.template.as_ref().unwrap();
                         let template = self.schema_root.resolve_schema(template).unwrap();
 
                         dbg!(&template);

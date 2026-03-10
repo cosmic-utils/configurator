@@ -141,7 +141,7 @@ pub fn schema_at<'a>(
         match (&schema.kind, data) {
             (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Name(_)) => todo!(),
             (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Indice(_)) => todo!(),
-            (RustSchemaKind::Array(array), DataPathType::Indice(_)) => match &array.kind {
+            (RustSchemaKind::Array(array), DataPathType::Indice(_)) => match &array.template {
                 Some(kind) => {
                     schema = root.resolve_schema(kind)?;
                 }

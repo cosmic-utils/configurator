@@ -24,7 +24,7 @@ impl NodeContainer {
             RustSchemaKind::Option(rust_schema_or_ref) => todo!(),
             RustSchemaKind::Array(array) => {
                 let value = if let Some(vec) = value.as_array() {
-                    if let Some(template) = &array.kind {
+                    if let Some(template) = &array.template {
                         let template = root.resolve_schema(template).unwrap();
 
                         Some(
@@ -46,7 +46,7 @@ impl NodeContainer {
                     min: array.min,
                     max: array.max,
                     value,
-                    has_template: array.kind.is_some(),
+                    has_template: array.template.is_some(),
                 }))
             }
             RustSchemaKind::Tuple(rust_schema_or_refs) => todo!(),
