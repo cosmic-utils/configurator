@@ -155,12 +155,28 @@ pub fn read(path: &Path) -> anyhow::Result<Value> {
         map.0.insert(filename.to_string(), value);
     }
 
-    // todo: is name in the path variable ?
     Ok(Value::Struct(None, map))
+}
+
+fn clear_dir(path: &Path) -> std::io::Result<()> {
+    if path.exists() {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let p = entry.path();
+
+            if p.is_file() {
+                fs::remove_file(p)?;
+            }
+        }
+    }
+
+    Ok(())
 }
 
 pub fn write(path: &Path, value: Value) -> anyhow::Result<()> {
     let value = value_to_ron_value(value);
+
+    clear_dir(path)?;
 
     let map = if let ron_value::Value::Struct(_, map) = value {
         map

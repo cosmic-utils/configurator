@@ -196,6 +196,7 @@ impl Page {
     pub fn write(&self) -> anyhow::Result<()> {
         match self.tree.to_value() {
             Some(value) => {
+                debug!("write value: {:?}", value);
                 providers::write(&self.write_path, &self.format, value)?;
             }
             None => bail!("no value to write"),
@@ -240,6 +241,17 @@ impl Page {
                 .set_name(node.name.clone())
                 .set_description(node.description.clone())
                 .set_is_removable(node.is_removable);
+
+                // self.tree
+                //     .set_modified(data_path[..data_path.len().checked_sub(1).unwrap_or(0)].iter());
+
+                self.data_path.sanitize_path(&self.tree);
+
+                if self.tree.is_valid() {
+                    self.write().unwrap();
+                } else {
+                    info!("tree is not valid")
+                }
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 debug!("{:?} {:?}", data_path, change_msg);
