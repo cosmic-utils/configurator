@@ -51,19 +51,27 @@ impl<'a> DefaultConflictError<'a> {
     }
 }
 
-pub fn assert_default_no_conflict<'a>(
+impl RustSchemaRoot {
+    pub fn assert_default_no_conflict<'a>(&'a self) -> Result<(), DefaultConflictError<'a>> {
+        let schema = self.resolve_schema(&self.schema)?;
+        assert_default_no_conflict(self, schema, None, true)
+    }
+}
+
+fn assert_default_no_conflict<'a>(
     root: &'a RustSchemaRoot,
     schema: &'a RustSchema,
     value: Option<&'a Value>,
+    first_call: bool,
 ) -> Result<(), DefaultConflictError<'a>> {
     match &schema.kind {
         RustSchemaKind::Option(schema) => {
             let schema = root.resolve_schema(schema)?;
 
             if let Some(Value::Null) = value {
-                assert_default_no_conflict(root, schema, None)?
+                assert_default_no_conflict(root, schema, None, false)?
             } else {
-                assert_default_no_conflict(root, schema, value)?
+                assert_default_no_conflict(root, schema, value, false)?
             }
         }
         RustSchemaKind::Array(array) => {
@@ -73,10 +81,10 @@ pub fn assert_default_no_conflict<'a>(
                 match value {
                     Some(Value::Array(values)) => {
                         for value in values {
-                            assert_default_no_conflict(root, schema, Some(value))?
+                            assert_default_no_conflict(root, schema, Some(value), false)?
                         }
                     }
-                    None => assert_default_no_conflict(root, schema, None)?,
+                    None => assert_default_no_conflict(root, schema, None, false)?,
                     _ => unreachable!(),
                 }
             }
@@ -87,9 +95,9 @@ pub fn assert_default_no_conflict<'a>(
 
                 match value {
                     Some(Value::Tuple(values)) => {
-                        assert_default_no_conflict(root, schema, Some(&values[i]))?
+                        assert_default_no_conflict(root, schema, Some(&values[i]), false)?
                     }
-                    None => assert_default_no_conflict(root, schema, None)?,
+                    None => assert_default_no_conflict(root, schema, None, false)?,
                     _ => unreachable!(),
                 }
             }
