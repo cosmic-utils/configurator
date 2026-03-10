@@ -236,7 +236,10 @@ impl Page {
                     schema,
                     &node.default,
                     &node.default,
-                );
+                )
+                .set_name(node.name.clone())
+                .set_description(node.description.clone())
+                .set_is_removable(node.is_removable);
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 debug!("{:?} {:?}", data_path, change_msg);

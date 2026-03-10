@@ -73,11 +73,8 @@ impl NodeContainer {
         }
     }
 
-    pub fn set_name(self, name: String) -> Self {
-        Self {
-            name: Some(name),
-            ..self
-        }
+    pub fn set_name(self, name: Option<String>) -> Self {
+        Self { name, ..self }
     }
 
     pub fn set_description(self, description: Option<String>) -> Self {

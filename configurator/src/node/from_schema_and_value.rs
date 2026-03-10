@@ -121,14 +121,14 @@ impl NodeContainer {
                                     ),
                                     final_field_default,
                                 )
-                                .set_name(field_name.to_owned())
+                                .set_name(Some(field_name.to_owned()))
                                 .set_description(field.description.to_owned())
                                 .set_default(final_field_default.clone()),
                             )
                         })
                         .collect(),
                 }))
-                .set_name(struct_.name.to_owned())
+                .set_name(Some(struct_.name.to_owned()))
                 .set_description(struct_.description.to_owned())
                 .set_default(default.if_not_empty(&struct_default).clone())
             }
