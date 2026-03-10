@@ -55,25 +55,72 @@ impl RustSchemaRoot {
     pub fn assert_default_no_conflict<'a>(&'a self) -> Result<(), DefaultConflictError<'a>> {
         let schema = self.resolve_schema(&self.schema)?;
 
+        assert_default_no_conflict(self, schema, ValueState::NotSet)
+    }
+}
 
-        assert_default_no_conflict(self, schema, None, true)
+#[derive(Clone, Copy)]
+enum ValueState<'a> {
+    Some(&'a Value),
+    None,
+    NotSet,
+}
+
+impl<'a> From<Option<&'a Value>> for ValueState<'a> {
+    fn from(value: Option<&'a Value>) -> Self {
+        match value {
+            Some(value) => ValueState::Some(value),
+            None => ValueState::None,
+        }
+    }
+}
+
+impl<'a> From<ValueState<'a>> for Option<&'a Value> {
+    fn from(value: ValueState<'a>) -> Self {
+        match value {
+            ValueState::Some(value) => Some(value),
+            ValueState::None => None,
+            ValueState::NotSet => panic!(),
+        }
+    }
+}
+
+impl<'a> From<&'a ValueState<'a>> for Option<&'a Value> {
+    fn from(value: &'a ValueState<'a>) -> Self {
+        match value {
+            ValueState::Some(value) => Some(value),
+            ValueState::None => None,
+            ValueState::NotSet => panic!(),
+        }
+    }
+}
+
+impl<'a> ValueState<'a> {
+    fn is_equal(&'a self, value: &'a Option<Value>) -> bool {
+        match (self, value) {
+            (ValueState::Some(v1), Some(v2)) => *v1 == v2,
+            (ValueState::None, None) => true,
+            (ValueState::NotSet, _) => true,
+            (ValueState::Some(value), None) => false,
+            (ValueState::None, Some(_)) => false,
+        }
     }
 }
 
 fn assert_default_no_conflict<'a>(
     root: &'a RustSchemaRoot,
     schema: &'a RustSchema,
-    value: Option<&'a Value>,
-    first_call: bool,
+    value: ValueState<'a>,
 ) -> Result<(), DefaultConflictError<'a>> {
     match &schema.kind {
         RustSchemaKind::Option(schema) => {
             let schema = root.resolve_schema(schema)?;
 
-            if let Some(Value::Null) = value {
-                assert_default_no_conflict(root, schema, None, false)?
+            if let ValueState::Some(Value::Null) = value {
+                // is it not set here ?
+                assert_default_no_conflict(root, schema, ValueState::NotSet)?
             } else {
-                assert_default_no_conflict(root, schema, value, false)?
+                assert_default_no_conflict(root, schema, value)?
             }
         }
         RustSchemaKind::Array(array) => {
@@ -81,13 +128,12 @@ fn assert_default_no_conflict<'a>(
                 let schema = root.resolve_schema(template)?;
 
                 match value {
-                    Some(Value::Array(values)) => {
+                    ValueState::Some(Value::Array(values)) => {
                         for value in values {
-                            assert_default_no_conflict(root, schema, Some(value), false)?
+                            assert_default_no_conflict(root, schema, ValueState::Some(value))?
                         }
                     }
-                    None => assert_default_no_conflict(root, schema, None, false)?,
-                    _ => unreachable!(),
+                    _ => assert_default_no_conflict(root, schema, value)?,
                 }
             }
         }
@@ -96,11 +142,10 @@ fn assert_default_no_conflict<'a>(
                 let schema = root.resolve_schema(schema)?;
 
                 match value {
-                    Some(Value::Tuple(values)) => {
-                        assert_default_no_conflict(root, schema, Some(&values[i]), false)?
+                    ValueState::Some(Value::Tuple(values)) => {
+                        assert_default_no_conflict(root, schema, ValueState::Some(&values[i]))?
                     }
-                    None => assert_default_no_conflict(root, schema, None, false)?,
-                    _ => unreachable!(),
+                    _ => assert_default_no_conflict(root, schema, value)?,
                 }
             }
         }
@@ -108,49 +153,49 @@ fn assert_default_no_conflict<'a>(
             let schema = root.resolve_schema(schema)?;
 
             match value {
-                Some(Value::Map(values)) => {
+                ValueState::Some(Value::Map(values)) => {
                     for value in values.values() {
-                        assert_default_no_conflict(root, schema, Some(value), false)?
+                        assert_default_no_conflict(root, schema, ValueState::Some(value))?
                     }
                 }
-                None => assert_default_no_conflict(root, schema, None, false)?,
-                _ => unreachable!(),
+                _ => assert_default_no_conflict(root, schema, value)?,
             }
         }
         RustSchemaKind::Struct(struct_) => {
-            if value != struct_.default.as_ref() {
+            if !value.is_equal(&struct_.default) {
                 return Err(DefaultConflictError::conflict(
                     format!("struct {}", struct_.name),
-                    value,
+                    value.into(),
                     struct_.default.as_ref(),
                 ));
             }
 
             for (field_name, field) in &struct_.fields {
-                match value {
-                    Some(Value::Struct(_, values)) => {
-                        let value = values.get(field_name);
+                let field_default = match &struct_.default {
+                    Some(struct_default) => {
+                        let (_, fields) = struct_default.as_struct().unwrap();
 
-                        if value != field.default.as_ref() {
-                            return Err(DefaultConflictError::conflict(
-                                format!("field {}.{}", struct_.name, field_name),
-                                value,
-                                struct_.default.as_ref(),
-                            ));
-                        }
-
-                        assert_default_no_conflict(root, schema, value, false)?
+                        fields.get(field_name)
                     }
-                    None => assert_default_no_conflict(root, schema, None, false)?,
-                    _ => unreachable!(),
+                    None => None,
+                };
+
+                if field_default != field.default.as_ref() {
+                    return Err(DefaultConflictError::conflict(
+                        format!("field {}.{}", struct_.name, field_name),
+                        field_default,
+                        struct_.default.as_ref(),
+                    ));
                 }
+
+                assert_default_no_conflict(root, schema, field_default.into())?
             }
         }
         RustSchemaKind::TupleStruct(tuple_struct) => {
-            if value != tuple_struct.default.as_ref() {
+            if !value.is_equal(&tuple_struct.default) {
                 return Err(DefaultConflictError::conflict(
                     format!("tuple {}", tuple_struct.name),
-                    value,
+                    value.into(),
                     tuple_struct.default.as_ref(),
                 ));
             }
@@ -158,11 +203,11 @@ fn assert_default_no_conflict<'a>(
             for (i, schema) in tuple_struct.fields.iter().enumerate() {
                 let schema = root.resolve_schema(schema)?;
 
-                match value {
+                match &tuple_struct.default {
                     Some(Value::Tuple(values)) => {
-                        assert_default_no_conflict(root, schema, Some(&values[i]), false)?
+                        assert_default_no_conflict(root, schema, Some(&values[i]).into())?
                     }
-                    None => assert_default_no_conflict(root, schema, None, false)?,
+                    None => assert_default_no_conflict(root, schema, ValueState::None)?,
                     _ => unreachable!(),
                 }
             }
@@ -176,23 +221,25 @@ fn assert_default_no_conflict<'a>(
                             let schema = root.resolve_schema(schema)?;
 
                             match value {
-                                Some(Value::EnumVariantTuple(_, values)) => {
+                                ValueState::Some(Value::EnumVariantTuple(name, values))
+                                    if &variant.name == name =>
+                                {
                                     assert_default_no_conflict(
                                         root,
                                         schema,
-                                        Some(&values[i]),
-                                        false,
+                                        ValueState::Some(&values[i]),
                                     )?
                                 }
-                                None => assert_default_no_conflict(root, schema, None, false)?,
-                                _ => {}
+                                _ => assert_default_no_conflict(root, schema, ValueState::NotSet)?,
                             }
                         }
                     }
                     EnumVariantKind::Struct(btree_map) => {
                         for (field_name, field) in btree_map {
                             match value {
-                                Some(Value::EnumVariantStruct(_, values)) => {
+                                ValueState::Some(Value::EnumVariantStruct(name, values))
+                                    if &variant.name == name =>
+                                {
                                     let value = values.get(field_name);
 
                                     if value != field.default.as_ref() {
@@ -206,10 +253,9 @@ fn assert_default_no_conflict<'a>(
                                         ));
                                     }
 
-                                    assert_default_no_conflict(root, schema, value, false)?
+                                    assert_default_no_conflict(root, schema, value.into())?
                                 }
-                                None => assert_default_no_conflict(root, schema, None, false)?,
-                                _ => {}
+                                _ => assert_default_no_conflict(root, schema, ValueState::NotSet)?,
                             }
                         }
                     }

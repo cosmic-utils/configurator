@@ -39,3 +39,13 @@ impl From<bool> for Value {
         Value::Bool(value)
     }
 }
+
+impl Value {
+    pub fn as_struct(&self) -> Option<(&String, &BTreeMap<String, Value>)> {
+        if let Value::Struct(name, fields) = self {
+            Some((name, fields))
+        } else {
+            None
+        }
+    }
+}
