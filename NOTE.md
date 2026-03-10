@@ -78,3 +78,8 @@ si on set modified pour tous les enfants:
 et est ce que ca rend set modified pour tous les enfants safe ?
 
 : non, il peut y avoir une struct qui avait un default definie plus haut qui ne sera plus definie.
+
+
+contraite:
+- tous doit avoir un default
+- chaque default doit être identique

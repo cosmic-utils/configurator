@@ -1,38 +1,81 @@
 use rust_schema2::{RustSchema, schema_for};
 use serde::{Deserialize, Serialize};
 
-#[derive(RustSchema, Deserialize, Serialize)]
-#[serde(default)]
-struct A {
-    b: B,
-}
+#[test]
+fn test() {
+    #[derive(RustSchema, Deserialize, Serialize)]
+    #[serde(default)]
+    struct A {
+        b: B,
+    }
 
-impl Default for A {
-    fn default() -> Self {
-        Self {
-            b: B {
-                s: String::from("hello1"),
-            },
+    impl Default for A {
+        fn default() -> Self {
+            Self {
+                b: B {
+                    s: String::from("hello1"),
+                },
+            }
         }
     }
-}
 
-#[derive(RustSchema, Deserialize, Serialize)]
-#[serde(default)]
-struct B {
-    s: String,
-}
+    #[derive(RustSchema, Deserialize, Serialize)]
+    #[serde(default)]
+    struct B {
+        s: String,
+    }
 
-impl Default for B {
-    fn default() -> Self {
-        Self {
-            s: Default::default(),
+    impl Default for B {
+        fn default() -> Self {
+            Self {
+                s: Default::default(),
+            }
         }
     }
+
+    let schema = schema_for::<A>();
+
+    let res = schema.assert_default_no_conflict();
+
+    if let Err(e) = &res {
+        println!("{e}");
+    }
+
+    res.unwrap_err();
 }
 
 #[test]
-fn test() {
+fn test2() {
+    #[derive(RustSchema, Deserialize, Serialize)]
+    #[serde(default)]
+    struct A {
+        b: B,
+    }
+
+    impl Default for A {
+        fn default() -> Self {
+            Self {
+                b: B {
+                    s: String::from("hello1"),
+                },
+            }
+        }
+    }
+
+    #[derive(RustSchema, Deserialize, Serialize)]
+    #[serde(default)]
+    struct B {
+        s: String,
+    }
+
+    impl Default for B {
+        fn default() -> Self {
+            Self {
+                s: String::from("hello1"),
+            }
+        }
+    }
+
     let schema = schema_for::<A>();
 
     let res = schema.assert_default_no_conflict();

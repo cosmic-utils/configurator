@@ -181,24 +181,30 @@ fn assert_default_no_conflict<'a>(
                     None => None,
                 };
 
-                fn compare_struct_field(n1: &Option<&Value>, n2: &Option<&Value>) -> bool {
+                fn compare_struct_field<'a>(
+                    n1: Option<&'a Value>,
+                    n2: Option<&'a Value>,
+                ) -> (bool, Option<&'a Value>) {
                     match (n1, n2) {
-                        (None, None) => true,
-                        (None, Some(_)) => false,
-                        (Some(_), None) => true,
-                        (Some(n1), Some(n2)) => n1 == n2,
+                        (None, None) => (true, None),
+                        (None, Some(_)) => (true, n2),
+                        (Some(_), None) => (true, n1),
+                        (Some(n1), Some(n2)) => (n1 == n2, Some(n1)),
                     }
                 }
 
-                if !compare_struct_field(&field_default_from_upper, &field.default.as_ref()) {
-                    return Err(DefaultConflictError::conflict(
-                        format!("field {}.{}", struct_.name, field_name),
-                        field_default_from_upper,
-                        field.default.as_ref(),
-                    ));
+                match compare_struct_field(field_default_from_upper, field.default.as_ref()) {
+                    (true, value) => {
+                        assert_default_no_conflict(root, schema, field_default_from_upper.into())?
+                    }
+                    (false, _) => {
+                        return Err(DefaultConflictError::conflict(
+                            format!("field {}.{}", struct_.name, field_name),
+                            field_default_from_upper,
+                            field.default.as_ref(),
+                        ));
+                    }
                 }
-
-                assert_default_no_conflict(root, schema, field_default_from_upper.into())?
             }
         }
         RustSchemaKind::TupleStruct(tuple_struct) => {
