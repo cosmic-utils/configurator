@@ -232,7 +232,7 @@ impl Page {
                 // todo: get the default value
                 // *node = NodeContainer::from_schema_and_value(&self.schema_root, schema, value);
 
-                self.tree.set_modified(&data_path[..data_path.len() - 1]);
+                // self.tree.set_modified(&data_path[..data_path.len() - 1]);
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
                 debug!("{:?} {:?}", data_path, change_msg);
