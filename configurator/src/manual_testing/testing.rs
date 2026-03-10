@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 /// Desc A
 struct A {
     /// Desc v
-    v: Vec<String>,
+    v: Vec<B>,
     /// Desc x
     x: String,
     /// Desc y
@@ -19,13 +19,18 @@ struct A {
 impl Default for A {
     fn default() -> Self {
         A {
-            v: vec!["hello1".into(), "hello2".into()],
+            v: vec![B { x: "hello1".into() }],
             x: String::default(),
             y: String::default(),
             z: String::default(),
             d: String::from("from default"),
         }
     }
+}
+
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
+struct B {
+    x: String,
 }
 
 #[test]
