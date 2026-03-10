@@ -194,9 +194,7 @@ fn assert_default_no_conflict<'a>(
                 }
 
                 match compare_struct_field(field_default_from_upper, field.default.as_ref()) {
-                    (true, value) => {
-                        assert_default_no_conflict(root, schema, field_default_from_upper.into())?
-                    }
+                    (true, value) => assert_default_no_conflict(root, schema, value.into())?,
                     (false, _) => {
                         return Err(DefaultConflictError::conflict(
                             format!("field {}.{}", struct_.name, field_name),
