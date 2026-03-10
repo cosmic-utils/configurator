@@ -171,6 +171,7 @@ fn assert_default_no_conflict<'a>(
             }
 
             for (field_name, field) in &struct_.fields {
+                let schema = root.resolve_schema(&field.schema)?;
                 let field_default_from_upper = match &struct_.default {
                     Some(struct_default) => {
                         let (_, fields) = struct_default.as_struct().unwrap();
@@ -245,6 +246,7 @@ fn assert_default_no_conflict<'a>(
                     }
                     EnumVariantKind::Struct(btree_map) => {
                         for (field_name, field) in btree_map {
+                            let schema = root.resolve_schema(&field.schema)?;
                             match value {
                                 ValueState::Some(Value::EnumVariantStruct(name, values))
                                     if &variant.name == name =>
