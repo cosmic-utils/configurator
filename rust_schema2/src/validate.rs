@@ -171,7 +171,7 @@ fn assert_default_no_conflict<'a>(
             }
 
             for (field_name, field) in &struct_.fields {
-                let field_default = match &struct_.default {
+                let field_default_from_upper = match &struct_.default {
                     Some(struct_default) => {
                         let (_, fields) = struct_default.as_struct().unwrap();
 
@@ -180,15 +180,24 @@ fn assert_default_no_conflict<'a>(
                     None => None,
                 };
 
-                if field_default != field.default.as_ref() {
+                fn compare_struct_field(n1: &Option<&Value>, n2: &Option<&Value>) -> bool {
+                    match (n1, n2) {
+                        (None, None) => true,
+                        (None, Some(_)) => false,
+                        (Some(_), None) => true,
+                        (Some(n1), Some(n2)) => n1 == n2,
+                    }
+                }
+
+                if !compare_struct_field(&field_default_from_upper, &field.default.as_ref()) {
                     return Err(DefaultConflictError::conflict(
                         format!("field {}.{}", struct_.name, field_name),
-                        field_default,
-                        struct_.default.as_ref(),
+                        field_default_from_upper,
+                        field.default.as_ref(),
                     ));
                 }
 
-                assert_default_no_conflict(root, schema, field_default.into())?
+                assert_default_no_conflict(root, schema, field_default_from_upper.into())?
             }
         }
         RustSchemaKind::TupleStruct(tuple_struct) => {

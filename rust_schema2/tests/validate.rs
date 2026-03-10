@@ -18,6 +18,7 @@ impl Default for A {
 }
 
 #[derive(RustSchema, Deserialize, Serialize)]
+#[serde(default)]
 struct B {
     s: String,
 }
