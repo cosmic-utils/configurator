@@ -19,7 +19,7 @@ struct A {
 impl Default for A {
     fn default() -> Self {
         A {
-            v: Vec::new(),
+            v: vec!["hello1".into(), "hello2".into()],
             x: String::default(),
             y: String::default(),
             z: String::default(),

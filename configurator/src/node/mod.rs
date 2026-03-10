@@ -31,7 +31,7 @@ pub struct NodeContainer {
     pub description: Option<String>,
     pub modified: bool,
     pub is_removable: bool,
-    pub default: Option<Value>,
+    pub default: Value,
     pub node: Node,
 }
 
@@ -69,7 +69,7 @@ impl NodeContainer {
             name: None,
             description: None,
             is_removable: false,
-            default: None,
+            default: Value::Empty,
         }
     }
 
@@ -94,7 +94,7 @@ impl NodeContainer {
         }
     }
 
-    pub fn set_default(self, default: Option<Value>) -> Self {
+    pub fn set_default(self, default: Value) -> Self {
         Self { default, ..self }
     }
 

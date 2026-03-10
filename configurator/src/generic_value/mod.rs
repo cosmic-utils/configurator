@@ -76,6 +76,13 @@ impl Value {
     pub fn is_empty(&self) -> bool {
         self == &Value::Empty
     }
+    pub fn is_not_empty(&self) -> bool {
+        self != &Value::Empty
+    }
+
+    pub fn if_not_empty<'a>(&'a self, fallback: &'a Value) -> &'a Value {
+        self.is_not_empty().then_some(self).unwrap_or(fallback)
+    }
 
     pub fn is_unit(&self) -> bool {
         self == &Value::Unit

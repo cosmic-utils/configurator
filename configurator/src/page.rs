@@ -120,6 +120,7 @@ impl Page {
             &schema_root,
             schema_root.resolve_schema(&schema_root.schema).unwrap(),
             &full_config,
+            &system_config,
         );
 
         tree.set_modified_from_value(&user_config);
@@ -182,6 +183,7 @@ impl Page {
                 .resolve_schema(&self.schema_root.schema)
                 .unwrap(),
             &self.full_config,
+            &self.system_config,
         );
 
         self.tree.set_modified_from_value(&self.user_config);
@@ -232,7 +234,8 @@ impl Page {
                 *node = NodeContainer::from_schema_and_value(
                     &self.schema_root,
                     schema,
-                    node.default.as_ref().unwrap_or(&Value::Empty),
+                    &node.default,
+                    &node.default,
                 );
             }
             PageMsg::ChangeMsg(data_path, change_msg) => {
@@ -256,9 +259,12 @@ impl Page {
                                 .unwrap()
                                 .remove(data.unwrap_indice());
 
+                            // could cause problem if a children doesn't have default
                             for n in node_array.value.as_mut().unwrap() {
                                 n.modified = true;
                             }
+
+                            node.modified = true;
                         }
                         _ => panic!(),
                     },
@@ -279,6 +285,7 @@ impl Page {
                         let mut new_node = NodeContainer::from_schema_and_value(
                             &self.schema_root,
                             template,
+                            &Value::Empty,
                             &Value::Empty,
                         )
                         .set_is_removable(true);
