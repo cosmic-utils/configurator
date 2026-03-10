@@ -1,41 +1,61 @@
 use crate::*;
 
 #[derive(Debug)]
-pub enum DefaultConflictError {
+pub enum DefaultConflictError<'a> {
     UnknownSchema(ResolveSchemaError),
-    Conflict(String),
+    Conflict {
+        id: String,
+        upper_default: Option<&'a Value>,
+        actual_default: Option<&'a Value>,
+    },
 }
 
-impl From<ResolveSchemaError> for DefaultConflictError {
+impl From<ResolveSchemaError> for DefaultConflictError<'_> {
     fn from(value: ResolveSchemaError) -> Self {
         DefaultConflictError::UnknownSchema(value)
     }
 }
 
-impl std::fmt::Display for DefaultConflictError {
+impl std::fmt::Display for DefaultConflictError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             DefaultConflictError::UnknownSchema(err) => err.fmt(f),
-            DefaultConflictError::Conflict(err) => {
-                write!(f, "{}", err)
+            DefaultConflictError::Conflict {
+                id,
+                upper_default,
+                actual_default,
+            } => {
+                write!(
+                    f,
+                    "{}: Upper default is {:?} but his default is {:?}",
+                    id, upper_default, actual_default
+                )
             }
         }
     }
 }
 
-impl std::error::Error for DefaultConflictError {}
+impl std::error::Error for DefaultConflictError<'_> {}
 
-impl DefaultConflictError {
-    fn conflict(error: impl Into<String>) -> Self {
-        Self::Conflict(error.into())
+impl<'a> DefaultConflictError<'a> {
+    fn conflict(
+        id: impl Into<String>,
+        upper: Option<&'a Value>,
+        default: Option<&'a Value>,
+    ) -> Self {
+        Self::Conflict {
+            id: id.into(),
+            upper_default: upper,
+            actual_default: default,
+        }
     }
 }
 
-pub fn assert_default_no_conflict(
-    root: &RustSchemaRoot,
-    schema: &RustSchema,
-    value: Option<&Value>,
-) -> Result<(), DefaultConflictError> {
+pub fn assert_default_no_conflict<'a>(
+    root: &'a RustSchemaRoot,
+    schema: &'a RustSchema,
+    value: Option<&'a Value>,
+) -> Result<(), DefaultConflictError<'a>> {
     match &schema.kind {
         RustSchemaKind::Option(schema) => {
             let schema = root.resolve_schema(schema)?;
@@ -89,10 +109,11 @@ pub fn assert_default_no_conflict(
         }
         RustSchemaKind::Struct(struct_) => {
             if value != struct_.default.as_ref() {
-                return Err(DefaultConflictError::conflict(format!(
-                    "struct {}, upper default value is {:?} but the struct default is {:?}",
-                    struct_.name, value, struct_.default
-                )));
+                return Err(DefaultConflictError::conflict(
+                    format!("struct {}", struct_.name),
+                    value,
+                    struct_.default.as_ref(),
+                ));
             }
 
             for (field_name, field) in &struct_.fields {
@@ -101,10 +122,11 @@ pub fn assert_default_no_conflict(
                         let value = values.get(field_name);
 
                         if value != field.default.as_ref() {
-                            return Err(DefaultConflictError::conflict(format!(
-                                "field {}.{}, upper default value is {:?} but the field default is {:?}",
-                                struct_.name, field_name, value, struct_.default
-                            )));
+                            return Err(DefaultConflictError::conflict(
+                                format!("field {}.{}", struct_.name, field_name),
+                                value,
+                                struct_.default.as_ref(),
+                            ));
                         }
 
                         assert_default_no_conflict(root, schema, value)?
@@ -116,10 +138,11 @@ pub fn assert_default_no_conflict(
         }
         RustSchemaKind::TupleStruct(tuple_struct) => {
             if value != tuple_struct.default.as_ref() {
-                return Err(DefaultConflictError::conflict(format!(
-                    "tuple {}, upper default value is {:?} but the tuple default is {:?}",
-                    tuple_struct.name, value, tuple_struct.default
-                )));
+                return Err(DefaultConflictError::conflict(
+                    format!("tuple {}", tuple_struct.name),
+                    value,
+                    tuple_struct.default.as_ref(),
+                ));
             }
 
             for (i, schema) in tuple_struct.fields.iter().enumerate() {
@@ -158,20 +181,20 @@ pub fn assert_default_no_conflict(
                                     let value = values.get(field_name);
 
                                     if value != field.default.as_ref() {
-                                        return Err(DefaultConflictError::conflict(format!(
-                                            "field {}.{}.{}: upper default value is {:?} but the field default is {:?}",
-                                            enum_.name,
-                                            variant.name,
-                                            field_name,
+                                        return Err(DefaultConflictError::conflict(
+                                            format!(
+                                                "field {}.{}.{}",
+                                                enum_.name, variant.name, field_name,
+                                            ),
                                             value,
-                                            field.default
-                                        )));
+                                            field.default.as_ref(),
+                                        ));
                                     }
 
                                     assert_default_no_conflict(root, schema, value)?
                                 }
                                 None => assert_default_no_conflict(root, schema, None)?,
-                                _ => unreachable!(),
+                                _ => {}
                             }
                         }
                     }
