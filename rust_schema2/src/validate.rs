@@ -54,6 +54,8 @@ impl<'a> DefaultConflictError<'a> {
 impl RustSchemaRoot {
     pub fn assert_default_no_conflict<'a>(&'a self) -> Result<(), DefaultConflictError<'a>> {
         let schema = self.resolve_schema(&self.schema)?;
+
+
         assert_default_no_conflict(self, schema, None, true)
     }
 }
@@ -108,10 +110,10 @@ fn assert_default_no_conflict<'a>(
             match value {
                 Some(Value::Map(values)) => {
                     for value in values.values() {
-                        assert_default_no_conflict(root, schema, Some(value))?
+                        assert_default_no_conflict(root, schema, Some(value), false)?
                     }
                 }
-                None => assert_default_no_conflict(root, schema, None)?,
+                None => assert_default_no_conflict(root, schema, None, false)?,
                 _ => unreachable!(),
             }
         }
@@ -137,9 +139,9 @@ fn assert_default_no_conflict<'a>(
                             ));
                         }
 
-                        assert_default_no_conflict(root, schema, value)?
+                        assert_default_no_conflict(root, schema, value, false)?
                     }
-                    None => assert_default_no_conflict(root, schema, None)?,
+                    None => assert_default_no_conflict(root, schema, None, false)?,
                     _ => unreachable!(),
                 }
             }
@@ -158,9 +160,9 @@ fn assert_default_no_conflict<'a>(
 
                 match value {
                     Some(Value::Tuple(values)) => {
-                        assert_default_no_conflict(root, schema, Some(&values[i]))?
+                        assert_default_no_conflict(root, schema, Some(&values[i]), false)?
                     }
-                    None => assert_default_no_conflict(root, schema, None)?,
+                    None => assert_default_no_conflict(root, schema, None, false)?,
                     _ => unreachable!(),
                 }
             }
@@ -175,9 +177,14 @@ fn assert_default_no_conflict<'a>(
 
                             match value {
                                 Some(Value::EnumVariantTuple(_, values)) => {
-                                    assert_default_no_conflict(root, schema, Some(&values[i]))?
+                                    assert_default_no_conflict(
+                                        root,
+                                        schema,
+                                        Some(&values[i]),
+                                        false,
+                                    )?
                                 }
-                                None => assert_default_no_conflict(root, schema, None)?,
+                                None => assert_default_no_conflict(root, schema, None, false)?,
                                 _ => {}
                             }
                         }
@@ -199,9 +206,9 @@ fn assert_default_no_conflict<'a>(
                                         ));
                                     }
 
-                                    assert_default_no_conflict(root, schema, value)?
+                                    assert_default_no_conflict(root, schema, value, false)?
                                 }
-                                None => assert_default_no_conflict(root, schema, None)?,
+                                None => assert_default_no_conflict(root, schema, None, false)?,
                                 _ => {}
                             }
                         }
