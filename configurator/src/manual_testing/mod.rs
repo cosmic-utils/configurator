@@ -1,4 +1,9 @@
-use std::{fmt::Debug, fs, path::Path, str::FromStr};
+use std::{
+    fmt::Debug,
+    fs::{self, create_dir_all},
+    path::Path,
+    str::FromStr,
+};
 
 use configurator_utils::ConfigFormat;
 use rust_schema2::RustSchemaTrait;
@@ -6,14 +11,33 @@ use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
 
 use crate::node::NodeContainer;
 
+mod testing;
 mod testing1;
 mod testing2;
 
 fn get_schema<C: RustSchemaTrait>(name: &str) -> String {
     let config_path = format!("{}/test_configs/{}", env!("CARGO_MANIFEST_DIR"), name);
 
+    let system_path = format!("{config_path}/system");
+    let home_path = format!("{config_path}/home");
+    let write_path = format!("{config_path}/write");
+
+    if !fs::exists(&system_path).unwrap() {
+        fs::create_dir_all(&system_path).unwrap();
+    }
+
+    if !fs::exists(&home_path).unwrap() {
+        fs::create_dir_all(&home_path).unwrap();
+    }
+
+    if !fs::exists(&write_path).unwrap() {
+        fs::create_dir_all(&write_path).unwrap();
+    }
+
     configurator_schema::SchemaGenerator::new()
-        .source_home_path(&config_path)
+        .source_paths([&system_path])
+        .source_home_path(&home_path)
+        .write_path(&write_path)
         .format(ConfigFormat::CosmicRon)
         .generate::<C>()
         .unwrap()
@@ -29,9 +53,9 @@ pub fn print_node_container<C: RustSchemaTrait>(name: &str) {
     let content = get_schema::<C>(name);
 
     let json_value = json::Value::from_str(&content).unwrap();
-    let tree = NodeContainer::from_rust_schema(&json::from_value(json_value).unwrap()).unwrap();
+    // let tree = NodeContainer::from_rust_schema(&json::from_value(json_value).unwrap()).unwrap();
 
-    println!("{:#?}", tree);
+    // println!("{:#?}", tree);
 }
 
 pub fn gen_schema<C: RustSchemaTrait>(name: &str) {
@@ -62,6 +86,12 @@ pub fn print_ron<C: Default + Serialize>() {
 
 pub fn from_ron<C: Debug + DeserializeOwned>(ron: &str) {
     let e: C = ron::from_str(ron).unwrap();
+
+    println!("{:?}", e);
+}
+
+pub fn from_json<C: Debug + DeserializeOwned>(json: &str) {
+    let e: C = json::from_str(json).unwrap();
 
     println!("{:?}", e);
 }

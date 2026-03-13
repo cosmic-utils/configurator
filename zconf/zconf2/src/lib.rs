@@ -14,24 +14,16 @@ pub struct ConfigManager<S> {
 }
 
 impl<S> ConfigManager<S> {
-    pub fn new(
-        qualifier: &str,
-        organization: &str,
-        application: &str,
-    ) -> anyhow::Result<ConfigManager<S>>
+    pub fn from_path(settings_file_path: impl Into<PathBuf>) -> anyhow::Result<ConfigManager<S>>
     where
-        S: Default + DeserializeOwned + Serialize,
+        S: Default + DeserializeOwned,
     {
-        let default_config_dir_path = ProjectDirs::from(qualifier, organization, application)
-            .unwrap()
-            .config_dir()
-            .to_path_buf();
+        let settings_file_path: PathBuf = settings_file_path.into();
 
-        if !default_config_dir_path.exists() {
-            fs::create_dir_all(&default_config_dir_path)?;
+        let parent = settings_file_path.parent().expect("parent");
+        if !parent.exists() {
+            fs::create_dir_all(parent)?;
         }
-
-        let settings_file_path = default_config_dir_path.join(format!("{}.json", application));
 
         let settings = if !settings_file_path.exists() {
             S::default()
@@ -49,6 +41,23 @@ impl<S> ConfigManager<S> {
             settings_file_path,
             settings,
         })
+    }
+    pub fn new(
+        qualifier: &str,
+        organization: &str,
+        application: &str,
+    ) -> anyhow::Result<ConfigManager<S>>
+    where
+        S: Default + DeserializeOwned,
+    {
+        let default_config_dir_path = ProjectDirs::from(qualifier, organization, application)
+            .unwrap()
+            .config_dir()
+            .to_path_buf();
+
+        let settings_file_path = default_config_dir_path.join(format!("{}.json", application));
+
+        Self::from_path(settings_file_path)
     }
 
     fn settings_file_path(&self, name: &str) -> &PathBuf {

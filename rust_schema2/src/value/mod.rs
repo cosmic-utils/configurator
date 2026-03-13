@@ -11,6 +11,7 @@ pub use ser::*;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum Value {
     Unit,
+    // todo: use option ?
     Null,
     Bool(bool),
     Number(Number),
@@ -36,5 +37,15 @@ impl From<&str> for Value {
 impl From<bool> for Value {
     fn from(value: bool) -> Self {
         Value::Bool(value)
+    }
+}
+
+impl Value {
+    pub fn as_struct(&self) -> Option<(&String, &BTreeMap<String, Value>)> {
+        if let Value::Struct(name, fields) = self {
+            Some((name, fields))
+        } else {
+            None
+        }
     }
 }

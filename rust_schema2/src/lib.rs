@@ -10,4 +10,5 @@ pub use generate::{RustSchemaTrait, SchemaGenerator, schema_for};
 
 mod generate;
 mod rust_schema_impls;
+mod validate;
 mod value;

@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Display};
 
 use cosmic::{
     Element,
@@ -6,10 +6,10 @@ use cosmic::{
     iced_widget::{pick_list, toggler},
     prelude::CollectionWidget,
     widget::{
-        button, column, container, horizontal_space, mouse_area, row, scrollable,
+        button, column, container, mouse_area, row, scrollable,
         segmented_button::Entity,
         settings::section,
-        text, text_input,
+        space, text, text_input,
         tooltip::{Position, tooltip},
     },
 };
@@ -20,9 +20,8 @@ use crate::{
     icon, icon_button,
     message::{AppMsg, ChangeMsg, PageMsg},
     node::{
-        Node, NodeArray, NodeBool, NodeContainer, NodeEnum, NodeNumber, NodeObject, NodeString,
-        NodeValue, NumberValue,
-        data_path::{DataPath, DataPathType},
+        self, Node, NodeArray, NodeContainer, NodeString, NodeStruct,
+        data_path::{self, DataPath, DataPathType, DataPathTypeCopy},
     },
     page::Page,
 };
@@ -76,18 +75,20 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
     let data_path = page.data_path.current();
 
-    let node = page.tree.get_at(data_path.iter()).unwrap();
+    let node = page.tree.get_at(Box::new(data_path.iter())).unwrap();
 
     let content = match &node.node {
-        Node::Bool(node_bool) => view_bool(data_path, node, node_bool),
+        // Node::Bool(node_bool) => view_bool(data_path, node, node_bool),
         Node::String(node_string) => view_string(data_path, node, node_string),
-        Node::Number(node_number) => view_number(data_path, node, node_number),
-        Node::Object(node_object) => view_object(data_path, node, node_object),
-        Node::Enum(node_enum) => view_enum(data_path, node, node_enum),
-        Node::Value(node_value) => view_value(data_path, node, node_value),
-        Node::Unit => text("null").into(),
+        // Node::Number(node_number) => view_number(data_path, node, node_number),
+        // Node::Object(node_object) => view_object(data_path, node, node_object),
+        // Node::Enum(node_enum) => view_enum(data_path, node, node_enum),
+        // Node::Value(node_value) => view_value(data_path, node, node_value),
+        // Node::Unit => text("null").into(),
+        // Node::Array(node_array) => view_array(data_path, node, node_array),
+        Node::Struct(node_struct) => view_struct(page, data_path, node, node_struct),
+        // Node::TupleStruct(_) => todo!(),
         Node::Array(node_array) => view_array(data_path, node, node_array),
-        Node::Any => todo!(),
     };
 
     column()
@@ -100,7 +101,7 @@ fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
 fn no_value_defined_warning_icon<'a, M: 'a>() -> Element<'a, M> {
     tooltip(
         icon!("report24").class(cosmic::theme::Svg::custom(|e| cosmic::widget::svg::Style {
-            color: Some(Color::from_rgb(236.0, 194.0, 58.0)),
+            color: Some(Color::from_rgb(236.0 / 255.0, 194.0 / 255.0, 58.0 / 255.0)),
         })),
         text("You need to define some values that have no default!"),
         Position::Top,
@@ -118,155 +119,196 @@ fn this_will_remove_all_children<'a, M: 'a>() -> Element<'a, M> {
 }
 
 fn node_list<'a>(
-    name: DataPathType,
-    inner_node: &'a NodeContainer,
+    name: DataPathTypeCopy<'a>,
     data_path: &'a [DataPathType],
+    node: &'a NodeContainer,
 ) -> Element<'a, PageMsg> {
-    fn append_data_path(data_path: &[DataPathType], field: &DataPathType) -> Vec<DataPathType> {
-        let mut new_vec = Vec::with_capacity(data_path.len() + 1);
-        new_vec.extend_from_slice(data_path);
-        new_vec.push(field.clone());
-        new_vec
-    }
-
-    let name_cloned = name.clone();
-
     mouse_area(
         row()
             .align_y(Alignment::Center)
-            .push(text(format!("{}", name)))
-            .push_maybe(
-                if inner_node.removable
-                    && let DataPathType::Name(name) = &name
-                {
-                    Some(
-                        button::text("edit key")
-                            .on_press(PageMsg::DialogRenameKey(data_path.to_vec(), name.clone())),
-                    )
-                } else {
-                    None
-                },
+            .push(
+                column()
+                    .push(text(format!("{}", name)))
+                    .push_maybe(node.description.as_ref().map(text::caption)),
             )
-            .push(horizontal_space())
-            .push_maybe(match &inner_node.node {
-                Node::Unit => Some(Element::from(text("null"))),
-                Node::Bool(node_bool) => Some(
-                    toggler(node_bool.value.unwrap_or_default())
-                        .on_toggle(move |value| {
+            // .push_maybe(
+            //     if inner_node.removable
+            //         && let DataPathType::Name(name) = &name
+            //     {
+            //         Some(
+            //             button::text("edit key")
+            //                 .on_press(PageMsg::DialogRenameKey(data_path.to_vec(), name.clone())),
+            //         )
+            //     } else {
+            //         None
+            //     },
+            // )
+            .push(space::horizontal())
+            .push_maybe(match &node.node {
+                // Node::Unit => Some(Element::from(text("null"))),
+                Node::String(node_string) => Some({
+                    text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
+                        move |value| {
                             PageMsg::ChangeMsg(
-                                append_data_path(data_path, &name),
-                                ChangeMsg::ChangeBool(value),
+                                data_path::push_one(data_path, name),
+                                ChangeMsg::ChangeString(value),
                             )
-                        })
-                        .into(),
-                ),
-
-                Node::Enum(node_enum) => {
-                    #[derive(Eq, Clone)]
-                    struct Key<'a> {
-                        pub pos: usize,
-                        pub value: Cow<'a, str>,
-                    }
-
-                    impl PartialEq for Key<'_> {
-                        fn eq(&self, other: &Self) -> bool {
-                            self.pos == other.pos
-                        }
-                    }
-
-                    #[allow(clippy::to_string_trait_impl)]
-                    impl ToString for Key<'_> {
-                        fn to_string(&self) -> String {
-                            self.value.to_string()
-                        }
-                    }
-
-                    Some(
-                        row()
-                            .push_maybe(node_enum.value.map(|pos| {
-                                text(
-                                    node_to_str(&node_enum.nodes[pos])
-                                        .unwrap_or(Cow::Owned(pos.to_string())),
-                                )
-                            }))
-                            .push(pick_list(
-                                node_enum
-                                    .nodes
-                                    .iter()
-                                    .enumerate()
-                                    .map(|(pos, node)| Key {
-                                        pos,
-                                        value: node_to_str(node)
-                                            .unwrap_or(Cow::Owned(pos.to_string())),
-                                    })
-                                    .collect::<Vec<_>>(),
-                                node_enum.value.map(|pos| Key {
-                                    pos,
-                                    value: Cow::Borrowed(""),
-                                }),
-                                move |key| {
-                                    PageMsg::ChangeMsg(
-                                        append_data_path(data_path, &name),
-                                        ChangeMsg::ChangeEnum(key.pos),
-                                    )
-                                },
-                            ))
-                            .align_y(alignment::Vertical::Center)
-                            .into(),
+                        },
                     )
-                }
+                }),
 
+                // Node::Bool(node_bool) => Some(
+                //     toggler(node_bool.value.unwrap_or_default())
+                //         .on_toggle(move |value| {
+                //             PageMsg::ChangeMsg(
+                //                 append_data_path(data_path, &name),
+                //                 ChangeMsg::ChangeBool(value),
+                //             )
+                //         })
+                //         .into(),
+                // ),
+                // Node::Enum(node_enum) => {
+                //     #[derive(Eq, Clone)]
+                //     struct Key<'a> {
+                //         pub pos: usize,
+                //         pub value: Cow<'a, str>,
+                //     }
+                //     impl PartialEq for Key<'_> {
+                //         fn eq(&self, other: &Self) -> bool {
+                //             self.pos == other.pos
+                //         }
+                //     }
+                //     #[allow(clippy::to_string_trait_impl)]
+                //     impl ToString for Key<'_> {
+                //         fn to_string(&self) -> String {
+                //             self.value.to_string()
+                //         }
+                //     }
+                //     Some(
+                //         row()
+                //             .push_maybe(node_enum.value.map(|pos| {
+                //                 text(
+                //                     node_to_str(&node_enum.nodes[pos])
+                //                         .unwrap_or(Cow::Owned(pos.to_string())),
+                //                 )
+                //             }))
+                //             .push(pick_list(
+                //                 node_enum
+                //                     .nodes
+                //                     .iter()
+                //                     .enumerate()
+                //                     .map(|(pos, node)| Key {
+                //                         pos,
+                //                         value: node_to_str(node)
+                //                             .unwrap_or(Cow::Owned(pos.to_string())),
+                //                     })
+                //                     .collect::<Vec<_>>(),
+                //                 node_enum.value.map(|pos| Key {
+                //                     pos,
+                //                     value: Cow::Borrowed(""),
+                //                 }),
+                //                 move |key| {
+                //                     PageMsg::ChangeMsg(
+                //                         append_data_path(data_path, &name),
+                //                         ChangeMsg::ChangeEnum(key.pos),
+                //                     )
+                //                 },
+                //             ))
+                //             .align_y(alignment::Vertical::Center)
+                //             .into(),
+                //     )
+                // }
                 _ => None,
             })
-            .push_maybe(if !inner_node.is_valid() {
-                Some(no_value_defined_warning_icon())
-            } else {
-                None
-            })
-            .push_maybe(if inner_node.removable {
-                Some(icon_button!("close24").on_press(PageMsg::ChangeMsg(
+            .push_maybe((!node.is_valid()).then(|| no_value_defined_warning_icon()))
+            .push_maybe(node.is_removable.then(|| {
+                icon_button!("close24").on_press(PageMsg::ChangeMsg(
                     data_path.to_vec(),
-                    ChangeMsg::Remove(name_cloned.clone()),
-                )))
-            } else {
-                None
-            }),
+                    ChangeMsg::Remove(name.into()),
+                ))
+            })),
     )
-    .on_press(PageMsg::OpenDataPath(name_cloned))
+    .on_press(PageMsg::OpenDataPath(name.into()))
     .into()
 }
 
-fn view_object<'a>(
+// fn view_object<'a>(
+//     data_path: &'a [DataPathType],
+//     node: &'a NodeContainer,
+//     node_object: &'a NodeObject,
+// ) -> Element<'a, PageMsg> {
+//     column()
+//         .push_maybe(
+//             node.description
+//                 .as_ref()
+//                 .map(|desc| section().title("Description").add(text(desc))),
+//         )
+//         .push(
+//             section()
+//                 .title("Values")
+//                 .extend(node_object.nodes.iter().map(|(name, inner_node)| {
+//                     node_list(
+//                         DataPathType::Name(name.clone()),
+//                         None,
+//                         inner_node,
+//                         data_path,
+//                     )
+//                 })),
+//         )
+//         .push_maybe(node_object.template.as_ref().map(|_| {
+//             icon_button!("add24").on_press(PageMsg::DialogAddNewNodeToObject(data_path.to_vec()))
+//         }))
+//         .push_maybe(node.default.as_ref().map(|default| {
+//             section().title("Default").add(
+//                 row()
+//                     .push(horizontal_space())
+//                     .push(
+//                         // xxx: the on_press need to be lazy
+//                         button::text("reset to default").on_press(PageMsg::ChangeMsg(
+//                             data_path.to_vec(),
+//                             ChangeMsg::ApplyDefault,
+//                         )),
+//                     )
+//                     .push(this_will_remove_all_children()),
+//             )
+//         }))
+//         .spacing(SPACING)
+//         .into()
+// }
+
+fn view_struct<'a>(
+    page: &'a Page,
     data_path: &'a [DataPathType],
     node: &'a NodeContainer,
-    node_object: &'a NodeObject,
+    node_struct: &'a NodeStruct,
 ) -> Element<'a, PageMsg> {
     column()
+        .push_maybe(
+            node.name
+                .as_ref()
+                .map(|name| section().title("Name").add(text(name))),
+        )
         .push_maybe(
             node.description
                 .as_ref()
                 .map(|desc| section().title("Description").add(text(desc))),
         )
         .push(
-            section()
-                .title("Values")
-                .extend(node_object.nodes.iter().map(|(name, inner_node)| {
-                    node_list(DataPathType::Name(name.clone()), inner_node, data_path)
-                })),
+            section().title("Values").extend(
+                node_struct
+                    .fields
+                    .iter()
+                    .map(|(name, field)| node_list(DataPathTypeCopy::Name(name), data_path, field)),
+            ),
         )
-        .push_maybe(node_object.template.as_ref().map(|_| {
-            icon_button!("add24").on_press(PageMsg::DialogAddNewNodeToObject(data_path.to_vec()))
-        }))
-        .push_maybe(node.default.as_ref().map(|default| {
+        .push_maybe(node.default.is_not_empty().then(|| {
             section().title("Default").add(
                 row()
-                    .push(horizontal_space())
+                    .push(space::horizontal())
                     .push(
                         // xxx: the on_press need to be lazy
-                        button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                            data_path.to_vec(),
-                            ChangeMsg::ApplyDefault,
-                        )),
+                        button::text("reset to default")
+                            .on_press(PageMsg::ApplyDefault(data_path.to_vec())),
                     )
                     .push(this_will_remove_all_children()),
             )
@@ -289,30 +331,44 @@ fn view_array<'a>(
         .push(
             section().title("Values").extend(
                 node_array
-                    .values
+                    .value
                     .as_ref()
                     .map_or(&[] as &[NodeContainer], |v| v.as_slice())
                     .iter()
                     .enumerate()
                     .map(|(pos, inner_node)| {
-                        node_list(DataPathType::Indice(pos), inner_node, data_path)
+                        node_list(DataPathTypeCopy::Indice(pos), data_path, inner_node)
                     }),
             ),
         )
-        .push(icon_button!("add24").on_press(PageMsg::ChangeMsg(
-            data_path.to_vec(),
-            ChangeMsg::AddNewNodeToArray,
-        )))
-        .push_maybe(node.default.as_ref().map(|default| {
+        .push_maybe(
+            (node_array.has_template
+                && node_array
+                    .max
+                    .map(|max| {
+                        (max as usize)
+                            < node_array
+                                .value
+                                .as_ref()
+                                .map(|value| value.len())
+                                .unwrap_or(0)
+                    })
+                    .unwrap_or(true))
+            .then(|| {
+                icon_button!("add24").on_press(PageMsg::ChangeMsg(
+                    data_path.to_vec(),
+                    ChangeMsg::AddNewNodeToArray,
+                ))
+            }),
+        )
+        .push_maybe(node.default.is_not_empty().then(|| {
             section().title("Default").add(
                 row()
-                    .push(horizontal_space())
+                    .push(space::horizontal())
                     .push(
                         // xxx: the on_press need to be lazy
-                        button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                            data_path.to_vec(),
-                            ChangeMsg::ApplyDefault,
-                        )),
+                        button::text("reset to default")
+                            .on_press(PageMsg::ApplyDefault(data_path.to_vec())),
                     )
                     .push(this_will_remove_all_children()),
             )
@@ -321,141 +377,141 @@ fn view_array<'a>(
         .into()
 }
 
-fn view_enum<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_enum: &'a NodeEnum,
-) -> Element<'a, PageMsg> {
-    column()
-        .push_maybe(
-            node.description
-                .as_ref()
-                .map(|desc| section().title("Description").add(text(desc))),
-        )
-        .push(
-            section()
-                .title("Values")
-                .extend(node_enum.nodes.iter().enumerate().map(|(pos, inner_node)| {
-                    container(cosmic::widget::radio(
-                        {
-                            let is_active = if let Some(active_pos) = node_enum.value
-                                && active_pos == pos
-                            {
-                                Some(())
-                            } else {
-                                None
-                            };
+// fn view_enum<'a>(
+//     data_path: &'a [DataPathType],
+//     node: &'a NodeContainer,
+//     node_enum: &'a NodeEnum,
+// ) -> Element<'a, PageMsg> {
+//     column()
+//         .push_maybe(
+//             node.description
+//                 .as_ref()
+//                 .map(|desc| section().title("Description").add(text(desc))),
+//         )
+//         .push(
+//             section()
+//                 .title("Values")
+//                 .extend(node_enum.nodes.iter().enumerate().map(|(pos, inner_node)| {
+//                     container(cosmic::widget::radio(
+//                         {
+//                             let is_active = if let Some(active_pos) = node_enum.value
+//                                 && active_pos == pos
+//                             {
+//                                 Some(())
+//                             } else {
+//                                 None
+//                             };
 
-                            row()
-                                .push(text(
-                                    node_to_str(inner_node).unwrap_or(Cow::Owned(pos.to_string())),
-                                ))
-                                .push(horizontal_space())
-                                .push_maybe(is_active.map(|_| {
-                                    button::text("modify")
-                                        .on_press(PageMsg::OpenDataPath(DataPathType::Indice(pos)))
-                                }))
-                                .push_maybe(is_active.and_then(|_| {
-                                    if !inner_node.is_valid() {
-                                        Some(no_value_defined_warning_icon())
-                                    } else {
-                                        None
-                                    }
-                                }))
-                                .align_y(Alignment::Center)
-                        },
-                        pos,
-                        node_enum.value,
-                        |pos| PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeEnum(pos)),
-                    ))
-                    .padding(5)
-                })),
-        )
-        .push_maybe(node.default.as_ref().map(|default| {
-            section()
-                .title("Default")
-                .add(
-                    container(
-                        row()
-                            .push(text("Default value"))
-                            .push(horizontal_space())
-                            .push(text(
-                                value_to_str(default)
-                                    .unwrap_or(Cow::Borrowed("Value not displayable")),
-                            )),
-                    )
-                    .padding(10),
-                )
-                .add(
-                    row()
-                        .push(horizontal_space())
-                        .push(
-                            // xxx: the on_press need to be lazy
-                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                                data_path.to_vec(),
-                                ChangeMsg::ApplyDefault,
-                            )),
-                        )
-                        .push(this_will_remove_all_children()),
-                )
-        }))
-        .spacing(SPACING)
-        .into()
-}
+//                             row()
+//                                 .push(text(
+//                                     node_to_str(inner_node).unwrap_or(Cow::Owned(pos.to_string())),
+//                                 ))
+//                                 .push(horizontal_space())
+//                                 .push_maybe(is_active.map(|_| {
+//                                     button::text("modify")
+//                                         .on_press(PageMsg::OpenDataPath(DataPathType::Indice(pos)))
+//                                 }))
+//                                 .push_maybe(is_active.and_then(|_| {
+//                                     if !inner_node.is_valid() {
+//                                         Some(no_value_defined_warning_icon())
+//                                     } else {
+//                                         None
+//                                     }
+//                                 }))
+//                                 .align_y(Alignment::Center)
+//                         },
+//                         pos,
+//                         node_enum.value,
+//                         |pos| PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeEnum(pos)),
+//                     ))
+//                     .padding(5)
+//                 })),
+//         )
+//         .push_maybe(node.default.as_ref().map(|default| {
+//             section()
+//                 .title("Default")
+//                 .add(
+//                     container(
+//                         row()
+//                             .push(text("Default value"))
+//                             .push(horizontal_space())
+//                             .push(text(
+//                                 value_to_str(default)
+//                                     .unwrap_or(Cow::Borrowed("Value not displayable")),
+//                             )),
+//                     )
+//                     .padding(10),
+//                 )
+//                 .add(
+//                     row()
+//                         .push(horizontal_space())
+//                         .push(
+//                             // xxx: the on_press need to be lazy
+//                             button::text("reset to default").on_press(PageMsg::ChangeMsg(
+//                                 data_path.to_vec(),
+//                                 ChangeMsg::ApplyDefault,
+//                             )),
+//                         )
+//                         .push(this_will_remove_all_children()),
+//                 )
+//         }))
+//         .spacing(SPACING)
+//         .into()
+// }
 
-fn view_bool<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_bool: &'a NodeBool,
-) -> Element<'a, PageMsg> {
-    column()
-        .push_maybe(
-            node.description
-                .as_ref()
-                .map(|desc| section().title("Description").add(text(desc))),
-        )
-        .push(
-            section().title("Value").add(
-                row()
-                    .push(text("Current value"))
-                    .push(horizontal_space())
-                    .push(
-                        toggler(node_bool.value.unwrap_or_default()).on_toggle(move |value| {
-                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeBool(value))
-                        }),
-                    )
-                    .push_maybe(if node_bool.value.is_none() {
-                        Some(no_value_defined_warning_icon())
-                    } else {
-                        None
-                    }),
-            ),
-        )
-        .push_maybe(
-            node.default
-                .as_ref()
-                .and_then(|v| v.as_bool())
-                .map(|default| {
-                    section()
-                        .title("Default")
-                        .add(
-                            row()
-                                .push(text("Default value"))
-                                .push(horizontal_space())
-                                .push(toggler(*default)),
-                        )
-                        .add(row().push(horizontal_space()).push(
-                            // xxx: the on_press need to be lazy
-                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                                data_path.to_vec(),
-                                ChangeMsg::ApplyDefault,
-                            )),
-                        ))
-                }),
-        )
-        .spacing(SPACING)
-        .into()
-}
+// fn view_bool<'a>(
+//     data_path: &'a [DataPathType],
+//     node: &'a NodeContainer,
+//     node_bool: &'a NodeBool,
+// ) -> Element<'a, PageMsg> {
+//     column()
+//         .push_maybe(
+//             node.description
+//                 .as_ref()
+//                 .map(|desc| section().title("Description").add(text(desc))),
+//         )
+//         .push(
+//             section().title("Value").add(
+//                 row()
+//                     .push(text("Current value"))
+//                     .push(horizontal_space())
+//                     .push(
+//                         toggler(node_bool.value.unwrap_or_default()).on_toggle(move |value| {
+//                             PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeBool(value))
+//                         }),
+//                     )
+//                     .push_maybe(if node_bool.value.is_none() {
+//                         Some(no_value_defined_warning_icon())
+//                     } else {
+//                         None
+//                     }),
+//             ),
+//         )
+//         .push_maybe(
+//             node.default
+//                 .as_ref()
+//                 .and_then(|v| v.as_bool())
+//                 .map(|default| {
+//                     section()
+//                         .title("Default")
+//                         .add(
+//                             row()
+//                                 .push(text("Default value"))
+//                                 .push(horizontal_space())
+//                                 .push(toggler(*default)),
+//                         )
+//                         .add(row().push(horizontal_space()).push(
+//                             // xxx: the on_press need to be lazy
+//                             button::text("reset to default").on_press(PageMsg::ChangeMsg(
+//                                 data_path.to_vec(),
+//                                 ChangeMsg::ApplyDefault,
+//                             )),
+//                         ))
+//                 }),
+//         )
+//         .spacing(SPACING)
+//         .into()
+// }
 
 fn view_string<'a>(
     data_path: &'a [DataPathType],
@@ -472,7 +528,7 @@ fn view_string<'a>(
             section().title("Value").add(
                 row()
                     .push(text("Current value"))
-                    .push(horizontal_space())
+                    .push(space::horizontal())
                     .push(
                         text_input("value", node_string.value.as_ref().map_or("", |v| v)).on_input(
                             move |value| {
@@ -490,131 +546,130 @@ fn view_string<'a>(
                     }),
             ),
         )
-        .push_maybe(
-            node.default
-                .as_ref()
-                .and_then(|v| v.as_str())
-                .map(|default| {
-                    section()
-                        .title("Default")
-                        .add(
-                            row()
-                                .push(text("Default value"))
-                                .push(horizontal_space())
-                                .push(text(default)),
-                        )
-                        .add(row().push(horizontal_space()).push(
-                            // xxx: the on_press need to be lazy
-                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                                data_path.to_vec(),
-                                ChangeMsg::ApplyDefault,
-                            )),
-                        ))
-                }),
-        )
+        // .push_maybe(
+        //     node.default
+        //         .as_ref()
+        //         .and_then(|v| v.as_str())
+        //         .map(|default| {
+        //             section()
+        //                 .title("Default")
+        //                 .add(
+        //                     row()
+        //                         .push(text("Default value"))
+        //                         .push(horizontal_space())
+        //                         .push(text(default)),
+        //                 )
+        //                 .add(row().push(horizontal_space()).push(
+        //                     // xxx: the on_press need to be lazy
+        //                     button::text("reset to default").on_press(PageMsg::ChangeMsg(
+        //                         data_path.to_vec(),
+        //                         ChangeMsg::ApplyDefault,
+        //                     )),
+        //                 ))
+        //         }),
+        // )
         .spacing(SPACING)
         .into()
 }
 
-fn view_number<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_number: &'a NodeNumber,
-) -> Element<'a, PageMsg> {
-    column()
-        .push_maybe(
-            node.description
-                .as_ref()
-                .map(|desc| section().title("Description").add(text(desc))),
-        )
-        .push(
-            section().title("Value").add(
-                row()
-                    .push(text("Current value"))
-                    .push(horizontal_space())
-                    .push(
-                        text_input("value", &node_number.value_string).on_input(move |value| {
-                            PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeNumber(value))
-                        }),
-                    )
-                    .push_maybe(if node_number.value.is_none() {
-                        Some(no_value_defined_warning_icon())
-                    } else if node_number
-                        .try_parse_from_str(&node_number.value_string)
-                        .is_err()
-                    {
-                        Some(
-                            tooltip(
-                                icon!("report24"),
-                                text("This value is incorrect."),
-                                Position::Top,
-                            )
-                            .into(),
-                        )
-                    } else {
-                        None
-                    }),
-            ),
-        )
-        .push_maybe(
-            node.default
-                .as_ref()
-                .and_then(|v| v.as_number())
-                .map(|default| {
-                    section()
-                        .title("Default")
-                        .add(
-                            row()
-                                .push(text("Default value"))
-                                .push(horizontal_space())
-                                .push(text(NumberValue::from_number(default).to_string())),
-                        )
-                        .add(row().push(horizontal_space()).push(
-                            // xxx: the on_press need to be lazy
-                            button::text("reset to default").on_press(PageMsg::ChangeMsg(
-                                data_path.to_vec(),
-                                ChangeMsg::ApplyDefault,
-                            )),
-                        ))
-                }),
-        )
-        .spacing(SPACING)
-        .into()
-}
+// fn view_number<'a>(
+//     data_path: &'a [DataPathType],
+//     node: &'a NodeContainer,
+//     node_number: &'a NodeNumber,
+// ) -> Element<'a, PageMsg> {
+//     column()
+//         .push_maybe(
+//             node.description
+//                 .as_ref()
+//                 .map(|desc| section().title("Description").add(text(desc))),
+//         )
+//         .push(
+//             section().title("Value").add(
+//                 row()
+//                     .push(text("Current value"))
+//                     .push(horizontal_space())
+//                     .push(
+//                         text_input("value", &node_number.temp).on_input(move |value| {
+//                             PageMsg::ChangeMsg(data_path.to_vec(), ChangeMsg::ChangeNumber(value))
+//                         }),
+//                     )
+//                     .push_maybe(if node_number.value.is_none() {
+//                         Some(no_value_defined_warning_icon())
+//                     } else if node_number.try_parse_from_str(&node_number.temp).is_err() {
+//                         Some(
+//                             tooltip(
+//                                 icon!("report24"),
+//                                 text("This value is incorrect."),
+//                                 Position::Top,
+//                             )
+//                             .into(),
+//                         )
+//                     } else {
+//                         None
+//                     }),
+//             ),
+//         )
+//         .push_maybe(
+//             node.default
+//                 .as_ref()
+//                 .and_then(|v| v.as_number())
+//                 .map(|default| {
+//                     section()
+//                         .title("Default")
+//                         .add(
+//                             row()
+//                                 .push(text("Default value"))
+//                                 .push(horizontal_space())
+//                                 .push(text(NumberValue::from_number(default).to_string())),
+//                         )
+//                         .add(row().push(horizontal_space()).push(
+//                             // xxx: the on_press need to be lazy
+//                             button::text("reset to default").on_press(PageMsg::ChangeMsg(
+//                                 data_path.to_vec(),
+//                                 ChangeMsg::ApplyDefault,
+//                             )),
+//                         ))
+//                 }),
+//         )
+//         .spacing(SPACING)
+//         .into()
+// }
 
-fn view_value<'a>(
-    data_path: &'a [DataPathType],
-    node: &'a NodeContainer,
-    node_value: &'a NodeValue,
-) -> Element<'a, PageMsg> {
-    column()
-        .push_maybe(
-            node.description
-                .as_ref()
-                .map(|desc| section().title("Description").add(text(desc))),
-        )
-        .push(
-            section()
-                .title("Value")
-                .add(text(format!("{:?}", node_value.value))),
-        )
-        .spacing(SPACING)
-        .into()
-}
+// fn view_value<'a>(
+//     data_path: &'a [DataPathType],
+//     node: &'a NodeContainer,
+//     node_value: &'a NodeValue,
+// ) -> Element<'a, PageMsg> {
+//     column()
+//         .push_maybe(
+//             node.description
+//                 .as_ref()
+//                 .map(|desc| section().title("Description").add(text(desc))),
+//         )
+//         .push(
+//             section()
+//                 .title("Value")
+//                 .add(text(format!("{:?}", node_value.value))),
+//         )
+//         .spacing(SPACING)
+//         .into()
+// }
 
-fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
-    match &node.node {
-        Node::Unit => Some(Cow::Borrowed("Null")),
-        Node::Bool(node_bool) => None,
-        Node::String(node_string) => None,
-        Node::Number(node_number) => None,
-        Node::Object(node_object) => None,
-        Node::Enum(node_enum) => None,
-        Node::Array(node_array) => None,
-        Node::Value(node_value) => value_to_str(&node_value.value),
-        Node::Any => Some(Cow::Borrowed("Any")),
-    }
-}
+// fn node_to_str(node: &NodeContainer) -> Option<Cow<'_, str>> {
+//     match &node.node {
+//         Node::Unit => Some(Cow::Borrowed("Null")),
+//         // Node::Bool(node_bool) => None,
+//         Node::String(node_string) => None,
+//         Node::Number(node_number) => None,
+//         // Node::Object(node_object) => None,
+//         // Node::Enum(node_enum) => None,
+//         // Node::Array(node_array) => None,
+//         // Node::Value(node_value) => value_to_str(&node_value.value),
+//         Node::Struct(node_struct) => Some(Cow::Borrowed(node_struct.name.as_str())),
+//         Node::TupleStruct(_) => todo!(),
+//         Node::Array(_) => todo!(),
+//     }
+// }
 
 fn value_to_str(value: &Value) -> Option<Cow<'_, str>> {
     match value {
@@ -629,11 +684,11 @@ fn value_to_str(value: &Value) -> Option<Cow<'_, str>> {
         Value::String(s) => Some(Cow::Borrowed(s)),
         Value::Bytes(items) => todo!(),
         Value::Option(value) => todo!(),
-        Value::List(values) => todo!(),
+        Value::Array(values) => todo!(),
         Value::Map(map) => todo!(),
         Value::Tuple(values) => todo!(),
         Value::UnitStruct(s) => Some(Cow::Borrowed(s)),
         Value::Struct(_, map) => todo!(),
-        Value::NamedTuple(_, values) => todo!(),
+        Value::TupleStruct(_, values) => todo!(),
     }
 }

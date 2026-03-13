@@ -41,13 +41,13 @@ pub fn value_to_ron_value(value: Value) -> ron_value::Value {
         Value::Option(opt) => {
             ron_value::Value::Option(opt.map(|v| Box::new(value_to_ron_value(*v))))
         }
-        Value::List(values) => {
+        Value::Array(values) => {
             ron_value::Value::List(values.into_iter().map(value_to_ron_value).collect())
         }
         Value::Map(map) => {
             let mut m = ron_value::Map::new();
             for (k, v) in map.0 {
-                m.insert(value_to_ron_value(k), value_to_ron_value(v));
+                m.insert(k, value_to_ron_value(v));
             }
             ron_value::Value::Map(m)
         }
@@ -62,7 +62,7 @@ pub fn value_to_ron_value(value: Value) -> ron_value::Value {
             }
             ron_value::Value::Struct(name, m)
         }
-        Value::NamedTuple(name, values) => {
+        Value::TupleStruct(name, values) => {
             ron_value::Value::NamedTuple(name, values.into_iter().map(value_to_ron_value).collect())
         }
     }
@@ -94,14 +94,17 @@ pub fn ron_value_to_value(value: ron_value::Value) -> Value {
             Value::Option(value.map(|v| Box::new(ron_value_to_value(*v))))
         }
         ron_value::Value::List(values) => {
-            Value::List(values.into_iter().map(ron_value_to_value).collect())
+            Value::Array(values.into_iter().map(ron_value_to_value).collect())
         }
         ron_value::Value::Map(map) => {
             let mut map2 = Map::new();
 
             for (key, value) in map {
-                map2.0
-                    .insert(ron_value_to_value(key), ron_value_to_value(value));
+                let ron_value::Value::String(key) = key else {
+                    panic!("key is not a string")
+                };
+
+                map2.0.insert(key, ron_value_to_value(value));
             }
 
             Value::Map(map2)
@@ -120,7 +123,7 @@ pub fn ron_value_to_value(value: ron_value::Value) -> Value {
             Value::Struct(name, map2)
         }
         ron_value::Value::NamedTuple(name, values) => {
-            Value::NamedTuple(name, values.into_iter().map(ron_value_to_value).collect())
+            Value::TupleStruct(name, values.into_iter().map(ron_value_to_value).collect())
         }
     }
 }
@@ -152,22 +155,40 @@ pub fn read(path: &Path) -> anyhow::Result<Value> {
         map.0.insert(filename.to_string(), value);
     }
 
-    // todo: is name in the path variable ?
     Ok(Value::Struct(None, map))
 }
 
-pub fn write(path: &Path, value: Value) -> anyhow::Result<()> {
-    let value = value_to_ron_value(value);
+fn clear_dir(path: &Path) -> std::io::Result<()> {
+    if path.exists() {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let p = entry.path();
 
-    let map = if let ron_value::Value::Struct(_, map) = value {
-        map
-    } else {
-        bail!("initial value is not a struct")
-    };
+            if p.is_file() {
+                fs::remove_file(p)?;
+            }
+        }
+    }
 
-    for (key, value) in map {
-        let content = ron_value::to_string(&value).unwrap();
-        write_and_create_parent(&path.join(key), content.as_bytes())?;
+    Ok(())
+}
+
+pub fn write(path: &Path, value: Option<Value>) -> anyhow::Result<()> {
+    let value = value.map(value_to_ron_value);
+
+    clear_dir(path)?;
+
+    if let Some(value) = value {
+        let map = if let ron_value::Value::Struct(_, map) = value {
+            map
+        } else {
+            bail!("initial value is not a struct")
+        };
+
+        for (key, value) in map {
+            let content = ron_value::to_string(&value).unwrap();
+            write_and_create_parent(&path.join(key), content.as_bytes())?;
+        }
     }
 
     Ok(())

@@ -18,7 +18,7 @@ macro_rules! array_impls {
                         kind: RustSchemaKind::Array(Array {
                             min: Some($len),
                             max: Some($len),
-                            kind: Some(generator.schema_for::<T>())
+                            template: Some(generator.schema_for::<T>())
                         }),
                     }
                 }

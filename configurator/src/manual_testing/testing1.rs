@@ -11,16 +11,39 @@ use crate::{
     test_common::{Complex, EnumComplex},
 };
 
+/// Doc on struct NewStruct
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct NewStruct(u32);
 
+/// Doc on struct Complex2
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
+#[serde(default)]
+struct Complex2 {
+    /// Doc on field x
+    x: String,
+    y: String,
+}
+
+impl Default for Complex2 {
+    fn default() -> Self {
+        Self {
+            x: String::from("hello"),
+            y: Default::default(),
+        }
+    }
+}
+
+/// Doc on upper
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
 #[serde(default)]
 struct Config {
-    x: NewStruct,
-    y: Complex,
+    /// Doc on field y
+    y: Complex2,
 }
+
+#[derive(Clone, Debug, RustSchema, Serialize, Deserialize, Default)]
+struct UnitS;
 
 const NAME: &str = "testing1";
 
@@ -45,7 +68,13 @@ fn print_ron() {
 #[test]
 #[ignore]
 fn from_ron() {
-    super::from_ron::<Config>("(x:0,y:(x:\"hello\",y:10))");
+    let content = "Complex2( x: \"hello\" , y: \"\" )";
+
+    // super::from_ron::<Complex2>(content);
+
+    let value = ron_value::from_str(&content).unwrap();
+
+    dbg!(&value);
 }
 
 #[test]

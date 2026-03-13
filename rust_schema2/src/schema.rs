@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -7,6 +8,32 @@ use crate::value::Value;
 pub struct RustSchemaRoot {
     pub schema: RustSchemaOrRef,
     pub definitions: BTreeMap<RustSchemaId, RustSchema>,
+}
+
+#[derive(Debug)]
+pub struct ResolveSchemaError(String);
+
+impl std::fmt::Display for ResolveSchemaError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unknown ref {}", self.0)
+    }
+}
+
+impl std::error::Error for ResolveSchemaError {}
+
+impl RustSchemaRoot {
+    pub fn resolve_schema<'a>(
+        &'a self,
+        schema: &'a RustSchemaOrRef,
+    ) -> Result<&'a RustSchema, ResolveSchemaError> {
+        match schema {
+            RustSchemaOrRef::Ref(ref_) => match self.definitions.get(ref_) {
+                Some(schema) => Ok(schema),
+                None => Err(ResolveSchemaError(ref_.to_owned())),
+            },
+            RustSchemaOrRef::Schema(rust_schema) => Ok(rust_schema),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,7 +80,7 @@ pub struct Array {
     pub min: Option<u64>,
     pub max: Option<u64>,
     /// Optional in case the expected size is 0
-    pub kind: Option<RustSchemaOrRef>,
+    pub template: Option<RustSchemaOrRef>,
 }
 
 impl Array {
@@ -61,7 +88,7 @@ impl Array {
         Self {
             min: None,
             max: None,
-            kind: Some(kind),
+            template: Some(kind),
         }
     }
 
@@ -69,7 +96,7 @@ impl Array {
         Self {
             min: Some(0),
             max: Some(0),
-            kind: None,
+            template: None,
         }
     }
 }
@@ -79,7 +106,7 @@ pub struct Struct {
     pub name: String,
     pub description: Option<String>,
     pub default: Option<Value>,
-    pub fields: BTreeMap<String, StructField>,
+    pub fields: IndexMap<String, StructField>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -115,10 +142,10 @@ pub struct EnumVariant {
 pub enum EnumVariantKind {
     Unit,
     Tuple(Vec<RustSchemaOrRef>),
-    Struct(BTreeMap<String, StructField>),
+    Struct(IndexMap<String, StructField>),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NumberKind {
     U8,
     U16,
@@ -134,4 +161,14 @@ pub enum NumberKind {
     ISize,
     F32,
     F64,
+}
+
+impl RustSchema {
+    pub fn as_array(&self) -> Option<&Array> {
+        if let RustSchemaKind::Array(array) = &self.kind {
+            Some(array)
+        } else {
+            None
+        }
+    }
 }

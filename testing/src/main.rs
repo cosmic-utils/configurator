@@ -1,16 +1,27 @@
-use schemars::{JsonSchema, schema_for};
+// use schemars::{JsonSchema, schema_for};
+
+// fn main() {
+//     #[derive(JsonSchema)]
+//     struct A {
+//         x: i32,
+//         y: Option<Box<B>>,
+//     }
+
+//     #[derive(JsonSchema)]
+//     struct B {
+//         x: i32,
+//     }
+
+//     let s = schema_for!(A);
+// }
+
+use serde::Deserialize;
 
 fn main() {
-    #[derive(JsonSchema)]
+    #[derive(Deserialize, Default)]
+    #[serde(default)]
     struct A {
-        x: i32,
-        y: Option<Box<B>>,
+        #[serde(default)]
+        x: String,
     }
-
-    #[derive(JsonSchema)]
-    struct B {
-        x: i32,
-    }
-
-    let s = schema_for!(A);
 }

@@ -4,19 +4,110 @@ use derive_more::derive::Unwrap;
 
 use crate::node::{Node, NodeContainer};
 
-#[derive(Debug, Clone, Unwrap, PartialEq, Eq)]
-#[unwrap(ref)]
-pub enum DataPathType {
-    Name(String),
-    Indice(usize),
-    // todo: more complex type ? (Figment)
+pub use data_path_type::DataPathType;
+pub use data_path_type_copy::DataPathTypeCopy;
+
+pub fn alloc_one(data_path: &[DataPathType]) -> Vec<DataPathType> {
+    let mut new_vec = Vec::with_capacity(data_path.len() + 1);
+    new_vec.extend_from_slice(data_path);
+    new_vec
 }
 
-impl Display for DataPathType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DataPathType::Name(name) => write!(f, "{}", name),
-            DataPathType::Indice(pos) => write!(f, "{}", pos),
+pub fn push_one(data_path: &[DataPathType], more: impl Into<DataPathType>) -> Vec<DataPathType> {
+    let mut new_vec = alloc_one(data_path);
+    new_vec.push(more.into());
+    new_vec
+}
+
+mod data_path_type {
+    use std::fmt::Display;
+
+    use derive_more::Unwrap;
+
+    #[derive(Debug, Clone, Unwrap, PartialEq, Eq, Hash)]
+    #[unwrap(ref)]
+    pub enum DataPathType {
+        Name(String),
+        Indice(usize),
+    }
+
+    impl From<String> for DataPathType {
+        fn from(value: String) -> Self {
+            DataPathType::Name(value)
+        }
+    }
+
+    impl From<&String> for DataPathType {
+        fn from(value: &String) -> Self {
+            DataPathType::Name(value.to_owned())
+        }
+    }
+
+    impl From<&str> for DataPathType {
+        fn from(value: &str) -> Self {
+            DataPathType::Name(value.to_owned())
+        }
+    }
+
+    impl From<usize> for DataPathType {
+        fn from(value: usize) -> Self {
+            DataPathType::Indice(value)
+        }
+    }
+
+    impl Display for DataPathType {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                DataPathType::Name(name) => write!(f, "{}", name),
+                DataPathType::Indice(pos) => write!(f, "{}", pos),
+            }
+        }
+    }
+
+    impl DataPathType {
+        pub fn as_name(&self) -> Option<&str> {
+            match self {
+                DataPathType::Name(name) => Some(name.as_str()),
+                DataPathType::Indice(_) => None,
+            }
+        }
+
+        pub fn as_indice(&self) -> Option<usize> {
+            match self {
+                DataPathType::Name(_) => None,
+                DataPathType::Indice(indice) => Some(*indice),
+            }
+        }
+    }
+}
+
+mod data_path_type_copy {
+    use std::fmt::Display;
+
+    use crate::node::data_path::DataPathType;
+
+    /// Same as [`DataPathType`], but implement [`Copy`]
+    #[derive(Clone, Copy)]
+    pub enum DataPathTypeCopy<'a> {
+        Name(&'a String),
+        Indice(usize),
+    }
+
+    impl<'a> Display for DataPathTypeCopy<'a> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                DataPathTypeCopy::Name(name) => write!(f, "{}", name),
+                DataPathTypeCopy::Indice(pos) => write!(f, "{}", pos),
+            }
+        }
+    }
+
+    impl From<DataPathTypeCopy<'_>> for DataPathType {
+        fn from(value: DataPathTypeCopy<'_>) -> Self {
+            match value {
+                DataPathTypeCopy::Name(name) => DataPathType::Name(name.to_owned()),
+                DataPathTypeCopy::Indice(pos) => DataPathType::Indice(pos),
+            }
         }
     }
 }
@@ -62,7 +153,7 @@ impl DataPath {
         self.vec.get(pos)
     }
 
-    pub fn get_current(&self) -> Option<&DataPathType> {
+    pub fn last_current_data(&self) -> Option<&DataPathType> {
         self.pos.map(|pos| self.get_at(pos).unwrap())
     }
 
@@ -72,10 +163,36 @@ impl DataPath {
             None => &[],
         }
     }
+}
 
-    /// Keep the maximum of path, based on node that still exist
+impl DataPath {
+    /// Keep the maximum of path, based on nodes that still exist
     pub fn sanitize_path(&mut self, tree: &NodeContainer) {
-        if let Some(pos) = sanitize_path_rec(self.vec.iter(), tree, 0) {
+        fn find_first_invalid_index(
+            data_path: &[DataPathType],
+            mut node: &NodeContainer,
+        ) -> Option<usize> {
+            for (pos, data) in data_path.iter().enumerate() {
+                match (&node.node, data) {
+                    (Node::Array(node_array), DataPathType::Indice(i))
+                        if let Some(value) = &node_array.value
+                            && let Some(n) = value.get(*i) =>
+                    {
+                        node = n;
+                    }
+                    (Node::Struct(node_struct), DataPathType::Name(name))
+                        if let Some(field) = node_struct.fields.get(name) =>
+                    {
+                        node = field;
+                    }
+                    _ => return Some(pos),
+                }
+            }
+
+            None
+        }
+
+        if let Some(pos) = find_first_invalid_index(&self.vec, tree) {
             self.vec.truncate(pos);
 
             if pos == 0 {
@@ -88,141 +205,61 @@ impl DataPath {
         }
     }
 }
-
-/// Return Some(pos) where the first missing node is.
-/// None means the path is valid.
-fn sanitize_path_rec<'a>(
-    mut data_path: impl Iterator<Item = &'a DataPathType>,
-    node: &NodeContainer,
-    pos: usize,
-) -> Option<usize> {
-    match data_path.next() {
-        Some(component) => match &node.node {
-            Node::Object(node_object) => match component {
-                DataPathType::Name(name) => match node_object.nodes.get(name) {
-                    Some(inner_node) => sanitize_path_rec(data_path, inner_node, pos + 1),
-                    None => Some(pos),
-                },
-                DataPathType::Indice(_) => Some(pos),
-            },
-            Node::Enum(node_enum) => match component {
-                DataPathType::Name(_) => Some(pos),
-                DataPathType::Indice(indice_data_path) => match &node_enum.value {
-                    Some(indice_node) => {
-                        if indice_node == indice_data_path {
-                            sanitize_path_rec(data_path, &node_enum.nodes[*indice_node], pos + 1)
-                        } else {
-                            Some(pos)
-                        }
-                    }
-                    None => Some(pos),
-                },
-            },
-            Node::Array(node_array) => match component {
-                DataPathType::Name(_) => Some(pos),
-                DataPathType::Indice(indice_data_path) => match &node_array.values {
-                    Some(inner_nodes) => match inner_nodes.get(*indice_data_path) {
-                        Some(inner_node) => sanitize_path_rec(data_path, inner_node, pos + 1),
-                        None => Some(pos),
-                    },
-                    None => Some(pos),
-                },
-            },
-            _ => Some(pos),
-        },
-        None => None,
-    }
-}
-
 impl NodeContainer {
-    pub fn get_at<'a>(
-        &self,
-        mut data_path: impl Iterator<Item = &'a DataPathType>,
-    ) -> Option<&Self> {
-        match data_path.next() {
-            Some(component) => match &self.node {
-                Node::Object(node_object) => {
-                    let name = component.unwrap_name_ref();
+    pub fn get_at<'a, 'b>(
+        &'a self,
+        data_path: Box<dyn Iterator<Item = &'b DataPathType> + 'b>,
+    ) -> Option<&'a Self> {
+        let mut node = self;
 
-                    let node = node_object.nodes.get(name).unwrap();
-
-                    node.get_at(data_path)
+        for data in data_path {
+            match (&node.node, data) {
+                (Node::Array(node_array), DataPathType::Indice(pos))
+                    if let Some(value) = &node_array.value
+                        && let Some(n) = value.get(*pos) =>
+                {
+                    node = n;
                 }
-                Node::Enum(node_enum) => {
-                    let p = component.unwrap_indice_ref();
-                    let node = &node_enum.nodes[*p];
-
-                    node.get_at(data_path)
+                (Node::Struct(node_struct), DataPathType::Name(name))
+                    if let Some(field) = node_struct.fields.get(name) =>
+                {
+                    node = field;
                 }
-                Node::Array(node_array) => {
-                    let p = component.unwrap_indice_ref();
-                    let node = &node_array.values.as_ref().unwrap()[*p];
-
-                    node.get_at(data_path)
-                }
-                _ => panic!(),
-            },
-            None => Some(self),
-        }
-    }
-
-    pub fn get_at_mut<'a>(
-        &mut self,
-        mut data_path: impl Iterator<Item = &'a DataPathType>,
-    ) -> Option<&mut Self> {
-        match data_path.next() {
-            Some(component) => match &mut self.node {
-                Node::Object(node_object) => {
-                    let name = component.unwrap_name_ref();
-
-                    let node = node_object.nodes.get_mut(name).unwrap();
-
-                    node.get_at_mut(data_path)
-                }
-                Node::Enum(node_enum) => {
-                    let p = component.unwrap_indice_ref();
-                    let node = &mut node_enum.nodes[*p];
-
-                    node.get_at_mut(data_path)
-                }
-                Node::Array(node_array) => {
-                    let p = component.unwrap_indice_ref();
-                    let node = &mut node_array.values.as_mut().unwrap()[*p];
-
-                    node.get_at_mut(data_path)
-                }
-                _ => panic!(),
-            },
-            None => Some(self),
-        }
-    }
-
-    pub fn set_modified<'a>(&mut self, mut data_path: impl Iterator<Item = &'a DataPathType>) {
-        self.modified = true;
-
-        if let Some(component) = data_path.next() {
-            match &mut self.node {
-                Node::Object(node_object) => {
-                    let name = component.unwrap_name_ref();
-
-                    let node = node_object.nodes.get_mut(name).unwrap();
-
-                    node.set_modified(data_path);
-                }
-                Node::Enum(node_enum) => {
-                    let p = component.unwrap_indice_ref();
-                    let node = &mut node_enum.nodes[*p];
-
-                    node.set_modified(data_path);
-                }
-                Node::Array(node_array) => {
-                    let p = component.unwrap_indice_ref();
-                    let node = &mut node_array.values.as_mut().unwrap()[*p];
-
-                    node.set_modified(data_path);
-                }
-                _ => {}
+                _ => return None,
             }
         }
+
+        Some(node)
+    }
+
+    pub fn get_at_mut<'a, 'b>(
+        &'a mut self,
+        data_path: Box<dyn Iterator<Item = &'b DataPathType> + 'b>,
+    ) -> Option<&'a mut Self> {
+        let mut node = self;
+
+        for data in data_path {
+            match (&mut node.node, data) {
+                (Node::Array(node_array), DataPathType::Indice(pos)) => {
+                    if let Some(value) = &mut node_array.value
+                        && let Some(n) = value.get_mut(*pos)
+                    {
+                        node = n;
+                    } else {
+                        return None;
+                    }
+                }
+                (Node::Struct(node_struct), DataPathType::Name(name)) => {
+                    if let Some(field) = node_struct.fields.get_mut(name) {
+                        node = field;
+                    } else {
+                        return None;
+                    }
+                }
+                _ => return None,
+            }
+        }
+
+        Some(node)
     }
 }

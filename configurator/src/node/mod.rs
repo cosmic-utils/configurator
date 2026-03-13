@@ -1,241 +1,258 @@
-use std::{borrow::Cow, collections::BTreeMap, fmt::Display, rc::Rc};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, HashMap, HashSet},
+    fmt::Display,
+    rc::Rc,
+};
 
 use derive_more::derive::Unwrap;
 use indexmap::IndexMap;
 use light_enum::LightEnum;
+use rust_schema2::{NumberKind, RustSchema, RustSchemaKind, RustSchemaOrRef, RustSchemaRoot};
 
-use crate::generic_value::Value;
+use crate::{
+    generic_value::{F32, F64, Map, Number, Value},
+    node::data_path::DataPathType,
+};
 
-mod apply_value;
+use anyhow::{anyhow, bail};
+
 pub mod data_path;
-// pub mod from_json_schema;
-pub mod from_rust_schema;
-mod number;
-pub use number::{NumberValue, NumberValueLight};
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
+
+mod from_schema_and_value;
+mod set_modified;
 mod to_value;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct NodeContainer {
-    pub title: Option<String>,
-    pub default: Option<Rc<Value>>,
-    pub node: Node,
+    pub name: Option<String>,
     pub description: Option<String>,
-    /// Node that are modified should be written to disk
     pub modified: bool,
-    /// Used for HashMap. We need to know if the node
-    /// was created by a "template"
-    pub removable: bool,
+    pub is_removable: bool,
+    pub default: Value,
+    pub node: Node,
+}
+
+#[derive(Debug, Unwrap)]
+#[unwrap(ref_mut)]
+pub enum Node {
+    String(NodeString),
+    Array(NodeArray),
+    Struct(NodeStruct),
+}
+
+#[derive(Debug)]
+pub struct NodeString {
+    pub value: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct NodeStruct {
+    pub fields: IndexMap<String, NodeContainer>,
+}
+
+#[derive(Debug)]
+pub struct NodeArray {
+    pub min: Option<u64>,
+    pub max: Option<u64>,
+    pub value: Option<Vec<NodeContainer>>,
+    pub has_template: bool,
 }
 
 impl NodeContainer {
     pub fn from_node(node: Node) -> Self {
         Self {
             node,
-            default: None,
-            title: None,
-            description: None,
             modified: false,
-            removable: false,
+            name: None,
+            description: None,
+            is_removable: false,
+            default: Value::Empty,
         }
     }
 
-    pub fn set_description(mut self, desc: Option<String>) -> Self {
-        self.description = desc;
-        self
+    pub fn set_name(self, name: Option<String>) -> Self {
+        Self { name, ..self }
     }
-}
 
-#[derive(Debug, Clone, Unwrap)]
-#[unwrap(ref_mut)]
-pub enum Node {
-    Unit,
-    Bool(NodeBool),
-    String(NodeString),
-    Number(NodeNumber),
-    // Option(NodeOption),
-    Object(NodeObject),
-    Enum(NodeEnum),
-    Array(NodeArray),
-    /// represent a final value
-    /// currently only string is supported
-    Value(NodeValue),
-    // todo: support any
-    Any,
-}
-
-#[derive(Debug, Clone)]
-pub struct UnNamedObject {
-    pub values: Vec<NodeContainer>,
-}
-
-impl UnNamedObject {
-    pub fn new(values: Vec<NodeContainer>) -> Self {
-        Self { values }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeBool {
-    pub value: Option<bool>,
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeString {
-    pub value: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeNumber {
-    pub kind: NumberValueLight,
-    pub value: Option<NumberValue>,
-    pub value_string: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeValue {
-    pub value: Value,
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeEnum {
-    pub value: Option<usize>,
-    pub nodes: Vec<NodeContainer>,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct NodeObject {
-    pub nodes: IndexMap<String, NodeContainer>,
-    pub template: Option<Box<NodeContainer>>,
-}
-
-#[derive(Debug, Clone)]
-pub enum NodeArrayTemplate {
-    All(Box<NodeContainer>),
-    FirstN(Vec<NodeContainer>),
-}
-
-#[derive(Debug, Clone)]
-pub struct NodeArray {
-    pub values: Option<Vec<NodeContainer>>,
-    pub template: NodeArrayTemplate,
-    pub min: Option<u32>,
-    pub max: Option<u32>,
-}
-
-impl NodeBool {
-    pub fn new() -> Self {
-        Self { value: None }
-    }
-}
-
-impl NodeString {
-    pub fn new() -> Self {
-        Self { value: None }
-    }
-}
-
-impl NodeValue {
-    pub fn new(value: Value) -> Self {
-        Self { value }
-    }
-}
-
-impl NodeEnum {
-    pub fn new(nodes: Vec<NodeContainer>) -> Self {
-        Self { value: None, nodes }
-    }
-}
-
-impl NodeObject {
-    pub fn new(nodes: IndexMap<String, NodeContainer>, node_type: Option<NodeContainer>) -> Self {
+    pub fn set_description(self, description: Option<String>) -> Self {
         Self {
-            nodes,
-            template: node_type.map(Box::new),
+            description,
+            ..self
         }
     }
 
-    pub fn template(&self) -> Option<NodeContainer> {
-        match &self.template {
-            Some(template) => {
-                let mut template = *template.clone();
-                template.removable = true;
-                Some(template)
-            }
-            None => None,
-        }
-    }
-}
-
-impl NodeArray {
-    pub fn new_any() -> Self {
+    pub fn set_is_removable(self, is_removable: bool) -> Self {
         Self {
-            values: None,
-            template: NodeArrayTemplate::All(Box::new(NodeContainer::from_node(Node::Any))),
-            min: None,
-            max: None,
+            is_removable,
+            ..self
         }
     }
 
-    pub fn template(&self, n: Option<usize>) -> NodeContainer {
-        match &self.template {
-            NodeArrayTemplate::All(new_node) => {
-                let mut new_node = (**new_node).clone();
-                new_node.removable = true;
-                new_node
+    pub fn set_default(self, default: Value) -> Self {
+        Self { default, ..self }
+    }
+
+    pub fn remove_value_rec(&mut self) {
+        self.modified = false;
+        match &mut self.node {
+            Node::String(node_string) => {
+                node_string.value.take();
             }
-            NodeArrayTemplate::FirstN(vec) => {
-                let n = match n {
-                    Some(n) => n,
-                    None => match &self.values {
-                        Some(v) => v.len(),
-                        None => 0,
-                    },
-                };
-
-                vec[n].clone()
+            Node::Struct(node_struct) => {
+                node_struct
+                    .fields
+                    .values_mut()
+                    .for_each(|field| field.remove_value_rec());
             }
-        }
+            Node::Array(node_array) => {
+                node_array.value.take();
+            }
+        };
     }
 
-    pub fn is_tuple(&self) -> bool {
-        match &self.template {
-            NodeArrayTemplate::All(_) => false,
-            NodeArrayTemplate::FirstN(_) => true,
-        }
-    }
-}
-
-impl NodeContainer {
-    /// Return true if all active note have a value
+    /// Return true if all active nodes have a value
     pub fn is_valid(&self) -> bool {
         match &self.node {
-            Node::Unit => true,
-            Node::Bool(node_bool) => node_bool.value.is_some(),
             Node::String(node_string) => node_string.value.is_some(),
-            Node::Number(node_number) => node_number.value.is_some(),
-            Node::Object(node_object) => node_object.nodes.values().all(|n| n.is_valid()),
-            Node::Enum(node_enum) => node_enum
-                .value
-                .is_some_and(|pos| node_enum.nodes[pos].is_valid()),
-            Node::Array(node_array) => node_array
-                .values
-                .as_ref()
-                .is_some_and(|values| values.iter().all(|n| n.is_valid())),
-            Node::Value(node_value) => true,
-            Node::Any => true,
+            Node::Struct(node_struct) => node_struct.fields.values().all(|f| f.is_valid()),
+            Node::Array(node_array) => node_array.value.as_ref().is_some_and(|values| {
+                let is_complete = node_array
+                    .min
+                    .map(|min| values.len() >= min as usize)
+                    .unwrap_or(true)
+                    && node_array
+                        .max
+                        .map(|max| values.len() <= max as usize)
+                        .unwrap_or(true);
+
+                is_complete && values.iter().all(|n| n.is_valid())
+            }),
         }
     }
 }
 
-impl NodeEnum {
-    pub fn unwrap_value(&self) -> (usize, &NodeContainer) {
-        let pos = match self.value {
-            Some(pos) => pos,
-            None => panic!(),
-        };
+pub fn schema_at<'a>(
+    root: &'a RustSchemaRoot,
+    data_path: &[DataPathType],
+) -> anyhow::Result<&'a RustSchema> {
+    let mut schema = root.resolve_schema(&root.schema)?;
 
-        (pos, &self.nodes[pos])
+    for data in data_path {
+        match (&schema.kind, data) {
+            (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Name(_)) => todo!(),
+            (RustSchemaKind::Option(rust_schema_or_ref), DataPathType::Indice(_)) => todo!(),
+            (RustSchemaKind::Array(array), DataPathType::Indice(_)) => match &array.template {
+                Some(kind) => {
+                    schema = root.resolve_schema(kind)?;
+                }
+                None => bail!("no kind for array: {:?}", schema),
+            },
+            (RustSchemaKind::Tuple(rust_schema_or_refs), DataPathType::Indice(_)) => todo!(),
+            (RustSchemaKind::Map(rust_schema_or_ref), DataPathType::Name(_)) => todo!(),
+            (RustSchemaKind::Struct(struct_), DataPathType::Name(name)) => {
+                match struct_.fields.get(name) {
+                    Some(field) => {
+                        schema = root.resolve_schema(&field.schema)?;
+                    }
+                    None => {
+                        bail!("no field named {} in {}", name, struct_.name)
+                    }
+                }
+            }
+            (RustSchemaKind::TupleStruct(tuple_struct), DataPathType::Indice(_)) => todo!(),
+            (RustSchemaKind::Enum(_), DataPathType::Name(_)) => todo!(),
+            (RustSchemaKind::Enum(_), DataPathType::Indice(_)) => todo!(),
+            _ => bail!("schema {:?} is not compatible with {}", schema, data),
+        }
+    }
+
+    Ok(schema)
+}
+
+fn value_at<'a>(value: &'a Value, data_path: &[DataPathType]) -> &'a Value {
+    let mut value = value;
+
+    for data in data_path {
+        value = match (value, data) {
+            (Value::Option(value), DataPathType::Name(_)) => todo!(),
+            (Value::Option(value), DataPathType::Indice(_)) => todo!(),
+            (Value::Array(values), DataPathType::Name(_)) => todo!(),
+            (Value::Array(values), DataPathType::Indice(_)) => todo!(),
+            (Value::Map(map), DataPathType::Name(_)) => todo!(),
+            (Value::Map(map), DataPathType::Indice(_)) => todo!(),
+            (Value::Tuple(values), DataPathType::Name(_)) => todo!(),
+            (Value::Tuple(values), DataPathType::Indice(_)) => todo!(),
+            (Value::UnitStruct(_), DataPathType::Name(_)) => todo!(),
+            (Value::UnitStruct(_), DataPathType::Indice(_)) => todo!(),
+            (Value::Struct(_, map), DataPathType::Name(name))
+                if let Some(value) = map.0.get(name) =>
+            {
+                value
+            }
+            (Value::TupleStruct(_, values), DataPathType::Indice(i))
+                if let Some(value) = values.get(*i) =>
+            {
+                value
+            }
+            _ => return &Value::Empty,
+        };
+    }
+
+    value
+}
+
+fn rust_schema_value_to_value(value: &rust_schema2::Value) -> Value {
+    match value {
+        rust_schema2::Value::Unit => Value::Unit,
+        rust_schema2::Value::Null => Value::Option(None),
+        rust_schema2::Value::Bool(bool) => Value::Bool(*bool),
+        rust_schema2::Value::Number(number) => Value::Number(match number {
+            rust_schema2::Number::U8(v) => Number::U8(*v),
+            rust_schema2::Number::U16(v) => Number::U16(*v),
+            rust_schema2::Number::U32(v) => Number::U32(*v),
+            rust_schema2::Number::U64(v) => Number::U64(*v),
+            rust_schema2::Number::U128(v) => Number::U128(*v),
+            rust_schema2::Number::USize(v) => Number::USize(*v),
+            rust_schema2::Number::I8(v) => Number::I8(*v),
+            rust_schema2::Number::I16(v) => Number::I16(*v),
+            rust_schema2::Number::I32(v) => Number::I32(*v),
+            rust_schema2::Number::I64(v) => Number::I64(*v),
+            rust_schema2::Number::I128(v) => Number::I128(*v),
+            rust_schema2::Number::ISize(v) => Number::ISize(*v),
+            rust_schema2::Number::F32(rust_schema2::F32(v)) => Number::F32(F32(*v)),
+            rust_schema2::Number::F64(rust_schema2::F64(v)) => Number::F64(F64(*v)),
+        }),
+        rust_schema2::Value::Char(c) => Value::Char(*c),
+        rust_schema2::Value::String(s) => Value::String(s.to_owned()),
+        rust_schema2::Value::Array(values) => {
+            Value::Array(values.iter().map(rust_schema_value_to_value).collect())
+        }
+        rust_schema2::Value::Tuple(values) => {
+            Value::Tuple(values.iter().map(rust_schema_value_to_value).collect())
+        }
+        rust_schema2::Value::Map(btree_map) => Value::Map(
+            btree_map
+                .iter()
+                .map(|(k, v)| (k.to_owned(), rust_schema_value_to_value(v)))
+                .collect(),
+        ),
+        rust_schema2::Value::UnitStruct(name) => Value::UnitStruct(name.to_owned()),
+        rust_schema2::Value::Struct(name, btree_map) => Value::Struct(
+            Some(name.to_owned()),
+            btree_map
+                .iter()
+                .map(|(k, v)| (k.to_owned(), rust_schema_value_to_value(v)))
+                .collect(),
+        ),
+        rust_schema2::Value::TupleStruct(name, values) => Value::TupleStruct(
+            name.to_owned(),
+            values.iter().map(rust_schema_value_to_value).collect(),
+        ),
+        rust_schema2::Value::EnumVariantUnit(_) => todo!(),
+        rust_schema2::Value::EnumVariantTuple(_, values) => todo!(),
+        rust_schema2::Value::EnumVariantStruct(_, btree_map) => todo!(),
     }
 }
