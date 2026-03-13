@@ -307,9 +307,6 @@ impl Page {
 
                         match &mut node_array.value {
                             Some(values) => {
-                                for n in &mut *values {
-                                    n.modified = true;
-                                }
                                 values.push(new_node);
                             }
                             None => {
@@ -320,7 +317,7 @@ impl Page {
                     ChangeMsg::RenameKey { prev, new } => todo!(),
                 }
 
-                self.tree.set_modified(data_path.iter());
+                self.tree.set_modified2(data_path.iter());
 
                 self.data_path.sanitize_path(&self.tree);
 

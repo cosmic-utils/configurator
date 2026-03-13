@@ -33,6 +33,41 @@ impl NodeContainer {
         node.modified = true;
     }
 
+    pub fn set_modified2<'a>(&mut self, data_path: impl Iterator<Item = &'a DataPathType>) {
+        fn inner<'a>(
+            node: &mut NodeContainer,
+            mut data_path: impl Iterator<Item = &'a DataPathType>,
+            force: bool,
+        ) {
+            node.modified = true;
+
+            match &mut node.node {
+                Node::String(node_string) => {}
+                Node::Array(node_array) => {
+                    if let Some(value) = &mut node_array.value {
+                        for node in value {
+                            inner(node, std::iter::empty(), true);
+                        }
+                    }
+                }
+                Node::Struct(node_struct) => {
+                    if force {
+                        for field in &mut node_struct.fields {
+                            inner(field.1, std::iter::empty(), true);
+                        }
+                    } else {
+                        let data = data_path.next().unwrap().as_name().unwrap();
+                        let field = node_struct.fields.get_mut(data).unwrap();
+
+                        inner(field, data_path, false);
+                    }
+                }
+            }
+        }
+
+        inner(self, data_path, false);
+    }
+
     pub fn set_modified_from_value(&mut self, value: &Value) {
         self.modified = match (&mut self.node, value) {
             (Node::String(node_string), Value::String(_)) => true,
