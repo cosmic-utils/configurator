@@ -6,14 +6,16 @@ members = [
     "ron_value",
     # "rust_schema",
     "rust_schema2",
-    "rust_schema2_derive", "testing",
+    "rust_schema2_derive",
+    "testing",
     "zconf/zconf2",
     # "zconf/figment_schemars_bridge",
     # "zconf/zconf",
     # "zconf/zconf_derive",
     # "zconf/zconf_derive_impl",
 ]
-resolver = "2"
+
+resolver = "3"
 
 [workspace.package]
 authors = ["wiiznokes <wiiznokes2@gmail.com>"]
@@ -70,7 +72,7 @@ serial_test = "3"
 
 [workspace.dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic"
-rev = "4b92ee5f80dbc3cc6d64cf1411ade88ded8ff741"
+rev = "01e5593741c7aa7eedf0692c6087ee3fb97feeb8"
 default-features = false
 # branch = "master"
 
