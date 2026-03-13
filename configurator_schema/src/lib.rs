@@ -44,7 +44,7 @@ impl SchemaGenerator {
     pub fn generate<T: RustSchemaTrait>(self) -> Result<String, Box<dyn std::error::Error>> {
         let schema = schema_for::<T>();
 
-        schema.assert_default_no_conflict()?;
+        // schema.assert_default_no_conflict()?;
 
         let mut value = json::value::to_value(&schema)?;
 

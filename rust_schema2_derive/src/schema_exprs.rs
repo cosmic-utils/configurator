@@ -117,7 +117,7 @@ fn expr_for_unit_struct(cont: &Container) -> TokenStream {
                     name: String::from(#name),
                     description: #description,
                     default: None,
-                    fields: std::collections::BTreeMap::new()
+                    fields: indexmap::IndexMap::new()
                 }
             ),
         }

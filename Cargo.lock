@@ -4101,6 +4101,7 @@ dependencies = [
 name = "rust_schema2"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "rust_schema2_derive",
  "schemars",
  "serde",

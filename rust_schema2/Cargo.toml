@@ -9,6 +9,7 @@ keywords.workspace = true
 [dependencies]
 rust_schema2_derive.workspace = true
 serde = { workspace = true, features = ["derive"] }
+indexmap = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 schemars.workspace = true

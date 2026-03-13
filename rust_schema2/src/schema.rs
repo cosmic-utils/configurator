@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -105,7 +106,7 @@ pub struct Struct {
     pub name: String,
     pub description: Option<String>,
     pub default: Option<Value>,
-    pub fields: BTreeMap<String, StructField>,
+    pub fields: IndexMap<String, StructField>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -141,7 +142,7 @@ pub struct EnumVariant {
 pub enum EnumVariantKind {
     Unit,
     Tuple(Vec<RustSchemaOrRef>),
-    Struct(BTreeMap<String, StructField>),
+    Struct(IndexMap<String, StructField>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
