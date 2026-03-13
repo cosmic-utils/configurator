@@ -238,8 +238,10 @@ impl Page {
                 .set_description(node.description.clone())
                 .set_is_removable(node.is_removable);
 
-                // self.tree
-                //     .set_modified(data_path[..data_path.len().checked_sub(1).unwrap_or(0)].iter());
+                self.tree.set_modified2(data_path.iter());
+
+                let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
+                node.set_unmodified();
 
                 self.data_path.sanitize_path(&self.tree);
 
@@ -293,7 +295,7 @@ impl Page {
 
                         dbg!(&template);
 
-                        let mut new_node = NodeContainer::from_schema_and_value(
+                        let new_node = NodeContainer::from_schema_and_value(
                             &self.schema_root,
                             template,
                             &Value::Empty,
@@ -302,8 +304,6 @@ impl Page {
                         .set_is_removable(true);
 
                         dbg!(&new_node);
-
-                        new_node.modified = true;
 
                         match &mut node_array.value {
                             Some(values) => {

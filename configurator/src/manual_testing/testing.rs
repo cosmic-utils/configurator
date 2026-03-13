@@ -19,7 +19,7 @@ struct A {
 impl Default for A {
     fn default() -> Self {
         A {
-            v: vec![B { x: "hello1".into() }],
+            v: vec![B { x: "hello1".into() }, B { x: "hello2".into() }],
             x: String::default(),
             y: String::default(),
             z: String::default(),
@@ -29,8 +29,17 @@ impl Default for A {
 }
 
 #[derive(Clone, Debug, RustSchema, Serialize, Deserialize)]
+#[serde(default)]
 struct B {
     x: String,
+}
+
+impl Default for B {
+    fn default() -> Self {
+        Self {
+            x: String::from("defaultB"),
+        }
+    }
 }
 
 #[test]

@@ -68,6 +68,26 @@ impl NodeContainer {
         inner(self, data_path, false);
     }
 
+    pub fn set_unmodified(&mut self) {
+        self.modified = false;
+
+        match &mut self.node {
+            Node::String(node_string) => {}
+            Node::Array(node_array) => {
+                if let Some(value) = &mut node_array.value {
+                    for node in value {
+                        node.set_unmodified();
+                    }
+                }
+            }
+            Node::Struct(node_struct) => {
+                for (_, field) in &mut node_struct.fields {
+                    field.set_unmodified();
+                }
+            }
+        }
+    }
+
     pub fn set_modified_from_value(&mut self, value: &Value) {
         self.modified = match (&mut self.node, value) {
             (Node::String(node_string), Value::String(_)) => true,
