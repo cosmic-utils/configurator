@@ -232,7 +232,7 @@ impl Page {
 
                 let schema = schema_at(&self.schema_root, &data_path).unwrap();
 
-                *node = NodeContainer::from_schema_and_value(
+                let new_node = NodeContainer::from_schema_and_value(
                     &self.schema_root,
                     schema,
                     &node.default,
@@ -240,8 +240,15 @@ impl Page {
                 )
                 .set_name(node.name.clone())
                 .set_description(node.description.clone())
-                .set_is_removable(node.is_removable)
-                .set_is_modified(true);
+                .set_is_removable(node.is_removable);
+
+                let is_modified = match &new_node.node {
+                    Node::String(_) => false,
+                    Node::Array(_) => false,
+                    Node::Struct(_) => true,
+                };
+
+                *node = new_node.set_is_modified(is_modified);
 
                 self.data_path.sanitize_path(&self.tree);
 
