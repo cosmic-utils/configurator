@@ -19,7 +19,16 @@ struct A {
 impl Default for A {
     fn default() -> Self {
         A {
-            v: vec![B { x: "hello1".into() }, B { x: "hello2".into() }],
+            v: vec![
+                B {
+                    x: String::from("outer for x"),
+                    y: String::from("outer for y"),
+                },
+                B {
+                    x: String::from("outer for x"),
+                    y: String::from("outer for y"),
+                },
+            ],
             x: String::default(),
             y: String::default(),
             z: String::default(),
@@ -32,12 +41,14 @@ impl Default for A {
 #[serde(default)]
 struct B {
     x: String,
+    y: String,
 }
 
 impl Default for B {
     fn default() -> Self {
         Self {
-            x: String::from("defaultB"),
+            x: String::from("defaultB for x"),
+            y: String::from("defaultB for y"),
         }
     }
 }

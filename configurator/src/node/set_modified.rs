@@ -56,10 +56,12 @@ impl NodeContainer {
                             inner(field.1, std::iter::empty(), true);
                         }
                     } else {
-                        let data = data_path.next().unwrap().as_name().unwrap();
-                        let field = node_struct.fields.get_mut(data).unwrap();
+                        if let Some(data) = data_path.next() {
+                            let data = data.as_name().unwrap();
+                            let field = node_struct.fields.get_mut(data).unwrap();
 
-                        inner(field, data_path, false);
+                            inner(field, data_path, false);
+                        }
                     }
                 }
             }

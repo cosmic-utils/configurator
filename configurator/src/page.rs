@@ -222,13 +222,17 @@ impl Page {
             }
 
             PageMsg::ApplyDefault(data_path) => {
+                // we can this before, to avoid setting modified
+                // to the node we just created
+                self.tree.set_modified2(data_path.iter());
+
                 let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
 
                 node.remove_value_rec();
 
                 let schema = schema_at(&self.schema_root, &data_path).unwrap();
 
-                *node = NodeContainer::from_schema_and_value(
+                let new_node = NodeContainer::from_schema_and_value(
                     &self.schema_root,
                     schema,
                     &node.default,
@@ -238,10 +242,13 @@ impl Page {
                 .set_description(node.description.clone())
                 .set_is_removable(node.is_removable);
 
-                self.tree.set_modified2(data_path.iter());
+                let is_modified = match &new_node.node {
+                    Node::String(_) => false,
+                    Node::Array(_) => false,
+                    Node::Struct(_) => true,
+                };
 
-                let node = self.tree.get_at_mut(Box::new(data_path.iter())).unwrap();
-                node.set_unmodified();
+                *node = new_node.set_is_modified(is_modified);
 
                 self.data_path.sanitize_path(&self.tree);
 

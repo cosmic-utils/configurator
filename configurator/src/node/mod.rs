@@ -91,6 +91,10 @@ impl NodeContainer {
         }
     }
 
+    pub fn set_is_modified(self, modified: bool) -> Self {
+        Self { modified, ..self }
+    }
+
     pub fn set_default(self, default: Value) -> Self {
         Self { default, ..self }
     }

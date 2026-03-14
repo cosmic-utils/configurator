@@ -546,28 +546,18 @@ fn view_string<'a>(
                     }),
             ),
         )
-        // .push_maybe(
-        //     node.default
-        //         .as_ref()
-        //         .and_then(|v| v.as_str())
-        //         .map(|default| {
-        //             section()
-        //                 .title("Default")
-        //                 .add(
-        //                     row()
-        //                         .push(text("Default value"))
-        //                         .push(horizontal_space())
-        //                         .push(text(default)),
-        //                 )
-        //                 .add(row().push(horizontal_space()).push(
-        //                     // xxx: the on_press need to be lazy
-        //                     button::text("reset to default").on_press(PageMsg::ChangeMsg(
-        //                         data_path.to_vec(),
-        //                         ChangeMsg::ApplyDefault,
-        //                     )),
-        //                 ))
-        //         }),
-        // )
+        .push_maybe(node.default.is_not_empty().then(|| {
+            section().title("Default").add(
+                row()
+                    .push(space::horizontal())
+                    .push(
+                        // xxx: the on_press need to be lazy
+                        button::text("reset to default")
+                            .on_press(PageMsg::ApplyDefault(data_path.to_vec())),
+                    )
+                    .push(this_will_remove_all_children()),
+            )
+        }))
         .spacing(SPACING)
         .into()
 }

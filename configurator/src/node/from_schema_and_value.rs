@@ -101,8 +101,10 @@ impl NodeContainer {
                                 .map(rust_schema_value_to_value)
                                 .unwrap_or(Value::Empty);
 
+                            // we don't use the outer default because
+                            // we only want to detect when the default is defined on the struct definition
                             let final_field_default = get_struct_field_value(
-                                &default,
+                                &Value::Empty,
                                 &struct_default,
                                 &field_default,
                                 field_name,
