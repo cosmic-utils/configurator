@@ -83,3 +83,6 @@ default-features = false
 # facet-format = { path = "../facet/facet-format" }
 # facet-reflect = { path = "../facet/facet-reflect" }
 # facet-json = { path = "../facet/facet-json" }
+
+# [patch."https://github.com/pop-os/libcosmic"]
+# libcosmic = { path = "../libcosmic" }
