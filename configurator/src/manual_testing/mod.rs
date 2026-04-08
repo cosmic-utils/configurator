@@ -1,30 +1,64 @@
-use std::{fs, path::Path};
+use std::{
+    fmt::Debug,
+    fs::{self, create_dir_all},
+    path::Path,
+    str::FromStr,
+};
 
 use configurator_utils::ConfigFormat;
-use figment::{Figment, Profile, providers};
-use schemars::JsonSchema;
-use serde::Serialize;
+use rust_schema2::RustSchemaTrait;
+use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
 
+use crate::node::NodeContainer;
+
+mod testing;
 mod testing1;
 mod testing2;
 
-fn get_schema<C: JsonSchema>(name: &str) -> String {
+fn get_schema<C: RustSchemaTrait>(name: &str) -> String {
     let config_path = format!("{}/test_configs/{}", env!("CARGO_MANIFEST_DIR"), name);
 
-    configurator_schema::gen_schema::<C>()
-        .source_home_path(&config_path)
+    let system_path = format!("{config_path}/system");
+    let home_path = format!("{config_path}/home");
+    let write_path = format!("{config_path}/write");
+
+    if !fs::exists(&system_path).unwrap() {
+        fs::create_dir_all(&system_path).unwrap();
+    }
+
+    if !fs::exists(&home_path).unwrap() {
+        fs::create_dir_all(&home_path).unwrap();
+    }
+
+    if !fs::exists(&write_path).unwrap() {
+        fs::create_dir_all(&write_path).unwrap();
+    }
+
+    configurator_schema::SchemaGenerator::new()
+        .source_paths([&system_path])
+        .source_home_path(&home_path)
+        .write_path(&write_path)
         .format(ConfigFormat::CosmicRon)
-        .call()
+        .generate::<C>()
         .unwrap()
 }
 
-pub fn print_schema<C: JsonSchema>(name: &str) {
+pub fn print_schema<C: RustSchemaTrait>(name: &str) {
     let e = get_schema::<C>(name);
 
-    print!("{}", e);
+    println!("{}", e);
 }
 
-pub fn gen_schema<C: JsonSchema>(name: &str) {
+pub fn print_node_container<C: RustSchemaTrait>(name: &str) {
+    let content = get_schema::<C>(name);
+
+    let json_value = json::Value::from_str(&content).unwrap();
+    // let tree = NodeContainer::from_rust_schema(&json::from_value(json_value).unwrap()).unwrap();
+
+    // println!("{:#?}", tree);
+}
+
+pub fn gen_schema<C: RustSchemaTrait>(name: &str) {
     let schema = get_schema::<C>(name);
 
     let schemas_path = Path::new("test_schemas");
@@ -38,21 +72,26 @@ pub fn gen_schema<C: JsonSchema>(name: &str) {
     fs::write(schema_path, &schema).unwrap();
 }
 
-pub fn print_default_figment<C: Default + Serialize>() {
-    let figment =
-        Figment::new().merge(providers::Serialized::from(&C::default(), Profile::Default));
-
-    dbg!(&figment);
-}
-
 pub fn print_json<C: Default + Serialize>() {
     let e = json::to_string_pretty(&C::default()).unwrap();
 
-    print!("{}", e);
+    println!("{}", e);
 }
 
 pub fn print_ron<C: Default + Serialize>() {
     let e = ron::to_string(&C::default()).unwrap();
 
-    print!("{}", e);
+    println!("{}", e);
+}
+
+pub fn from_ron<C: Debug + DeserializeOwned>(ron: &str) {
+    let e: C = ron::from_str(ron).unwrap();
+
+    println!("{:?}", e);
+}
+
+pub fn from_json<C: Debug + DeserializeOwned>(json: &str) {
+    let e: C = json::from_str(json).unwrap();
+
+    println!("{:?}", e);
 }

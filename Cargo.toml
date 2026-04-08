@@ -4,13 +4,18 @@ members = [
     "configurator_schema",
     "configurator_utils",
     "ron_value",
+    # "rust_schema",
+    "rust_schema2",
+    "rust_schema2_derive",
+    "testing",
     "zconf/zconf2",
     # "zconf/figment_schemars_bridge",
     # "zconf/zconf",
     # "zconf/zconf_derive",
     # "zconf/zconf_derive_impl",
 ]
-resolver = "2"
+
+resolver = "3"
 
 [workspace.package]
 authors = ["wiiznokes <wiiznokes2@gmail.com>"]
@@ -27,6 +32,8 @@ unused_imports = "allow"
 configurator_schema = { path = "configurator_schema" }
 configurator_utils = { path = "configurator_utils" }
 figment_schemars_bridge = { path = "figment_schemars_bridge" }
+rust_schema2 = { path = "rust_schema2" }
+rust_schema2_derive = { path = "rust_schema2_derive" }
 ron_value = { path = "ron_value" }
 # zconf = { path = "zconf/zconf" }
 zconf2 = { path = "zconf/zconf2" }
@@ -36,7 +43,7 @@ ron = "0.12"
 xdg = "3"
 directories = "6"
 figment = "0.10"
-schemars = "0.8"
+schemars = "1"
 serde = { version = "1" }
 json = { version = "1", package = "serde_json" }
 anyhow = "1"
@@ -65,6 +72,14 @@ serial_test = "3"
 
 [workspace.dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic"
-rev = "ae1f15f37ee6d1fde579c6a6557e44b1a208f95e"
+rev = "01e5593741c7aa7eedf0692c6087ee3fb97feeb8"
 default-features = false
 # branch = "master"
+
+
+# [patch.crates-io]
+# facet = { path = "../facet/facet" }
+# facet-core = { path = "../facet/facet-core" }
+# facet-format = { path = "../facet/facet-format" }
+# facet-reflect = { path = "../facet/facet-reflect" }
+# facet-json = { path = "../facet/facet-json" }

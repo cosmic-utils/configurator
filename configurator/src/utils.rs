@@ -19,7 +19,7 @@ pub fn json_value_eq_value(json_value: &json::Value, value: &Value) -> bool {
         }
 
         (json::Value::String(str1), Value::String(str2)) => str1 == str2,
-
+        (json::Value::String(str1), Value::UnitStruct(name)) => str1 == name,
         (json::Value::Object(map1), Value::Struct(_, map2)) => {
             map1.len() == map2.len()
                 && map2

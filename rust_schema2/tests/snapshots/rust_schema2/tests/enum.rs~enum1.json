@@ -1,0 +1,87 @@
+{
+  "definitions": {
+    "A": {
+      "kind": {
+        "Enum": {
+          "description": "Doc on Enum",
+          "name": "A",
+          "variants": [
+            {
+              "description": "Doc on variant",
+              "kind": "Unit",
+              "name": "Unit"
+            },
+            {
+              "description": null,
+              "kind": {
+                "Tuple": [
+                  {
+                    "Schema": {
+                      "kind": "String"
+                    }
+                  }
+                ]
+              },
+              "name": "NewType"
+            },
+            {
+              "description": null,
+              "kind": {
+                "Tuple": [
+                  {
+                    "Schema": {
+                      "kind": "String"
+                    }
+                  },
+                  {
+                    "Schema": {
+                      "kind": {
+                        "Number": "I32"
+                      }
+                    }
+                  }
+                ]
+              },
+              "name": "Tuple"
+            },
+            {
+              "description": null,
+              "kind": {
+                "Struct": {
+                  "x": {
+                    "default": {
+                      "Number": {
+                        "I32": 0
+                      }
+                    },
+                    "description": "Doc on field variant",
+                    "schema": {
+                      "Schema": {
+                        "kind": {
+                          "Number": "I32"
+                        }
+                      }
+                    }
+                  },
+                  "y": {
+                    "default": null,
+                    "description": null,
+                    "schema": {
+                      "Schema": {
+                        "kind": "String"
+                      }
+                    }
+                  }
+                }
+              },
+              "name": "Struct"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "schema": {
+    "Ref": "A"
+  }
+}

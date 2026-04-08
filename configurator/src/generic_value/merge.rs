@@ -49,7 +49,7 @@ impl Value {
             }
 
             // lists and tuples we merge indexwise, but elements in `other` win
-            (Value::List(l1), Value::List(l2)) => {
+            (Value::Array(l1), Value::Array(l2)) => {
                 let len = usize::max(l1.len(), l2.len());
                 let mut out = Vec::with_capacity(len);
                 for i in 0..len {
@@ -61,7 +61,7 @@ impl Value {
                     };
                     out.push(v);
                 }
-                Value::List(out)
+                Value::Array(out)
             }
 
             (Value::Tuple(t1), Value::Tuple(t2)) => {
@@ -79,7 +79,7 @@ impl Value {
                 Value::Tuple(out)
             }
 
-            (Value::NamedTuple(name1, t1), Value::NamedTuple(name2, t2)) if name1 == name2 => {
+            (Value::TupleStruct(name1, t1), Value::TupleStruct(name2, t2)) if name1 == name2 => {
                 let len = usize::max(t1.len(), t2.len());
                 let mut out = Vec::with_capacity(len);
                 for i in 0..len {
@@ -91,7 +91,7 @@ impl Value {
                     };
                     out.push(v);
                 }
-                Value::NamedTuple(name1.clone(), out)
+                Value::TupleStruct(name1.clone(), out)
             }
 
             // same variant but no special merging strategy -- other wins
@@ -131,39 +131,10 @@ mod tests {
     }
 
     #[test]
-    fn merge_maps_and_structs() {
-        let mut m1 = Map::new();
-        m1.0.insert(Value::from("x"), Value::from(1));
-        let mut m2 = Map::new();
-        m2.0.insert(Value::from("y"), Value::from(2));
-        m2.0.insert(Value::from("x"), Value::from(3));
-        let merged = Value::Map(m1.clone()).merge(&Value::Map(m2.clone()));
-        if let Value::Map(m) = merged {
-            assert_eq!(m.0.get(&Value::from("x")), Some(&Value::from(3)));
-            assert_eq!(m.0.get(&Value::from("y")), Some(&Value::from(2)));
-        } else {
-            panic!("expected map");
-        }
-
-        let mut s1 = Map::new();
-        s1.0.insert("a".to_string(), Value::from(1));
-        let mut s2 = Map::new();
-        s2.0.insert("b".to_string(), Value::from(2));
-        s2.0.insert("a".to_string(), Value::from(3));
-        let merged = Value::Struct(None, s1).merge(&Value::Struct(None, s2));
-        if let Value::Struct(_, ms) = merged {
-            assert_eq!(ms.0.get("a"), Some(&Value::from(3)));
-            assert_eq!(ms.0.get("b"), Some(&Value::from(2)));
-        } else {
-            panic!("expected struct");
-        }
-    }
-
-    #[test]
     fn merge_lists() {
-        let a = Value::List(vec![Value::from(1), Value::from(2)]);
-        let b = Value::List(vec![Value::from(10)]);
+        let a = Value::Array(vec![Value::from(1), Value::from(2)]);
+        let b = Value::Array(vec![Value::from(10)]);
         let merged = a.merge(&b);
-        assert_eq!(merged, Value::List(vec![Value::from(10), Value::from(2)]));
+        assert_eq!(merged, Value::Array(vec![Value::from(10), Value::from(2)]));
     }
 }

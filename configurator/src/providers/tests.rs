@@ -33,7 +33,7 @@ where
 
     super::write(path, format, initial_value).unwrap();
 
-    assert_paths(path, "tests/cosmic/expected/v1").unwrap();
+    assert_paths(path, "tests/cosmicron/expected/v1").unwrap();
 
     // let value = super::read_from_format(path, format);
 
@@ -45,7 +45,7 @@ where
 }
 
 fn write_and_read_common<S: Default + Serialize + CosmicConfigEntry>(format: &ConfigFormat) {
-    write_and_read::<_, S>("tests/cosmic/actual/v1", format);
+    write_and_read::<_, S>("tests/cosmicron/actual/v1", format);
 }
 
 #[test]

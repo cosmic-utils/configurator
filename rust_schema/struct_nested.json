@@ -1,0 +1,182 @@
+{
+  "schema": {
+    "Ref": "#/$defs/StructNested"
+  },
+  "definitions": {
+    "#/$defs/Complex": {
+      "description": null,
+      "kind": {
+        "Struct": [
+          "Complex",
+          {
+            "s": {
+              "Schema": {
+                "description": null,
+                "kind": "String",
+                "default": null
+              }
+            }
+          }
+        ]
+      },
+      "default": null
+    },
+    "#/$defs/ComplexNested": {
+      "description": null,
+      "kind": {
+        "Struct": [
+          "ComplexNested",
+          {
+            "c": {
+              "Ref": "#/$defs/Complex"
+            },
+            "opt_c": {
+              "Schema": {
+                "description": null,
+                "kind": {
+                  "Option": {
+                    "Ref": "#/$defs/ComplexNested"
+                  }
+                },
+                "default": null
+              }
+            },
+            "opt_e": {
+              "Schema": {
+                "description": null,
+                "kind": {
+                  "Option": {
+                    "Ref": "#/$defs/EnumNested"
+                  }
+                },
+                "default": null
+              }
+            }
+          }
+        ]
+      },
+      "default": null
+    },
+    "#/$defs/EnumNested": {
+      "description": null,
+      "kind": {
+        "Enum": [
+          "EnumNested",
+          [
+            [
+              "Unit",
+              "Unit"
+            ],
+            [
+              "Tuple",
+              {
+                "Tuple": [
+                  {
+                    "Schema": {
+                      "description": null,
+                      "kind": "String",
+                      "default": null
+                    }
+                  },
+                  {
+                    "Schema": {
+                      "description": null,
+                      "kind": {
+                        "Tuple": [
+                          {
+                            "Ref": "#/$defs/Complex"
+                          },
+                          {
+                            "Schema": {
+                              "description": null,
+                              "kind": {
+                                "Number": "I32"
+                              },
+                              "default": null
+                            }
+                          }
+                        ]
+                      },
+                      "default": null
+                    }
+                  }
+                ]
+              }
+            ],
+            [
+              "Struct",
+              {
+                "Struct": {
+                  "c": {
+                    "Ref": "#/$defs/Complex"
+                  },
+                  "s": {
+                    "Schema": {
+                      "description": null,
+                      "kind": "String",
+                      "default": null
+                    }
+                  }
+                }
+              }
+            ]
+          ]
+        ]
+      },
+      "default": null
+    },
+    "#/$defs/StructNested": {
+      "description": null,
+      "kind": {
+        "Struct": [
+          "StructNested",
+          {
+            "m": {
+              "Schema": {
+                "description": null,
+                "kind": {
+                  "Map": {
+                    "Ref": "#/$defs/ComplexNested"
+                  }
+                },
+                "default": null
+              }
+            },
+            "t": {
+              "Schema": {
+                "description": null,
+                "kind": {
+                  "Tuple": [
+                    {
+                      "Schema": {
+                        "description": null,
+                        "kind": "String",
+                        "default": null
+                      }
+                    },
+                    {
+                      "Ref": "#/$defs/ComplexNested"
+                    }
+                  ]
+                },
+                "default": null
+              }
+            },
+            "v": {
+              "Schema": {
+                "description": null,
+                "kind": {
+                  "Array": {
+                    "Ref": "#/$defs/ComplexNested"
+                  }
+                },
+                "default": null
+              }
+            }
+          }
+        ]
+      },
+      "default": null
+    }
+  }
+}
