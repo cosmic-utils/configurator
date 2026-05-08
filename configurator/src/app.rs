@@ -2,11 +2,10 @@ use cosmic::{
     Element,
     app::{Core, Task},
     executor,
-    iced_widget::text_input,
     widget::{
         self, button,
         segmented_button::{Entity, SingleSelectModel},
-        text,
+        text, text_input,
     },
 };
 use zconf2::ConfigManager;

@@ -1,4 +1,4 @@
-set windows-powershell := true
+set windows-powershell
 
 rootdir := ''
 prefix := '/usr'

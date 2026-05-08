@@ -1,4 +1,4 @@
-use cosmic::iced_core::Length;
+use cosmic::iced::Length;
 
 pub static ICON_LENGTH: Length = Length::Fixed(25.0);
 

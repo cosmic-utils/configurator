@@ -2,14 +2,12 @@ use std::{borrow::Cow, fmt::Display};
 
 use cosmic::{
     Element,
-    iced::{Alignment, Color, Length, alignment},
-    iced_widget::{pick_list, toggler},
-    prelude::CollectionWidget,
+    iced::{self, Alignment, Color, Length, alignment},
     widget::{
-        button, column, container, mouse_area, row, scrollable,
+        Column, Row, button, container, mouse_area, scrollable,
         segmented_button::Entity,
         settings::section,
-        space, text, text_input,
+        space, text, text_input, toggler,
         tooltip::{Position, tooltip},
     },
 };
@@ -25,6 +23,20 @@ use crate::{
     },
     page::Page,
 };
+
+fn column<'a, Message, Theme, Renderer>() -> Column<'a, Message, Theme, Renderer>
+where
+    Renderer: iced::core::Renderer,
+{
+    Column::new()
+}
+
+fn row<'a, Message, Theme, Renderer>() -> Row<'a, Message, Theme, Renderer>
+where
+    Renderer: iced::core::Renderer,
+{
+    Row::new()
+}
 
 const SPACING: f32 = 10.;
 
@@ -69,7 +81,7 @@ fn view_data_path(data_path: &DataPath) -> Element<'_, PageMsg> {
         );
     }
 
-    row::with_children(elements).into()
+    Row::with_children(elements).into()
 }
 
 fn view_page(entity: Entity, page: &Page) -> Element<'_, PageMsg> {
@@ -220,7 +232,7 @@ fn node_list<'a>(
                 // }
                 _ => None,
             })
-            .push_maybe((!node.is_valid()).then(|| no_value_defined_warning_icon()))
+            .push_maybe((!node.is_valid()).then(no_value_defined_warning_icon))
             .push_maybe(node.is_removable.then(|| {
                 icon_button!("close24").on_press(PageMsg::ChangeMsg(
                     data_path.to_vec(),

@@ -37,7 +37,7 @@ impl DefaultConflictError {
 }
 
 impl RustSchemaRoot {
-    pub fn assert_default_no_conflict<'a>(&'a self) -> Result<(), DefaultConflictError> {
+    pub fn assert_default_no_conflict(&self) -> Result<(), DefaultConflictError> {
         let schema = self.resolve_schema(&self.schema)?;
 
         assert_default_no_conflict(self, schema, ValueState::NotSet)

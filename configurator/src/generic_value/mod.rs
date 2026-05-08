@@ -81,7 +81,7 @@ impl Value {
     }
 
     pub fn if_not_empty<'a>(&'a self, fallback: &'a Value) -> &'a Value {
-        self.is_not_empty().then_some(self).unwrap_or(fallback)
+        if self.is_not_empty() { self } else { fallback }
     }
 
     pub fn is_unit(&self) -> bool {

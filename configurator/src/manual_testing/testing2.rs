@@ -4,7 +4,6 @@ use std::{
     path::Path,
 };
 
-use cosmic::iced_futures::backend::default;
 use rust_schema2::RustSchema;
 use serde::{Deserialize, Serialize};
 

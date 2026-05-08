@@ -72,7 +72,7 @@ serial_test = "3"
 
 [workspace.dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic"
-rev = "01e5593741c7aa7eedf0692c6087ee3fb97feeb8"
+rev = "528513725d3856e5094cfbff5f0dc1a79d6c4018"
 default-features = false
 # branch = "master"
 
