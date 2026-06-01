@@ -1,7 +1,7 @@
 set windows-powershell := true
 
 rootdir := ''
-prefix := ''
+prefix := '/usr'
 debug := '0'
 name := 'configurator'
 appid := 'io.github.cosmic_utils.' + name
